@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="LogSigillo">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="Sigillo" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Sigillo">
+		<xs:complexType>
+			<xs:simpleContent>
+				<xs:extension base="xs:string">
+					<xs:attribute name="CFOrganizzatore" type="xs:string" use="required" />
+					<xs:attribute name="CFTitolare" type="xs:string" use="required" />
+					<xs:attribute name="SistemaEmissione" type="xs:string" use="required" />
+					<xs:attribute name="CartaAttivazione" type="xs:string" use="required" />
+					<xs:attribute name="SigilloFiscale" type="xs:string" use="required" />
+					<xs:attribute name="DataEmissione" type="xs:string" use="required" />
+					<xs:attribute name="OraEmissione" type="xs:string" use="required" />
+					<xs:attribute name="NumeroProgressivo" type="xs:string" use="required" />
+					<xs:attribute name="TipoTitolo" type="xs:string" use="required" />
+					<xs:attribute name="CodiceOrdine" type="xs:string" use="required" />
+					<xs:attribute name="CorrispettivoLordo" type="xs:string" use="required" />
+					<xs:attribute name="CodiceRichiedenteEmissioneSigillo" type="xs:string" use="required" />
+					<xs:attribute name="OriginaleAnnullato" type="xs:string" />
+					<xs:attribute name="CartaOriginaleAnnullato" type="xs:string" />
+					<xs:attribute name="CausaleAnnullamento" type="xs:string" />
+				</xs:extension>
+			</xs:simpleContent>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

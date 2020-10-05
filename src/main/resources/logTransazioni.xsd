@@ -1,0 +1,257 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="LogTransazione">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="Transazione" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Transazione">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="1" ref="TitoloAccesso" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="Abbonamento" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="BigliettoAbbonamento" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="AcquirenteRegistrazione" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="AcquirenteTransazione" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="RiferimentoAnnullamento" />
+			</xs:sequence>
+			<xs:attribute name="CFOrganizzatore" type="xs:string" use="required" />
+			<xs:attribute name="CFTitolare" type="xs:string" use="required" />
+			<xs:attribute name="IVAPreassolta" use="required">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="N" />
+						<xs:enumeration value="B" />
+						<xs:enumeration value="F" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="TipoTassazione" use="required">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="S" />
+						<xs:enumeration value="I" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute default="E" name="Valuta">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="E" />
+						<xs:enumeration value="L" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="SistemaEmissione" type="xs:string" use="required" />
+			<xs:attribute name="CartaAttivazione" type="xs:string" use="required" />
+			<xs:attribute name="SigilloFiscale" type="xs:string" use="required" />
+			<xs:attribute name="DataEmissione" type="xs:string" use="required" />
+			<xs:attribute name="OraEmissione" type="xs:string" use="required" />
+			<xs:attribute name="NumeroProgressivo" type="xs:string" use="required" />
+			<xs:attribute name="TipoTitolo" type="xs:string" use="required" />
+			<xs:attribute name="CodiceOrdine" type="xs:string" use="required" />
+			<xs:attribute name="Causale" type="xs:string" />
+			<xs:attribute name="Posto" type="xs:string" />
+			<xs:attribute name="CodiceRichiedenteEmissioneSigillo" type="xs:string" use="required" />
+			<xs:attribute name="Prestampa" type="xs:string" />
+			<xs:attribute name="ImponibileIntrattenimenti" type="xs:string" />
+			<xs:attribute name="OriginaleAnnullato" type="xs:string" />
+			<xs:attribute name="CartaOriginaleAnnullato" type="xs:string" />
+			<xs:attribute name="CausaleAnnullamento" type="xs:string" />
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="TitoloAccesso">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="1" ref="CorrispettivoLordo" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="Prevendita" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="IVACorrispettivo" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="IVAPrevendita" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="ImportoFigurativo" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="IVAFigurativa" />
+				<xs:element ref="CodiceLocale" />
+				<xs:element ref="DataEvento" />
+				<xs:element ref="OraEvento" />
+				<xs:element ref="TipoGenere" />
+				<xs:element ref="Titolo" />
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="Complementare" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="Partecipante" />
+			</xs:sequence>
+			<xs:attribute default="N" name="Annullamento">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="S" />
+						<xs:enumeration value="N" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Abbonamento">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="CodiceAbbonamento" />
+				<xs:element ref="ProgressivoAbbonamento" />
+				<xs:element ref="Turno" />
+				<xs:element ref="QuantitaEventiAbilitati" />
+				<xs:element ref="Validita" />
+				<xs:element ref="Rateo" />
+				<xs:element ref="RateoIntrattenimenti" />
+				<xs:element ref="RateoIVA" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="CorrispettivoLordo" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="Prevendita" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="IVACorrispettivo" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="IVAPrevendita" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="ImportoFigurativo" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="IVAFigurativa" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="Partecipante" />
+			</xs:sequence>
+			<xs:attribute default="N" name="Annullamento">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="S" />
+						<xs:enumeration value="N" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="BigliettoAbbonamento">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="CodiceLocale" />
+				<xs:element ref="DataEvento" />
+				<xs:element ref="OraEvento" />
+				<xs:element ref="TipoGenere" />
+				<xs:element ref="Titolo" />
+				<xs:element ref="CodiceAbbonamento" />
+				<xs:element ref="ProgressivoAbbonamento" />
+				<xs:element ref="CodiceFiscale" />
+				<xs:element ref="ImportoFigurativo" />
+				<xs:element ref="IVAFigurativa" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="Partecipante" />
+			</xs:sequence>
+			<xs:attribute default="N" name="Annullamento">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="S" />
+						<xs:enumeration value="N" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Complementare">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="CodicePrestazione" />
+				<xs:element ref="ImportoPrestazione" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="AcquirenteRegistrazione">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="CodiceUnivocoAcquirente" />
+				<xs:element ref="IndirizzoIPRegistrazione" />
+				<xs:element ref="DataOraRegistrazione" />
+			</xs:sequence>
+			<xs:attribute name="Autenticazione" use="required">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="SPID" />
+						<xs:enumeration value="OTP" />
+						<xs:enumeration value="BO" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="AcquirenteTransazione">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="CodiceUnivocoNumeroTransazione" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="CellulareAcquirente" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="EmailAcquirente" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="IndirizzoIPTransazione" />
+				<xs:element ref="DataOraInizioCheckout" />
+				<xs:element ref="DataOraEsecuzionePagamento" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="CRO" />
+				<xs:element ref="MetodoSpedizioneTitolo" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="IndirizzoSpedizioneTitolo" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="RiferimentoAnnullamento">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="OriginaleRiferimentoAnnullamento" />
+				<xs:element ref="CartaRiferimentoAnnullamento" />
+				<xs:element ref="CausaleRiferimentoAnnullamento" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="CartaRiferimentoAnnullamento" type="xs:string" />
+	<xs:element name="CausaleRiferimentoAnnullamento" type="xs:string" />
+	<xs:element name="CellulareAcquirente" type="xs:string" />
+	<xs:element name="CodiceAbbonamento" type="xs:string" />
+	<xs:element name="CodicePrestazione" type="xs:string" />
+	<xs:element name="CodiceFiscale" type="xs:string" />
+	<xs:element name="CodiceLocale" type="xs:string" />
+	<xs:element name="CodiceUnivocoAcquirente" type="xs:string" />
+	<xs:element name="CodiceUnivocoNumeroTransazione" type="xs:string" />
+	<xs:element name="CorrispettivoLordo" type="xs:string" />
+	<xs:element name="CRO" type="xs:string" />
+	<xs:element name="DataEvento" type="xs:string" />
+	<xs:element name="DataOraEsecuzionePagamento" type="xs:string" />
+	<xs:element name="DataOraInizioCheckout" type="xs:string" />
+	<xs:element name="DataOraRegistrazione" type="xs:string" />
+	<xs:element name="EmailAcquirente" type="xs:string" />
+	<xs:element name="ImportoPrestazione" type="xs:string" />
+	<xs:element name="ImportoFigurativo" type="xs:string" />
+	<xs:element name="IndirizzoIPRegistrazione" type="xs:string" />
+	<xs:element name="IndirizzoIPTransazione" type="xs:string" />
+	<xs:element name="IndirizzoSpedizioneTitolo" type="xs:string" />
+	<xs:element name="IVACorrispettivo" type="xs:string" />
+	<xs:element name="IVAFigurativa" type="xs:string" />
+	<xs:element name="IVAPrevendita" type="xs:string" />
+	<xs:element name="MetodoSpedizioneTitolo" type="xs:string" />
+	<xs:element name="OraEvento" type="xs:string" />
+	<xs:element name="OriginaleAnnullato" type="xs:string" />
+	<xs:element name="OriginaleRiferimentoAnnullamento" type="xs:string" />
+	<xs:element name="Prevendita" type="xs:string" />
+	<xs:element name="ProgressivoAbbonamento" type="xs:string" />
+	<xs:element name="Quantita" type="xs:string" />
+	<xs:element name="QuantitaEventiAbilitati" type="xs:string" />
+	<xs:element name="Rateo" type="xs:string" />
+	<xs:element name="RateoIntrattenimenti" type="xs:string" />
+	<xs:element name="RateoIVA" type="xs:string" />
+	<xs:element name="TipoGenere" type="xs:string" />
+	<xs:element name="TipoProvento" type="xs:string" />
+	<xs:element name="Titolo" type="xs:string" />
+	<xs:element name="Turno">
+		<xs:complexType>
+			<xs:attribute name="valore" use="required">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="F" />
+						<xs:enumeration value="L" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Validita" type="xs:string" />
+	<xs:element name="Partecipante">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Nome" />
+				<xs:element ref="Cognome" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Nome" type="xs:string" />
+	<xs:element name="Cognome" type="xs:string" />
+</xs:schema>

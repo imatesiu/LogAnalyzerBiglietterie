@@ -1,0 +1,282 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>cnr.isti.sse</groupId>
+  <artifactId>loganalyzerbig</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  
+  
+  <properties>
+		<project.build.sourceEncoding>iso-8859-1</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>iso-8859-1</project.reporting.outputEncoding>
+
+		<primefaces.version>6.2</primefaces.version>
+
+
+		<java.version>1.8</java.version>
+
+		<maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
+		<jetty-maven-plugin.version>9.4.26.v20200117</jetty-maven-plugin.version>
+		
+
+        <mvn-compiler-plugin.version>3.7.0</mvn-compiler-plugin.version>
+        <maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
+
+        <!-- Code -->
+        <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
+        <javax.ws.rs-api.version>2.1</javax.ws.rs-api.version>
+        <jersey.version>2.19</jersey.version>
+        <swagger.version>2.0.2</swagger.version>
+        <swagger-ui.version>3.17.0</swagger-ui.version>
+        <!-- end Code -->
+		
+	</properties>
+
+
+	<dependencies>
+	<!--<dependency> <groupId>javax.xml.bind</groupId> <artifactId>jaxb-api</artifactId> 
+		<version>2.3.1</version> </dependency> <dependency> <groupId>javax.xml</groupId> 
+		<artifactId>jaxb-impl</artifactId> <version>2.1</version> </dependency> Jersey -->
+	<dependency>
+		<groupId>org.glassfish.jersey.connectors</groupId>
+		<artifactId>jersey-apache-connector</artifactId>
+		<version>${jersey.version}</version>
+	</dependency>
+
+
+	<dependency>
+		<groupId>io.swagger.core.v3</groupId>
+		<artifactId>swagger-jaxrs2</artifactId>
+		<version>${swagger.version}</version>
+	</dependency>
+	<dependency>
+		<groupId>io.swagger.core.v3</groupId>
+		<artifactId>swagger-jaxrs2-servlet-initializer</artifactId>
+		<version>${swagger.version}</version>
+	</dependency>
+	<!-- End Swagger -->
+
+	<dependency>
+		<groupId>org.glassfish.jersey.media</groupId>
+		<artifactId>jersey-media-json-jackson</artifactId>
+		<version>2.19</version>
+	</dependency>
+	<dependency>
+		<groupId>com.fasterxml.jackson.core</groupId>
+		<artifactId>jackson-annotations</artifactId>
+		<version>2.10.0</version>
+	</dependency>
+	<dependency>
+		<groupId>commons-fileupload</groupId>
+		<artifactId>commons-fileupload</artifactId>
+		<version>1.4</version>
+	</dependency>
+
+	<dependency>
+		<groupId>org.glassfish.jersey.containers.glassfish</groupId>
+		<artifactId>jersey-gf-cdi</artifactId>
+		<version>2.14</version>
+	</dependency>
+	<dependency>
+		<groupId>javax.enterprise</groupId>
+		<artifactId>cdi-api</artifactId>
+		<version>1.2</version>
+	</dependency>
+
+	<dependency>
+		<groupId>javax.transaction</groupId>
+		<artifactId>javax.transaction-api</artifactId>
+		<version>1.2</version>
+	</dependency>
+
+
+
+	<dependency>
+		<groupId>org.glassfish.jersey.containers</groupId>
+		<artifactId>jersey-container-grizzly2-http</artifactId>
+		<version>2.22.1</version>
+	</dependency>
+
+
+
+	<dependency>
+		<groupId>junit</groupId>
+		<artifactId>junit</artifactId>
+		<version>4.12</version>
+	</dependency>
+
+	<dependency>
+		<groupId>commons-io</groupId>
+		<artifactId>commons-io</artifactId>
+		<version>2.5</version>
+	</dependency>
+
+	<dependency>
+		<groupId>org.glassfish.jersey.test-framework.providers</groupId>
+		<artifactId>jersey-test-framework-provider-grizzly2</artifactId>
+		<version>2.19</version>
+	</dependency>
+	<dependency>
+		<groupId>org.glassfish.jersey.media</groupId>
+		<artifactId>jersey-media-multipart</artifactId>
+		<version>2.19</version>
+	</dependency>
+
+	<dependency>
+		<groupId>log4j</groupId>
+		<artifactId>log4j</artifactId>
+		<version>1.2.17</version>
+	</dependency>
+
+
+
+	<dependency>
+		<groupId>org.glassfish.jersey.core</groupId>
+		<artifactId>jersey-common</artifactId>
+		<version>2.19</version>
+	</dependency>
+
+	<dependency>
+		<groupId>org.glassfish.jersey.core</groupId>
+		<artifactId>jersey-server</artifactId>
+		<version>2.19</version>
+	</dependency>
+
+	<dependency>
+		<groupId>org.glassfish.jersey.ext</groupId>
+		<artifactId>jersey-mvc-jsp</artifactId>
+		<version>2.19</version>
+	</dependency>
+	<dependency>
+		<groupId>javax.servlet</groupId>
+		<artifactId>javax.servlet-api</artifactId>
+		<version>4.0.0</version>
+		<scope>provided</scope>
+	</dependency>
+
+	<dependency>
+		<groupId>org.glassfish.jersey.containers</groupId>
+		<artifactId>jersey-container-servlet</artifactId>
+		<version>2.19</version>
+	</dependency>
+	<dependency>
+		<groupId>org.glassfish.jersey.test-framework.providers</groupId>
+		<artifactId>jersey-test-framework-provider-simple</artifactId>
+		<version>2.19</version>
+		<scope>test</scope>
+	</dependency>
+
+
+	<!-- JSF -->
+
+	<dependency>
+		<groupId>com.sun.faces</groupId>
+		<artifactId>jsf-api</artifactId>
+		<version>2.2.20</version>
+
+	</dependency>
+	<dependency>
+		<groupId>com.sun.faces</groupId>
+		<artifactId>jsf-impl</artifactId>
+		<version>2.2.20</version>
+
+	</dependency>
+	<!-- PrimeFaces 
+	<dependency>
+		<groupId>org.primefaces</groupId>
+		<artifactId>primefaces</artifactId>
+		<version>${primefaces.version}</version>
+	</dependency>
+	<dependency>
+		<groupId>org.primefaces.themes</groupId>
+		<artifactId>cupertino</artifactId>
+		<version>1.0.10</version>
+	</dependency>
+	<dependency>
+		<groupId>org.primefaces.themes</groupId>
+		<artifactId>all-themes</artifactId>
+		<version>1.0.10</version>
+	</dependency>-->
+
+	<dependency>
+		<groupId>org.bouncycastle</groupId>
+		<artifactId>bcprov-jdk15on</artifactId>
+		<version>1.60</version>
+	</dependency>
+	<dependency>
+		<groupId>org.bouncycastle</groupId>
+		<artifactId>bcpkix-jdk15on</artifactId>
+		<version>1.60</version>
+	</dependency>
+
+	</dependencies>
+	
+	<build>
+		<finalName>${project.artifactId}</finalName>
+		<plugins>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>${maven-compiler-plugin.version}</version>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<encoding>iso-8859-1</encoding>
+				</configuration>
+			</plugin>
+			
+			<!-- 
+
+
+			<plugin>
+				<groupId>org.eclipse.jetty</groupId>
+				<artifactId>jetty-maven-plugin</artifactId>
+				<version>${jetty-maven-plugin.version}</version>
+				<configuration>
+					<jettyXml>${project.basedir}/src/main/resources/jetty.xml,${project.basedir}/src/main/resources/jetty-http.xml,${project.basedir}/src/main/resources/jetty-ssl.xml,${project.basedir}/src/main/resources/jetty-https.xml</jettyXml>
+				 <webAppSourceDirectory>target/${project.artifactId}</webAppSourceDirectory>
+					
+				</configuration>
+			</plugin> -->
+			
+			
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.7.9</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>prepare-integration-test-agent</id>
+						<goals>
+							<goal>prepare-agent-integration</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>generate-integration-test-report</id>
+						<goals>
+							<goal>report-integration</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.eluder.coveralls</groupId>
+				<artifactId>coveralls-maven-plugin</artifactId>
+				<version>4.3.0</version>
+			</plugin>
+			    
+		</plugins>
+	</build>
+</project>
