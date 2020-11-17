@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns="http://siae.it/mensile" elementFormDefault="qualified" targetNamespace="http://siae.it/mensile" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="RiepilogoMensile">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Titolare" />
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="Organizzatore" />
+			</xs:sequence>
+			<xs:attribute name="Sostituzione" use="required">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="N" />
+						<xs:enumeration value="S" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="Mese" type="xs:string" use="required" />
+			<xs:attribute default="E" name="Valuta">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="E" />
+						<xs:enumeration value="L" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Titolare">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Denominazione" />
+				<xs:element ref="CodiceFiscale" />
+				<xs:element ref="SistemaEmissione" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Organizzatore">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Denominazione" />
+				<xs:element ref="CodiceFiscale" />
+				<xs:element ref="TipoOrganizzatore" />
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="Evento" />
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="Abbonamenti" />
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="AltriProventiGenerici" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Evento">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Intrattenimento" />
+				<xs:element ref="Locale" />
+				<xs:element ref="DataEvento" />
+				<xs:element ref="OraEvento" />
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="MultiGenere" />
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="OrdineDiPosto" />
+				<xs:element ref="AltriProventiEvento" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Intrattenimento">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="TipoTassazione" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="Incidenza" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="ImponibileIntrattenimenti" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Locale">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Denominazione" />
+				<xs:element ref="CodiceLocale" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="MultiGenere">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="TipoGenere" />
+				<xs:element ref="IncidenzaGenere" />
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="TitoliOpere" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="TitoliOpere">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Titolo" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="ProduttoreCinema" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="Autore" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="Esecutore" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="Nazionalita" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="OrdineDiPosto">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="CodiceOrdine" />
+				<xs:element ref="Capienza" />
+				<xs:element ref="IVAEccedenteOmaqqi" />
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="TitoliAccesso" />
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="TitoliAnnullati" />
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="TitoliAccessoIVAPreassolta" />
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="TitoliIVAPreassoltaAnnullati" />
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="BigliettiAbbonamento" />
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="BigliettiAbbonamentoAnnullati" />
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="AbbonamentiFissi" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="TitoliAccesso">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="TipoTitolo" />
+				<xs:element ref="Quantita" />
+				<xs:element ref="CorrispettivoLordo" />
+				<xs:element ref="Prevendita" />
+				<xs:element ref="IVACorrispettivo" />
+				<xs:element ref="IVAPrevendita" />
+				<xs:element ref="ImportoPrestazione" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="TitoliAnnullati">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="TipoTitolo" />
+				<xs:element ref="Quantita" />
+				<xs:element ref="CorrispettivoLordo" />
+				<xs:element ref="Prevendita" />
+				<xs:element ref="IVACorrispettivo" />
+				<xs:element ref="IVAPrevendita" />
+				<xs:element ref="ImportoPrestazione" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="TitoliAccessoIVAPreassolta">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="TipoTitolo" />
+				<xs:element ref="Quantita" />
+				<xs:element ref="ImportoFiqurativo" />
+				<xs:element ref="IVAFiqurativa" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="TitoliIVAPreassoltaAnnullati">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="TipoTitolo" />
+				<xs:element ref="Quantita" />
+				<xs:element ref="ImportoFiqurativo" />
+				<xs:element ref="IVAFiqurativa" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="BigliettiAbbonamento">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="1" ref="CodiceFiscale" />
+				<xs:element ref="CodiceAbbonamento" />
+				<xs:element ref="TipoTitolo" />
+				<xs:element ref="Quantita" />
+				<xs:element ref="ImportoFiqurativo" />
+				<xs:element ref="IVAFiqurativa" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="BigliettiAbbonamentoAnnullati">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="1" ref="CodiceFiscale" />
+				<xs:element ref="CodiceAbbonamento" />
+				<xs:element ref="TipoTitolo" />
+				<xs:element ref="Quantita" />
+				<xs:element ref="ImportoFiqurativo" />
+				<xs:element ref="IVAFiqurativa" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="AbbonamentiFissi">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="1" ref="CodiceFiscale" />
+				<xs:element ref="CodiceAbbonamento" />
+				<xs:element ref="TipoTitolo" />
+				<xs:element ref="Quantita" />
+				<xs:element ref="ImportoFiqurativo" />
+				<xs:element ref="IVAFiqurativa" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="AltriProventiEvento">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="TipoProvento" />
+				<xs:element ref="CorrispettivoLordo" />
+				<xs:element ref="IVACorrispettivo" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Abbonamenti">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="CodiceAbbonamento" />
+				<xs:element ref="Validita" />
+				<xs:element ref="TipoTassazione" />
+				<xs:element ref="Turno" />
+				<xs:element ref="CodiceOrdine" />
+				<xs:element ref="TipoTitolo" />
+				<xs:element ref="QuantitaEventiAbilitati" />
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="AbbonamentiEmessi" />
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="AbbonamentiAnnullati" />
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="AbbonamentiIVAPreassolta" />
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="AbbonamentiIVAPreassoltaAnnullati" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="AbbonamentiEmessi">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Quantita" />
+				<xs:element ref="CorrispettivoLordo" />
+				<xs:element ref="Prevendita" />
+				<xs:element ref="IVACorrispettivo" />
+				<xs:element ref="IVAPrevendita" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="AbbonamentiAnnullati">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Quantita" />
+				<xs:element ref="CorrispettivoLordo" />
+				<xs:element ref="Prevendita" />
+				<xs:element ref="IVACorrispettivo" />
+				<xs:element ref="IVAPrevendita" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="AbbonamentiIVAPreassolta">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Quantita" />
+				<xs:element ref="ImportoFiqurativo" />
+				<xs:element ref="IVAFiqurativa" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="AbbonamentiIVAPreassoltaAnnullati">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Quantita" />
+				<xs:element ref="ImportoFiqurativo" />
+				<xs:element ref="IVAFiqurativa" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="AltriProventiGenerici">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="TipoProvento" />
+				<xs:element ref="CorrispettivoLordo" />
+				<xs:element ref="IVACorrispettivo" />
+				<xs:element ref="GenerePrevalente" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Autore" type="xs:string" />
+	<xs:element name="Capienza" type="xs:string" />
+	<xs:element name="CodiceAbbonamento" type="xs:string" />
+	<xs:element name="CodiceFiscale" type="xs:string" />
+	<xs:element name="CodiceLocale" type="xs:string" />
+	<xs:element name="CodiceOrdine" type="xs:string" />
+	<xs:element name="CorrispettivoLordo" type="xs:string" />
+	<xs:element name="DataEvento" type="xs:string" />
+	<xs:element name="Denominazione">
+		<xs:complexType />
+	</xs:element>
+	<xs:element name="Esecutore" type="xs:string" />
+	<xs:element name="GenerePrevalente" type="xs:string" />
+	<xs:element name="ImponibileIntrattenimenti" type="xs:string" />
+	<xs:element name="ImportoFiqurativo" type="xs:string" />
+	<xs:element name="ImportoPrestazione" type="xs:string" />
+	<xs:element name="Incidenza" type="xs:string" />
+	<xs:element name="IncidenzaGenere" type="xs:string" />
+	<xs:element name="IVACorrispettivo" type="xs:string" />
+	<xs:element name="IVAEccedenteOmaqqi" type="xs:string" />
+	<xs:element name="IVAFiqurativa" type="xs:string" />
+	<xs:element name="IVAPrevendita" type="xs:string" />
+	<xs:element name="Nazionalita" type="xs:string" />
+	<xs:element name="OraEvento" type="xs:string" />
+	<xs:element name="Prevendita" type="xs:string" />
+	<xs:element name="ProduttoreCinema" type="xs:string" />
+	<xs:element name="Quantita" type="xs:string" />
+	<xs:element name="QuantitaEventiAbilitati" type="xs:string" />
+	<xs:element name="SistemaEmissione" type="xs:string" />
+	<xs:element name="TipoGenere" type="xs:string" />
+	<xs:element name="TipoOrganizzatore">
+		<xs:complexType>
+			<xs:attribute default="G" name="valore">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="E" />
+						<xs:enumeration value="P" />
+						<xs:enumeration value="G" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="TipoProvento" type="xs:string" />
+	<xs:element name="TipoTassazione">
+		<xs:complexType>
+			<xs:attribute default="S" name="valore">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="S" />
+						<xs:enumeration value="I" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="TipoTitolo" type="xs:string" />
+	<xs:element name="Titolo" type="xs:string" />
+	<xs:element name="Turno">
+		<xs:complexType>
+			<xs:attribute name="valore" use="required">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="F" />
+						<xs:enumeration value="L" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Validita" type="xs:string" />
+</xs:schema>

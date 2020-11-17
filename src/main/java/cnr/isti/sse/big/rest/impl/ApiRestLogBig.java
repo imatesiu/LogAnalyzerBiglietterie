@@ -87,9 +87,11 @@ public class ApiRestLogBig {
 			StringReader reader = new StringReader(LogTransazione);
 			LogTransazione LogT = (LogTransazione) unmarshaller.unmarshal(reader);
 
+			Utility.check(LogT);
 			
 			String text = "KO";
-			throw new WebApplicationException(Response.status(406).entity(text).build());
+			return text;
+			//throw new WebApplicationException(Response.status(406).entity(text).build());
 		
 		
 		

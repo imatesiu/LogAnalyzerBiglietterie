@@ -1,0 +1,572 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<LogTransazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="N" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="C03F87A6A3186320" DataEmissione="20201017" OraEmissione="1057" NumeroProgressivo="84" TipoTitolo="I1" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0">
+
+    <TitoloAccesso Annullamento="N">
+
+      <CorrispettivoLordo>1200</CorrispettivoLordo>
+
+      <Prevendita>150</Prevendita>
+
+      <IVACorrispettivo>110</IVACorrispettivo>
+
+      <IVAPrevendita>14</IVAPrevendita>
+
+      <CodiceLocale>0580900325697</CodiceLocale>
+
+      <DataEvento>20201017</DataEvento>
+
+      <OraEvento>1000</OraEvento>
+
+      <TipoGenere>01</TipoGenere>
+
+      <Titolo>EVENTO 3</Titolo>
+
+    </TitoloAccesso>
+
+  </Transazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="N" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="74EAA6BFA44754ED" DataEmissione="20201017" OraEmissione="1057" NumeroProgressivo="85" TipoTitolo="I1" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0">
+
+    <TitoloAccesso Annullamento="N">
+
+      <CorrispettivoLordo>1200</CorrispettivoLordo>
+
+      <Prevendita>150</Prevendita>
+
+      <IVACorrispettivo>110</IVACorrispettivo>
+
+      <IVAPrevendita>14</IVAPrevendita>
+
+      <CodiceLocale>0580900325697</CodiceLocale>
+
+      <DataEvento>20201017</DataEvento>
+
+      <OraEvento>1000</OraEvento>
+
+      <TipoGenere>01</TipoGenere>
+
+      <Titolo>EVENTO 3</Titolo>
+
+    </TitoloAccesso>
+
+  </Transazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="N" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="CE755CBE1B1A300B" DataEmissione="20201017" OraEmissione="1058" NumeroProgressivo="86" TipoTitolo="I1" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0">
+
+    <TitoloAccesso Annullamento="N">
+
+      <CorrispettivoLordo>1200</CorrispettivoLordo>
+
+      <Prevendita>150</Prevendita>
+
+      <IVACorrispettivo>110</IVACorrispettivo>
+
+      <IVAPrevendita>14</IVAPrevendita>
+
+      <CodiceLocale>0580900325697</CodiceLocale>
+
+      <DataEvento>20201017</DataEvento>
+
+      <OraEvento>1000</OraEvento>
+
+      <TipoGenere>01</TipoGenere>
+
+      <Titolo>EVENTO 3</Titolo>
+
+    </TitoloAccesso>
+
+  </Transazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="N" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="C5C025C42101BA8D" DataEmissione="20201017" OraEmissione="1058" NumeroProgressivo="87" TipoTitolo="I1" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0">
+
+    <TitoloAccesso Annullamento="N">
+
+      <CorrispettivoLordo>1200</CorrispettivoLordo>
+
+      <Prevendita>150</Prevendita>
+
+      <IVACorrispettivo>110</IVACorrispettivo>
+
+      <IVAPrevendita>14</IVAPrevendita>
+
+      <CodiceLocale>0580900325697</CodiceLocale>
+
+      <DataEvento>20201017</DataEvento>
+
+      <OraEvento>1000</OraEvento>
+
+      <TipoGenere>01</TipoGenere>
+
+      <Titolo>EVENTO 3</Titolo>
+
+    </TitoloAccesso>
+
+  </Transazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="N" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="12BD612886A3E48D" DataEmissione="20201017" OraEmissione="1058" NumeroProgressivo="88" TipoTitolo="I1" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0">
+
+    <TitoloAccesso Annullamento="N">
+
+      <CorrispettivoLordo>1200</CorrispettivoLordo>
+
+      <Prevendita>150</Prevendita>
+
+      <IVACorrispettivo>110</IVACorrispettivo>
+
+      <IVAPrevendita>14</IVAPrevendita>
+
+      <CodiceLocale>0580900325697</CodiceLocale>
+
+      <DataEvento>20201017</DataEvento>
+
+      <OraEvento>1000</OraEvento>
+
+      <TipoGenere>01</TipoGenere>
+
+      <Titolo>EVENTO 3</Titolo>
+
+    </TitoloAccesso>
+
+  </Transazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="N" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="CB6A6DAD63E7B04D" DataEmissione="20201017" OraEmissione="1059" NumeroProgressivo="89" TipoTitolo="I1" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0" OriginaleAnnullato="84" CartaOriginaleAnnullato="A0139321" CausaleAnnullamento="004">
+
+    <TitoloAccesso Annullamento="S">
+
+      <CorrispettivoLordo>1200</CorrispettivoLordo>
+
+      <Prevendita>150</Prevendita>
+
+      <IVACorrispettivo>110</IVACorrispettivo>
+
+      <IVAPrevendita>14</IVAPrevendita>
+
+      <CodiceLocale>0580900325697</CodiceLocale>
+
+      <DataEvento>20201017</DataEvento>
+
+      <OraEvento>1000</OraEvento>
+
+      <TipoGenere>01</TipoGenere>
+
+      <Titolo>EVENTO 3</Titolo>
+
+    </TitoloAccesso>
+
+  </Transazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="B" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="B6563149E90782AF" DataEmissione="20201017" OraEmissione="1102" NumeroProgressivo="90" TipoTitolo="I1" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0">
+
+    <BigliettoAbbonamento Annullamento="N">
+
+      <CodiceLocale>0580900325697</CodiceLocale>
+
+      <DataEvento>20201017</DataEvento>
+
+      <OraEvento>1000</OraEvento>
+
+      <TipoGenere>01</TipoGenere>
+
+      <Titolo>EVENTO 3</Titolo>
+
+      <CodiceAbbonamento>01PTI1</CodiceAbbonamento>
+
+      <ProgressivoAbbonamento>1</ProgressivoAbbonamento>
+
+      <CodiceFiscale>
+
+      </CodiceFiscale>
+
+      <ImportoFigurativo>875</ImportoFigurativo>
+
+      <IVAFigurativa>80</IVAFigurativa>
+
+    </BigliettoAbbonamento>
+
+  </Transazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="B" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="C2F3807578B91FD5" DataEmissione="20201017" OraEmissione="1103" NumeroProgressivo="91" TipoTitolo="I1" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0">
+
+    <BigliettoAbbonamento Annullamento="N">
+
+      <CodiceLocale>0580900325697</CodiceLocale>
+
+      <DataEvento>20201017</DataEvento>
+
+      <OraEvento>1000</OraEvento>
+
+      <TipoGenere>01</TipoGenere>
+
+      <Titolo>EVENTO 3</Titolo>
+
+      <CodiceAbbonamento>01PTI1</CodiceAbbonamento>
+
+      <ProgressivoAbbonamento>2</ProgressivoAbbonamento>
+
+      <CodiceFiscale>
+
+      </CodiceFiscale>
+
+      <ImportoFigurativo>875</ImportoFigurativo>
+
+      <IVAFigurativa>80</IVAFigurativa>
+
+    </BigliettoAbbonamento>
+
+  </Transazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="N" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="373F2C44D2104F42" DataEmissione="20201017" OraEmissione="1103" NumeroProgressivo="92" TipoTitolo="R3" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0">
+
+    <TitoloAccesso Annullamento="N">
+
+      <CorrispettivoLordo>300</CorrispettivoLordo>
+
+      <Prevendita>150</Prevendita>
+
+      <IVACorrispettivo>28</IVACorrispettivo>
+
+      <IVAPrevendita>14</IVAPrevendita>
+
+      <CodiceLocale>0580900325697</CodiceLocale>
+
+      <DataEvento>20201017</DataEvento>
+
+      <OraEvento>1000</OraEvento>
+
+      <TipoGenere>01</TipoGenere>
+
+      <Titolo>EVENTO 3</Titolo>
+
+    </TitoloAccesso>
+
+  </Transazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="N" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="D1429EFB32D02B77" DataEmissione="20201017" OraEmissione="1104" NumeroProgressivo="93" TipoTitolo="R1" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0">
+
+    <TitoloAccesso Annullamento="N">
+
+      <CorrispettivoLordo>850</CorrispettivoLordo>
+
+      <Prevendita>150</Prevendita>
+
+      <IVACorrispettivo>78</IVACorrispettivo>
+
+      <IVAPrevendita>14</IVAPrevendita>
+
+      <CodiceLocale>0580900325697</CodiceLocale>
+
+      <DataEvento>20201017</DataEvento>
+
+      <OraEvento>1000</OraEvento>
+
+      <TipoGenere>01</TipoGenere>
+
+      <Titolo>EVENTO 3</Titolo>
+
+    </TitoloAccesso>
+
+  </Transazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="N" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="50443EFD5F55F0E5" DataEmissione="20201017" OraEmissione="1104" NumeroProgressivo="94" TipoTitolo="R1" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0">
+
+    <TitoloAccesso Annullamento="N">
+
+      <CorrispettivoLordo>850</CorrispettivoLordo>
+
+      <Prevendita>150</Prevendita>
+
+      <IVACorrispettivo>78</IVACorrispettivo>
+
+      <IVAPrevendita>14</IVAPrevendita>
+
+      <CodiceLocale>0580900325697</CodiceLocale>
+
+      <DataEvento>20201017</DataEvento>
+
+      <OraEvento>1000</OraEvento>
+
+      <TipoGenere>01</TipoGenere>
+
+      <Titolo>EVENTO 3</Titolo>
+
+    </TitoloAccesso>
+
+  </Transazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="B" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="C4D10B6301536400" DataEmissione="20201017" OraEmissione="1108" NumeroProgressivo="95" TipoTitolo="I1" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0">
+
+    <BigliettoAbbonamento Annullamento="N">
+
+      <CodiceLocale>0580900325697</CodiceLocale>
+
+      <DataEvento>20201017</DataEvento>
+
+      <OraEvento>1000</OraEvento>
+
+      <TipoGenere>01</TipoGenere>
+
+      <Titolo>EVENTO 3</Titolo>
+
+      <CodiceAbbonamento>01PTI1</CodiceAbbonamento>
+
+      <ProgressivoAbbonamento>4</ProgressivoAbbonamento>
+
+      <CodiceFiscale>
+
+      </CodiceFiscale>
+
+      <ImportoFigurativo>875</ImportoFigurativo>
+
+      <IVAFigurativa>80</IVAFigurativa>
+
+    </BigliettoAbbonamento>
+
+  </Transazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="N" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="7EB3375932D3FE42" DataEmissione="20201017" OraEmissione="1109" NumeroProgressivo="96" TipoTitolo="I1" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0">
+
+    <TitoloAccesso Annullamento="N">
+
+      <CorrispettivoLordo>1200</CorrispettivoLordo>
+
+      <Prevendita>150</Prevendita>
+
+      <IVACorrispettivo>110</IVACorrispettivo>
+
+      <IVAPrevendita>14</IVAPrevendita>
+
+      <CodiceLocale>0580900325697</CodiceLocale>
+
+      <DataEvento>20201017</DataEvento>
+
+      <OraEvento>1000</OraEvento>
+
+      <TipoGenere>01</TipoGenere>
+
+      <Titolo>EVENTO 3</Titolo>
+
+    </TitoloAccesso>
+
+  </Transazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="N" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="4D6EA86BEB54F852" DataEmissione="20201017" OraEmissione="1114" NumeroProgressivo="97" TipoTitolo="I1" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0">
+
+    <Abbonamento Annullamento="N">
+
+      <CodiceAbbonamento>03PTI1</CodiceAbbonamento>
+
+      <ProgressivoAbbonamento>1</ProgressivoAbbonamento>
+
+      <Turno valore="L" />
+
+      <QuantitaEventiAbilitati>2</QuantitaEventiAbilitati>
+
+      <Validita>20201025</Validita>
+
+      <Rateo>875</Rateo>
+
+      <RateoIntrattenimenti>0</RateoIntrattenimenti>
+
+      <RateoIVA>80</RateoIVA>
+
+      <CorrispettivoLordo>1750</CorrispettivoLordo>
+
+      <Prevendita>0</Prevendita>
+
+      <IVACorrispettivo>160</IVACorrispettivo>
+
+      <IVAPrevendita>0</IVAPrevendita>
+
+    </Abbonamento>
+
+  </Transazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="N" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="2F220D72D6277C89" DataEmissione="20201017" OraEmissione="1117" NumeroProgressivo="98" TipoTitolo="I1" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0">
+
+    <TitoloAccesso Annullamento="N">
+
+      <CorrispettivoLordo>1200</CorrispettivoLordo>
+
+      <Prevendita>150</Prevendita>
+
+      <IVACorrispettivo>110</IVACorrispettivo>
+
+      <IVAPrevendita>14</IVAPrevendita>
+
+      <CodiceLocale>0580900325697</CodiceLocale>
+
+      <DataEvento>20201017</DataEvento>
+
+      <OraEvento>1700</OraEvento>
+
+      <TipoGenere>45</TipoGenere>
+
+      <Titolo>EVENTO 4</Titolo>
+
+    </TitoloAccesso>
+
+  </Transazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="N" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="5DA73E3B68FDB0D7" DataEmissione="20201017" OraEmissione="1117" NumeroProgressivo="99" TipoTitolo="R1" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0">
+
+    <TitoloAccesso Annullamento="N">
+
+      <CorrispettivoLordo>850</CorrispettivoLordo>
+
+      <Prevendita>150</Prevendita>
+
+      <IVACorrispettivo>78</IVACorrispettivo>
+
+      <IVAPrevendita>14</IVAPrevendita>
+
+      <CodiceLocale>0580900325697</CodiceLocale>
+
+      <DataEvento>20201017</DataEvento>
+
+      <OraEvento>1700</OraEvento>
+
+      <TipoGenere>45</TipoGenere>
+
+      <Titolo>EVENTO 4</Titolo>
+
+    </TitoloAccesso>
+
+  </Transazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="N" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="4A387F4D4EC619E4" DataEmissione="20201017" OraEmissione="1118" NumeroProgressivo="100" TipoTitolo="R1" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0" OriginaleAnnullato="99" CartaOriginaleAnnullato="A0139321" CausaleAnnullamento="004">
+
+    <TitoloAccesso Annullamento="S">
+
+      <CorrispettivoLordo>850</CorrispettivoLordo>
+
+      <Prevendita>150</Prevendita>
+
+      <IVACorrispettivo>78</IVACorrispettivo>
+
+      <IVAPrevendita>14</IVAPrevendita>
+
+      <CodiceLocale>0580900325697</CodiceLocale>
+
+      <DataEvento>20201017</DataEvento>
+
+      <OraEvento>1700</OraEvento>
+
+      <TipoGenere>45</TipoGenere>
+
+      <Titolo>EVENTO 4</Titolo>
+
+    </TitoloAccesso>
+
+  </Transazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="B" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="11EAF256B6158C6C" DataEmissione="20201017" OraEmissione="1120" NumeroProgressivo="101" TipoTitolo="I1" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0">
+
+    <BigliettoAbbonamento Annullamento="N">
+
+      <CodiceLocale>0580900325697</CodiceLocale>
+
+      <DataEvento>20201017</DataEvento>
+
+      <OraEvento>1700</OraEvento>
+
+      <TipoGenere>45</TipoGenere>
+
+      <Titolo>EVENTO 4</Titolo>
+
+      <CodiceAbbonamento>03PTI1</CodiceAbbonamento>
+
+      <ProgressivoAbbonamento>1</ProgressivoAbbonamento>
+
+      <CodiceFiscale>
+
+      </CodiceFiscale>
+
+      <ImportoFigurativo>875</ImportoFigurativo>
+
+      <IVAFigurativa>80</IVAFigurativa>
+
+    </BigliettoAbbonamento>
+
+  </Transazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="N" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="9C090168E9B82224" DataEmissione="20201017" OraEmissione="1120" NumeroProgressivo="102" TipoTitolo="R1" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0">
+
+    <TitoloAccesso Annullamento="N">
+
+      <CorrispettivoLordo>850</CorrispettivoLordo>
+
+      <Prevendita>150</Prevendita>
+
+      <IVACorrispettivo>78</IVACorrispettivo>
+
+      <IVAPrevendita>14</IVAPrevendita>
+
+      <CodiceLocale>0580900325697</CodiceLocale>
+
+      <DataEvento>20201017</DataEvento>
+
+      <OraEvento>1700</OraEvento>
+
+      <TipoGenere>45</TipoGenere>
+
+      <Titolo>EVENTO 4</Titolo>
+
+    </TitoloAccesso>
+
+  </Transazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="N" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="6DBFFFDDC6094923" DataEmissione="20201017" OraEmissione="1121" NumeroProgressivo="103" TipoTitolo="I1" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0">
+
+    <TitoloAccesso Annullamento="N">
+
+      <CorrispettivoLordo>1200</CorrispettivoLordo>
+
+      <Prevendita>150</Prevendita>
+
+      <IVACorrispettivo>110</IVACorrispettivo>
+
+      <IVAPrevendita>14</IVAPrevendita>
+
+      <CodiceLocale>0580900325697</CodiceLocale>
+
+      <DataEvento>20201017</DataEvento>
+
+      <OraEvento>1700</OraEvento>
+
+      <TipoGenere>45</TipoGenere>
+
+      <Titolo>EVENTO 4</Titolo>
+
+    </TitoloAccesso>
+
+  </Transazione>
+
+  <Transazione CFOrganizzatore="01033470251" CFTitolare="01033470251" IVAPreassolta="N" TipoTassazione="S" Valuta="E" SistemaEmissione="P0001977" CartaAttivazione="A0139321" SigilloFiscale="136691B8AD77DE03" DataEmissione="20201017" OraEmissione="1122" NumeroProgressivo="104" TipoTitolo="I1" CodiceOrdine="PT" Posto="UNICO" CodiceRichiedenteEmissioneSigillo="CL000001" ImponibileIntrattenimenti="0" OriginaleAnnullato="98" CartaOriginaleAnnullato="A0139321" CausaleAnnullamento="004">
+
+    <TitoloAccesso Annullamento="S">
+
+      <CorrispettivoLordo>1200</CorrispettivoLordo>
+
+      <Prevendita>150</Prevendita>
+
+      <IVACorrispettivo>110</IVACorrispettivo>
+
+      <IVAPrevendita>14</IVAPrevendita>
+
+      <CodiceLocale>0580900325697</CodiceLocale>
+
+      <DataEvento>20201017</DataEvento>
+
+      <OraEvento>1700</OraEvento>
+
+      <TipoGenere>45</TipoGenere>
+
+      <Titolo>EVENTO 4</Titolo>
+
+    </TitoloAccesso>
+
+  </Transazione>
+
+</LogTransazione>
