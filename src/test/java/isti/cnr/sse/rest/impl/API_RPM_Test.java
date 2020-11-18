@@ -86,14 +86,11 @@ public class API_RPM_Test extends JerseyTest {
 
 	}
 
-	@Override
-	protected Application configure() {
-		return new ResourceConfig(ApiRestLogBig.class).register(new MultiPartFeature());
-	}
+
 	
 	@Override
     public void configureClient(ClientConfig config) {
-        config.register(MultiPartFeature.class);
+        config.register(MultiPartFeature.class).register(new ApiRestLogBig());
     }
 
 	@Test

@@ -382,24 +382,23 @@ public class Utility {
 	 * @throws StoreException
 	 * @throws OperatorCreationException
 	 */
-	public static boolean verifyPKCS7(byte[] byteArray)
-			throws CMSException, CertificateException, StoreException, OperatorCreationException,
-			NoSuchAlgorithmException, NoSuchProviderException, InvalidNameException {
+	public static boolean verifyPKCS7(byte[] byteArray) {
 		// inspiration:
 		// http://stackoverflow.com/a/26702631/535646
 		// http://stackoverflow.com/a/9261365/535646
 		//CMSProcessable signedContent = new CMSProcessableByteArray(byteArray);
-		CMSSignedData signedData = new CMSSignedData(byteArray);
-		Store certificatesStore = signedData.getCertificates();
-		Collection<SignerInformation> signers = signedData.getSignerInfos().getSigners();
-		SignerInformation signerInformation = signers.iterator().next();
-		Collection matches = certificatesStore.getMatches(signerInformation.getSID());
-		X509CertificateHolder certificateHolder = (X509CertificateHolder) matches.iterator().next();
-		X509Certificate certFromSignedData = new JcaX509CertificateConverter().getCertificate(certificateHolder);
+		try {
+			CMSSignedData signedData = new CMSSignedData(byteArray);
+			Store certificatesStore = signedData.getCertificates();
+			Collection<SignerInformation> signers = signedData.getSignerInfos().getSigners();
+			SignerInformation signerInformation = signers.iterator().next();
+			Collection matches = certificatesStore.getMatches(signerInformation.getSID());
+			X509CertificateHolder certificateHolder = (X509CertificateHolder) matches.iterator().next();
+			X509Certificate certFromSignedData = new JcaX509CertificateConverter().getCertificate(certificateHolder);
 
-		//log.info("certFromSignedData: " + certFromSignedData);
+			//log.info("certFromSignedData: " + certFromSignedData);
 
-		/*CertificateInfo ci = new CertificateInfo();
+			/*CertificateInfo ci = new CertificateInfo();
         psi.certificateInfo = ci;
         ci.issuerDN = certFromSignedData.getIssuerDN().toString();
         ci.subjectDN = certFromSignedData.getSubjectDN().toString();
@@ -422,26 +421,31 @@ public class Utility {
             ci.subjectOIDs.put(rdn.getType(), rdn.getValue().toString());
         }*/
 
-		//certFromSignedData.checkValidity(sig.getSignDate().getTime());
+			//certFromSignedData.checkValidity(sig.getSignDate().getTime());
 
-		if (isSelfSigned(certFromSignedData)) {
-			log.info("Certificate is self-signed, LOL!");
-			// psi.isSelfSigned = true;
-		} else {
-			log.info("Certificate is not self-signed");
-			//psi.isSelfSigned = false;
-			// todo rest of chain
-		}
+			if (isSelfSigned(certFromSignedData)) {
+				log.info("Certificate is self-signed, LOL!");
+				// psi.isSelfSigned = true;
+			} else {
+				log.info("Certificate is not self-signed");
+				//psi.isSelfSigned = false;
+				// todo rest of chain
+			}
 
-		if (signerInformation.verify(new JcaSimpleSignerInfoVerifierBuilder().build(certFromSignedData))) {
-			//System.out.println("Signature verified");
-			log.info("Signature verified");
-			return true;
-			//psi.signatureVerified="YES";
-		} else {
-			System.out.println("Signature verification failed");
-			log.info("Signature verified");
-			// psi.signatureVerified="NO";
+			if (signerInformation.verify(new JcaSimpleSignerInfoVerifierBuilder().build(certFromSignedData))) {
+				//System.out.println("Signature verified");
+				log.info("Signature verified");
+				return true;
+				//psi.signatureVerified="YES";
+			} else {
+				System.out.println("Signature verification failed");
+				log.info("Signature verified");
+				// psi.signatureVerified="NO";
+			}
+		}catch (Exception e) {
+			// TODO: handle exception
+			log.error(e.getMessage());
+			return false;
 		}
 
 		return false;
@@ -606,10 +610,10 @@ public class Utility {
 
 		List<ImmutableTriple<Integer, Integer, Integer>> labb = new ArrayList<ImmutableTriple<Integer,Integer,Integer>>();
 		List<ImmutableTriple<Integer, Integer, Integer>> alabb = new ArrayList<ImmutableTriple<Integer,Integer,Integer>>();
-		
+
 		for(Organizzatore organizzatore: organizzatori) {
-			
-			
+
+
 			List<Abbonamenti> abb = organizzatore.getAbbonamenti();
 
 
@@ -660,17 +664,17 @@ public class Utility {
 			}
 
 		}
-		
+
 		ImmutableTriple<Integer, Integer, Integer> rootsumv = Utility.sumImmutableTriple(rootv);
 		ImmutableTriple<Integer, Integer, Integer> rootsuma = Utility.sumImmutableTriple(roota);
 		LogRP.TitoliAccesso titoliAccesso = new LogRP.TitoliAccesso(rootsumv, rootsuma);
-		
+
 		ImmutableTriple<Integer, Integer, Integer> rootsumav = Utility.sumImmutableTriple(labb);
 		ImmutableTriple<Integer, Integer, Integer> rootsumaa = Utility.sumImmutableTriple(alabb);
 		LogRP.Abbonamenti abb = new LogRP.Abbonamenti(rootsumav, rootsumaa);
-		
+
 		LogRP l = new LogRP(titoliAccesso,abb);
-		
+
 		return l;
 
 	}

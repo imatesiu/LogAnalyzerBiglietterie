@@ -3,7 +3,9 @@ package isti.cnr.sse.rest.impl;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,26 +53,26 @@ public class API_RPG_Test extends JerseyTest {
 
 	}
 
-	@Override
+	/*@Override
 	protected Application configure() {
 		return new ResourceConfig(ApiRestRPGBig.class).register(new MultiPartFeature());
-	}
+	}*/
 
 	@Override
 	public void configureClient(ClientConfig config) {
-		config.register(MultiPartFeature.class);
+		config.register(MultiPartFeature.class).register(ApiRestRPGBig.class);
 	}
 
 	@Test
-	public void test() throws JAXBException, IOException, URISyntaxException {
+	public void test() throws JAXBException, IOException, URISyntaxException, ClassNotFoundException {
 
 
 		String Filexml = "RPG_2020_10_13_001.xsi.p7m";
-		runTestRPM(Filexml);
+		//runTestRPM(Filexml);
 		List<String> files = new ArrayList<String>();
 		files.add(Filexml);
 		files.add(Filexml);
-		runTestRPM(files);
+		runTest3(files);
 
 	}
 
@@ -107,13 +109,15 @@ public class API_RPG_Test extends JerseyTest {
 		assertNotNull(response);
 	}
 
-	private void runTestRPM(List<String> files) throws JAXBException, IOException, URISyntaxException {
-
+	private void runTest3(List<String> files) throws IOException, ClassNotFoundException {
 		MultiPart multipartEntity = new FormDataMultiPart();
 		for(String nameFilexml: files) {
+			File f = FileUtils.toFile( API_LTA_TEST.class.getClassLoader().getResource(nameFilexml));
+			
 
 
-			File f = FileUtils.toFile( API_RPG_Test.class.getClassLoader().getResource(nameFilexml));
+
+
 
 			FileDataBodyPart filePart = new FileDataBodyPart("files", 
 					f);
@@ -124,19 +128,18 @@ public class API_RPG_Test extends JerseyTest {
 			
 				multipartEntity.bodyPart(filePart);
 			}
-			
-
-		Entity<MultiPart> entity = Entity.entity(multipartEntity, multipartEntity.getMediaType());
-
-		Response response = target("/biglietterie/ListRiepilogoGiornaliero/").request(MediaType.MULTIPART_FORM_DATA).post(entity);
+			Entity<MultiPart> entity = Entity.entity(multipartEntity, multipartEntity.getMediaType());
+			//Entity<List<InputStream>> entity = Entity.entity(lbyte, MediaType.MULTIPART_FORM_DATA);
+			Response response = target("/biglietterie/ListRiepilogoGiornaliero/").request(MediaType.MULTIPART_FORM_DATA).post(entity);
 
 
 
-		String res2 = response.readEntity(new GenericType<String>() {
-		});
+			String res2 = response.readEntity(new GenericType<String>() {
+			});
 
-		System.out.print(res2);
-		assertNotNull(response);
+
+			assertNotNull(response);
+		
 	}
 
 

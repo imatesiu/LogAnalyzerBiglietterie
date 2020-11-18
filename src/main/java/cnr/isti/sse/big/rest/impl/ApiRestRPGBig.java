@@ -43,7 +43,7 @@ public class ApiRestRPGBig {
 
 	private static org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(ApiRestRPGBig.class);
 
-	@Path("/RPG")
+	/*@Path("/RPG")
 	@POST
 	@ApiResponse(
 			responseCode = "200",
@@ -101,7 +101,7 @@ public class ApiRestRPGBig {
 		}
 		return "";
 
-	}
+	}*/
 
 
 	@Path("/ListRiepilogoGiornaliero")

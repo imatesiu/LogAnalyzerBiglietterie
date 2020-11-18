@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns="http://tempuri.org/lta" elementFormDefault="qualified" targetNamespace="http://tempuri.org/lta" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="LTA_Giornaliera">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="LTA_Evento" />
+			</xs:sequence>
+			<xs:attribute name="SistemaCA" type="xs:string" use="required" />
+			<xs:attribute name="CFTitolareCA" type="xs:string" use="required" />
+			<xs:attribute name="DataLTA" type="xs:string" use="required" />
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="LTA_Evento">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="Supporto" />
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="TitoloAccesso" />
+			</xs:sequence>
+			<xs:attribute name="CFOrganizzatore" type="xs:string" use="required" />
+			<xs:attribute name="CodiceLocale" type="xs:string" use="required" />
+			<xs:attribute name="DataEvento" type="xs:string" use="required" />
+			<xs:attribute name="OraEvento" type="xs:string" use="required" />
+			<xs:attribute name="Titolo" type="xs:string" use="required" />
+			<xs:attribute name="TipoGenere" type="xs:string" use="required" />
+			<xs:attribute name="DataApertura" type="xs:string" use="required" />
+			<xs:attribute name="OraApertura" type="xs:string" use="required" />
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Supporto">
+		<xs:complexType>
+			<xs:attribute name="TipoSupportoId" type="xs:string" use="required" />
+			<xs:attribute name="CodSupportoId" type="xs:string" use="required" />
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="TitoloAccesso">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="1" ref="Partecipante" />
+			</xs:sequence>
+			<xs:attribute name="SistemaEmissione" type="xs:string" use="required" />
+			<xs:attribute name="CartaAttivazione" type="xs:string" use="required" />
+			<xs:attribute name="ProgressivoFiscale" type="xs:string" use="required" />
+			<xs:attribute name="SigilloFiscale" type="xs:string" use="required" />
+			<xs:attribute name="DataEmissione" type="xs:string" use="required" />
+			<xs:attribute name="OraEmissione" type="xs:string" use="required" />
+			<xs:attribute name="DataLTA" type="xs:string" use="required" />
+			<xs:attribute name="OraLTA" type="xs:string" use="required" />
+			<xs:attribute name="TipoTitolo" type="xs:string" use="required" />
+			<xs:attribute name="CodiceOrdine" type="xs:string" use="required" />
+			<xs:attribute name="CorrispettivoLordo" type="xs:string" use="required" />
+			<xs:attribute name="Posto" type="xs:string" />
+			<xs:attribute default="N" name="Abbonamento">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="S" />
+						<xs:enumeration value="N" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="CFAbbonamento" type="xs:string" />
+			<xs:attribute name="CodiceAbbonamento" type="xs:string" />
+			<xs:attribute name="ProgressivoAbbonamento" type="xs:string" />
+			<xs:attribute name="QEventiAbilitati" type="xs:string" />
+			<xs:attribute default="N" name="Annullamento">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="S" />
+						<xs:enumeration value="N" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="DataANN" type="xs:string" />
+			<xs:attribute name="OraANN" type="xs:string" />
+			<xs:attribute name="CartaAttivazioneANN" type="xs:string" />
+			<xs:attribute name="ProgressivoFiscaleANN" type="xs:string" />
+			<xs:attribute name="SigilloFiscaleANN" type="xs:string" />
+			<xs:attribute name="CodSupporto" type="xs:string" use="required" />
+			<xs:attribute name="IdSupporto" type="xs:string" use="required" />
+			<xs:attribute name="IdSupAlt" type="xs:string" />
+			<xs:attribute name="Stato" type="xs:string" use="required" />
+			<xs:attribute name="DataIngresso" type="xs:string" />
+			<xs:attribute name="OraIngresso" type="xs:string" />
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Partecipante">
+		<xs:complexType>
+			<xs:attribute name="Nome" type="xs:string" />
+			<xs:attribute name="Cognome" type="xs:string" />
+			<xs:attribute name="DataNascita" type="xs:string" />
+			<xs:attribute name="LuogoNascita" type="xs:string" />
+		</xs:complexType>
+	</xs:element>
+	
+	
+</xs:schema>

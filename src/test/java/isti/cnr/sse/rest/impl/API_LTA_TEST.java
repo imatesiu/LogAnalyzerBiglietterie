@@ -81,11 +81,13 @@ import org.w3c.dom.NodeList;
 import com.google.common.primitives.Bytes;
 
 import cnr.isti.sse.big.data.transazioni.LogTransazione;
+import cnr.isti.sse.big.rest.impl.ApiRestLTA;
+import cnr.isti.sse.big.rest.impl.ApiRestLogAccessi;
 import cnr.isti.sse.big.rest.impl.ApiRestLogBig;
 import cnr.isti.sse.big.util.Utility;
 
 
-public class APIProveHWImplTest extends JerseyTest {
+public class API_LTA_TEST extends JerseyTest {
 
 	@Override
 	protected TestContainerFactory getTestContainerFactory() {
@@ -96,7 +98,7 @@ public class APIProveHWImplTest extends JerseyTest {
 	protected DeploymentContext configureDeployment() {
 		forceSet(TestProperties.CONTAINER_PORT, "0");
 		//register(MultiPartFeature.class);
-		return ServletDeploymentContext.forServlet(new ServletContainer(new ResourceConfig(MultiPartFeature.class).register(ApiRestLogBig.class)))
+		return ServletDeploymentContext.forServlet(new ServletContainer(new ResourceConfig(MultiPartFeature.class).register(ApiRestLTA.class)))
 				.build();
 
 	}
@@ -105,17 +107,17 @@ public class APIProveHWImplTest extends JerseyTest {
 
 	/*@Override
 	protected Application configure() {
-		return new ResourceConfig(ApiRestLogBig.class).register(new MultiPartFeature());
+		return new ResourceConfig(ApiRestLogAccessi.class);//.register(new MultiPartFeature());
 	}*/
 	
 	@Override
     public void configureClient(ClientConfig config) {
-        config.register(MultiPartFeature.class).register(ApiRestLogBig.class);
+        config.register(MultiPartFeature.class).register(ApiRestLTA.class);
     }
 
 
 	@Test
-	public void test() throws JAXBException, IOException, ClassNotFoundException, URISyntaxException {
+	public void test() throws ClassNotFoundException, IOException  {
 		
 		
 		
@@ -126,8 +128,8 @@ public class APIProveHWImplTest extends JerseyTest {
 	
 
 	
-	String Filexml = "LOG_2020_10_13_001.xsi.p7m";
-	runTest2(Filexml);
+	String Filexml = "LTA_2020_11_18_001.xsi.p7m";
+	//runTest2(Filexml);
 	
 	List<String> files = new ArrayList<String>();
 	files.add(Filexml);
@@ -162,7 +164,7 @@ public class APIProveHWImplTest extends JerseyTest {
 		List<byte[]> lbyte = new ArrayList<byte[]>();
 		FormDataMultiPart form = null;
 		for(String nameFilexml: files) {
-			File f = FileUtils.toFile( APIProveHWImplTest.class.getClassLoader().getResource(nameFilexml));
+			File f = FileUtils.toFile( API_LTA_TEST.class.getClassLoader().getResource(nameFilexml));
 			InputStream content = new FileInputStream(f);
 			//final String read = ReaderWriter.readFromAsString(content, MediaType.APPLICATION_XML_TYPE);
 			byte[] targetArray = fromFileToByteArray(f);
@@ -183,7 +185,7 @@ public class APIProveHWImplTest extends JerseyTest {
 
 			Entity<MultiPart> entity = Entity.entity(multipartEntity, multipartEntity.getMediaType());
 			//Entity<List<InputStream>> entity = Entity.entity(lbyte, MediaType.MULTIPART_FORM_DATA);
-			Response response = target("/biglietterie/ListLogTransazioneFile/").request(MediaType.MULTIPART_FORM_DATA).post(entity);
+			Response response = target("/biglietterie/ListLTA/").request(MediaType.MULTIPART_FORM_DATA).post(entity);
 
 
 
@@ -198,7 +200,7 @@ public class APIProveHWImplTest extends JerseyTest {
 	private void runTest3(List<String> files) throws IOException, ClassNotFoundException {
 		MultiPart multipartEntity = new FormDataMultiPart();
 		for(String nameFilexml: files) {
-			File f = FileUtils.toFile( APIProveHWImplTest.class.getClassLoader().getResource(nameFilexml));
+			File f = FileUtils.toFile( API_LTA_TEST.class.getClassLoader().getResource(nameFilexml));
 			
 
 
@@ -216,7 +218,7 @@ public class APIProveHWImplTest extends JerseyTest {
 			}
 			Entity<MultiPart> entity = Entity.entity(multipartEntity, multipartEntity.getMediaType());
 			//Entity<List<InputStream>> entity = Entity.entity(lbyte, MediaType.MULTIPART_FORM_DATA);
-			Response response = target("/biglietterie/ListLogTransazioneListFile/").request(MediaType.MULTIPART_FORM_DATA).post(entity);
+			Response response = target("/biglietterie/ListLTA/").request(MediaType.MULTIPART_FORM_DATA).post(entity);
 
 
 
@@ -245,7 +247,7 @@ public class APIProveHWImplTest extends JerseyTest {
 		
 
 
-		File f = FileUtils.toFile( APIProveHWImplTest.class.getClassLoader().getResource(nameFilexml));
+		File f = FileUtils.toFile( API_LTA_TEST.class.getClassLoader().getResource(nameFilexml));
 		InputStream content = new FileInputStream(f);
 		//final String read = ReaderWriter.readFromAsString(content, MediaType.APPLICATION_XML_TYPE);
 		byte[] targetArray = fromFileToByteArray(f);
@@ -269,7 +271,7 @@ public class APIProveHWImplTest extends JerseyTest {
 		
 		
 		
-		InputStream is = APIProveHWImplTest.class.getClassLoader().getResourceAsStream(nameFilexml);
+		InputStream is = API_LTA_TEST.class.getClassLoader().getResourceAsStream(nameFilexml);
 		assertNotNull(is);
 		JAXBContext jaxbContexti = JAXBContext.newInstance(LogTransazione.class);
 
@@ -279,7 +281,7 @@ public class APIProveHWImplTest extends JerseyTest {
 		Entity<LogTransazione> entity = Entity.entity(collaborativeContentInput, MediaType.APPLICATION_XML);
 
 
-		File f = FileUtils.toFile( APIProveHWImplTest.class.getClassLoader().getResource(nameFilexml));
+		File f = FileUtils.toFile( API_LTA_TEST.class.getClassLoader().getResource(nameFilexml));
 		InputStream content = new FileInputStream(f);
 		final String read = ReaderWriter.readFromAsString(content, MediaType.APPLICATION_XML_TYPE);
 
