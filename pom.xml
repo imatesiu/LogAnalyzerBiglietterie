@@ -249,7 +249,7 @@
 				<!--<version>8.1.14.v20131031</version> -->
 				<version>${jetty-maven-plugin.version}</version>
 				<configuration>
-					<jettyXml>${project.basedir}/src/main/resources/jetty.xml,${project.basedir}/src/main/resources/jetty-http.xml</jettyXml>
+					<jettyXml>${project.basedir}/src/main/resources/jetty.xml,${project.basedir}/src/main/resources/jetty-http.xml,${project.basedir}/src/main/resources/jetty-ssl.xml,${project.basedir}/src/main/resources/jetty-https.xml</jettyXml>
 				 <webAppSourceDirectory>target/${project.artifactId}</webAppSourceDirectory>
 					
 				</configuration>

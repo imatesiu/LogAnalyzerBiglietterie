@@ -33,6 +33,8 @@ import javax.xml.bind.annotation.XmlElement;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.glassfish.grizzly.utils.Pair;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import cnr.isti.sse.big.data.riepilogomensile.Abbonamenti;
 import cnr.isti.sse.big.data.riepilogomensile.AbbonamentiFissi;
@@ -93,6 +95,65 @@ public class ApiRestRPMBig {
 			
 			log.info("Message from: "+request.getRemoteAddr());
 			
+			 boolean	result = Utility.verifyPKCS7(rpg);
+				log.info(result);
+				
+				byte[] t = 	Utility.getData(rpg);
+				String rmensile = new String(t);
+				String mensile = rmensile.replaceAll("<!DOCTYPE RiepilogoMensile SYSTEM.*", "");
+			
+			JAXBContext jaxbContext = JAXBContext.newInstance(RiepilogoMensile.class);
+			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+			Utility.validateXmlLogTransazione(unmarshaller);	
+			
+			StringReader reader = new StringReader(mensile);
+			RiepilogoMensile RPM = (RiepilogoMensile) unmarshaller.unmarshal(reader);
+
+			
+			List<Organizzatore> organizzatori = RPM.getOrganizzatore();
+			
+			
+			Utility.check(organizzatori);
+			
+			String text = "KO";
+			return text;
+			//throw new WebApplicationException(Response.status(406).entity(text).build());
+		
+		
+		
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error(e);
+		}
+		return "";
+		
+	}
+	
+	@Path("/FileRPM")
+	@POST
+	@ApiResponse(
+	        responseCode = "200",
+	        content = @Content(
+	            mediaType = MediaType.APPLICATION_XML,
+	            		schema = @Schema(implementation = String.class)
+	        ),
+	        description = "."
+	    )
+	@RequestBody(content = @Content(
+			mediaType = MediaType.MULTIPART_FORM_DATA,
+			schema = @Schema(implementation = RiepilogoMensile.class)
+			),
+	description = "." )
+	public String putRPM( @FormDataParam("file") InputStream uploadedInputStream,
+			@FormDataParam("file") FormDataContentDisposition fileDetail, @Context HttpServletRequest request, @Context HttpServletResponse response)
+			throws JAXBException {// DatiCorrispettiviType Corrispettivi,
+		// @Context HttpServletRequest request){
+		response.setHeader("Connection", "Close");
+		log.info("****************RPM********************");
+		try{
+			
+			log.info("Message from: "+request.getRemoteAddr());
+			byte[] rpg = IOUtils.toByteArray(uploadedInputStream);
 			 boolean	result = Utility.verifyPKCS7(rpg);
 				log.info(result);
 				

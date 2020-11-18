@@ -102,7 +102,7 @@ public class ApiRestLogBig {
 
 	}
 
-	@Path("/ListLogTransazioneListFile")
+	@Path("/ListLogTransazioneFile")
 	@POST
 	@ApiResponse(
 			responseCode = "200",
@@ -156,7 +156,7 @@ public class ApiRestLogBig {
 				limm.add(Utility.check(LogT));
 			}
 			ImmutableTriple<Integer, Integer, Integer> sum = Utility.sumImmutableTriple(limm);
-			log.info("Logs: "+sum);
+			log.info("Logs: [NProgressivi, Corrispettivo Lordo, Prevendita Lordo] "+sum);
 			String text = "KO";
 			return text;
 			//throw new WebApplicationException(Response.status(406).entity(text).build());
@@ -171,7 +171,7 @@ public class ApiRestLogBig {
 
 	}
 
-	@Path("/ListLogTransazioneFile")
+	@Path("/LogTransazioneFile")
 	@POST
 	@ApiResponse(
 			responseCode = "200",

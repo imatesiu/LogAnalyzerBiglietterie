@@ -644,9 +644,9 @@ public class Utility {
 
 				}
 				ImmutableTriple<Integer, Integer, Integer> sum = Utility.sumImmutableTriple(limm);
-				log.info("Vendite: "+sum);
+				log.info("Vendite: [Quantità, LordoCorrispettivo, LordoPrevendita]  "+sum);
 				ImmutableTriple<Integer, Integer, Integer> asum = Utility.sumImmutableTriple(alimm);
-				log.info("Annulli: "+asum);
+				log.info("Annulli: [Quantità, LordoCorrispettivo, LordoPrevendita] "+asum);
 			}
 
 		}
