@@ -124,4 +124,13 @@ public class Intrattenimento {
         this.imponibileIntrattenimenti = value;
     }
 
+	@Override
+	public String toString() {
+		return (tipoTassazione != null ? "tipoTassazione: " + tipoTassazione + ", \\n " : "")
+				+ (incidenza != null ? "incidenza: " + incidenza + ", \\n " : "")
+				+ (imponibileIntrattenimenti != null ? "imponibileIntrattenimenti: " + imponibileIntrattenimenti : "");
+	}
+    
+    
+
 }

@@ -248,4 +248,18 @@ public class Evento {
         this.altriProventiEvento = value;
     }
 
+	@Override
+	public String toString() {
+		return (intrattenimento != null ? "intrattenimento: " + intrattenimento + ", \n " : "")
+				+ (locale != null ? "locale: " + locale + ", \n " : "")
+				+ (dataEvento != null ? "dataEvento: " + dataEvento + ", \n " : "")
+				+ (oraEvento != null ? "oraEvento: " + oraEvento + ", \n " : "")
+				+ (multiGenere != null ? "multiGenere: " + multiGenere + ", \n " : "")
+				+ (ordineDiPosto != null ? "ordineDiPosto: " + ordineDiPosto + ", \n " : "")
+				+ (altriProventiEvento != null ? "altriProventiEvento: " + altriProventiEvento : "");
+	}
+
+    
+    
+    
 }

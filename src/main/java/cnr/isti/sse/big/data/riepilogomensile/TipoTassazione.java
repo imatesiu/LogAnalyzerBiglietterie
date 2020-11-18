@@ -78,4 +78,11 @@ public class TipoTassazione {
         this.valore = value;
     }
 
+	@Override
+	public String toString() {
+		return (valore != null ? "valore: " + valore : "");
+	}
+    
+    
+
 }

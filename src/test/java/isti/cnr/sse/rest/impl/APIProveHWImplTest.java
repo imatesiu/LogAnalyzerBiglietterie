@@ -6,25 +6,34 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
 import java.io.Reader;
 import java.io.StringReader;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.Principal;
 import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
 
-
+import javax.naming.InvalidNameException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -43,7 +52,19 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-
+import org.apache.commons.lang3.ArrayUtils;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cms.CMSException;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.util.Store;
+import org.bouncycastle.util.StoreException;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.glassfish.jersey.media.multipart.MultiPart;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import org.glassfish.jersey.message.internal.ReaderWriter;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
@@ -57,8 +78,11 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
+import com.google.common.primitives.Bytes;
+
 import cnr.isti.sse.big.data.transazioni.LogTransazione;
 import cnr.isti.sse.big.rest.impl.ApiRestLogBig;
+import cnr.isti.sse.big.util.Utility;
 
 
 public class APIProveHWImplTest extends JerseyTest {
@@ -71,74 +95,179 @@ public class APIProveHWImplTest extends JerseyTest {
 	@Override
 	protected DeploymentContext configureDeployment() {
 		forceSet(TestProperties.CONTAINER_PORT, "0");
-		return ServletDeploymentContext.forServlet(new ServletContainer(new ResourceConfig(ApiRestLogBig.class)))
+		//register(MultiPartFeature.class);
+		return ServletDeploymentContext.forServlet(new ServletContainer(new ResourceConfig(MultiPartFeature.class).register(ApiRestLogBig.class)))
 				.build();
 
 	}
+	
+
 
 	@Override
 	protected Application configure() {
-		return new ResourceConfig(ApiRestLogBig.class);
+		return new ResourceConfig(ApiRestLogBig.class).register(new MultiPartFeature());
 	}
+	
+	@Override
+    public void configureClient(ClientConfig config) {
+        config.register(MultiPartFeature.class);
+    }
+
 
 	@Test
-	public void test() throws JAXBException, IOException, URISyntaxException {
+	public void test() throws JAXBException, IOException, ClassNotFoundException, URISyntaxException {
 		
 		
 		
-		String nameFilexml = "log.xml";//
+		//String nameFilexml = "log.xml";//
 
-		//
-	runTest(nameFilexml);
-	//	sendgetinfo();sendgetstop();
-	//	sendgetclear();
+		
+	//runTest(nameFilexml);
+	
 
-	/*	nameFilexml = "CC/c1.xml";
-		runTest(nameFilexml);
+	
+	String Filexml = "LOG_2020_10_13_001.xsi.p7m";
+	runTest2(Filexml);
+	
+	List<String> files = new ArrayList<String>();
+	files.add(Filexml);
+	files.add(Filexml);
+	runTest3(files);
+	/*File f = FileUtils.toFile( APIProveHWImplTest.class.getClassLoader().getResource(Filexml));
+	//InputStream content = new FileInputStream(f);
+	//final String read = ReaderWriter.readFromAsString(content, MediaType.APPLICATION_XML_TYPE);
+	
+	
+	
+	byte[] targetArray = fromFileToByteArray(f);
+	
+	byte[] t = 	Utility.getData(targetArray);
+	String string = new String(t);
+    //System.out.println(string);
+	Store<X509CertificateHolder> cert = Utility.getCert(targetArray);
+	
+	try {
+	 boolean	result = Utility.verifyPKCS7(targetArray,t);
+	 System.out.println(result);
+	} catch (CertificateException | StoreException | OperatorCreationException | NoSuchAlgorithmException
+			| NoSuchProviderException | InvalidNameException | CMSException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+	
+	System.out.println("");*/
+	}
 
- 	nameFilexml = "CC/c1.xml";
-		runTest(nameFilexml);
-				nameFilexml = "CC/c2.xml";
-		runTest(nameFilexml);
-		nameFilexml = "test_corrispettivi.xml";
-		runTest(nameFilexml);
+	private void runTest2(List<String> files) throws IOException, ClassNotFoundException {
+		List<byte[]> lbyte = new ArrayList<byte[]>();
+		FormDataMultiPart form = null;
+		for(String nameFilexml: files) {
+			File f = FileUtils.toFile( APIProveHWImplTest.class.getClassLoader().getResource(nameFilexml));
+			InputStream content = new FileInputStream(f);
+			//final String read = ReaderWriter.readFromAsString(content, MediaType.APPLICATION_XML_TYPE);
+			byte[] targetArray = fromFileToByteArray(f);
+			lbyte.add(targetArray);
 
-		nameFilexml = "CC/RT_192.168.1.166_07_04_2017__10_16_26_3.xml";
-		runTest(nameFilexml);
 
-		nameFilexml = "CC/RT_192.168.1.166_07_04_2017__10_16_45_4.xml";
-		runTest(nameFilexml);
 
-		nameFilexml = "CC/RT_192.168.1.166_07_04_2017__10_17_04_5.xml";
-		runTest(nameFilexml);
 
-		nameFilexml = "CC/RT_192.168.1.166_07_04_2017__10_17_24_6.xml";
-		runTest(nameFilexml);*/
-		//sendgetinfo();
-		/*
-		 * nameFilexml = "corrispettivo.xml"; runTest(nameFilexml); if(i==8){
-		 * sendgetclear(); }
-		 */
 
-		// }
+			FileDataBodyPart filePart = new FileDataBodyPart("file", 
+					f);
 
+			filePart.setContentDisposition(
+					FormDataContentDisposition.name("file")
+					.fileName(f.getName()).build());
+			MultiPart multipartEntity = new FormDataMultiPart()
+					.bodyPart(filePart);
+
+			Entity<MultiPart> entity = Entity.entity(multipartEntity, multipartEntity.getMediaType());
+			//Entity<List<InputStream>> entity = Entity.entity(lbyte, MediaType.MULTIPART_FORM_DATA);
+			Response response = target("/biglietterie/ListLogTransazioneFile/").request(MediaType.MULTIPART_FORM_DATA).post(entity);
+
+
+
+			String res2 = response.readEntity(new GenericType<String>() {
+			});
+
+
+			assertNotNull(response);
+		}
+	}
+	
+	private void runTest3(List<String> files) throws IOException, ClassNotFoundException {
+		MultiPart multipartEntity = new FormDataMultiPart();
+		for(String nameFilexml: files) {
+			File f = FileUtils.toFile( APIProveHWImplTest.class.getClassLoader().getResource(nameFilexml));
+			
+
+
+
+
+
+			FileDataBodyPart filePart = new FileDataBodyPart("files", 
+					f);
+
+			filePart.setContentDisposition(
+					FormDataContentDisposition.name("files")
+					.fileName(f.getName()).build());
+			
+				multipartEntity.bodyPart(filePart);
+			}
+			Entity<MultiPart> entity = Entity.entity(multipartEntity, multipartEntity.getMediaType());
+			//Entity<List<InputStream>> entity = Entity.entity(lbyte, MediaType.MULTIPART_FORM_DATA);
+			Response response = target("/biglietterie/ListLogTransazioneListFile/").request(MediaType.MULTIPART_FORM_DATA).post(entity);
+
+
+
+			String res2 = response.readEntity(new GenericType<String>() {
+			});
+
+
+			assertNotNull(response);
+		
+	}
+
+	private byte[] fromFileToByteArray(File file) {
+	    try {
+	        return FileUtils.readFileToByteArray(file);
+	    } catch (IOException e) {
+	    	System.err.println("Error while reading .p7m file!" + e);
+	    }
+	    return new byte[0];
 	}
 
 	
+	
+	
+	private void runTest2(String nameFilexml) throws JAXBException, IOException, URISyntaxException {
+		
+		
 
+
+		File f = FileUtils.toFile( APIProveHWImplTest.class.getClassLoader().getResource(nameFilexml));
+		InputStream content = new FileInputStream(f);
+		//final String read = ReaderWriter.readFromAsString(content, MediaType.APPLICATION_XML_TYPE);
+		byte[] targetArray = fromFileToByteArray(f);
+		
+		final Entity<byte[]> rex = Entity.entity(targetArray, MediaType.MULTIPART_FORM_DATA);
+
+
+		Response response = target("/biglietterie/LogTransazione/").request(MediaType.MULTIPART_FORM_DATA).post(rex);
+
+
+
+		String res2 = response.readEntity(new GenericType<String>() {
+		});
+		
+
+		assertNotNull(response);
+	}
+	
+	
 	private void runTest(String nameFilexml) throws JAXBException, IOException, URISyntaxException {
 		
-		//String nameFilexmlresp = "resp.txt";//
-		//InputStream is2 = APIProveHWImplTest.class.getClassLoader().getResourceAsStream(nameFilexmlresp);
 		
-	//	JAXBContext jaxbContextr = JAXBContext.newInstance(EsitoOperazioneType.class);
-	//	Unmarshaller jaxbUnmarshaller12 = jaxbContextr.createUnmarshaller();
-	//	EsitoOperazioneType collaborativeContentInput2 = (EsitoOperazioneType) jaxbUnmarshaller12.unmarshal(is2);
-	//	byte[] certificate2 = collaborativeContentInput2.getSignature().getKeyInfo().getX509Data().getX509Certificate();
-		
-	//	String theString2 = IOUtils.toString(new FileInputStream(new File(APIProveHWImplTest.class.getClassLoader().getResource(nameFilexmlresp).toURI())), "UTF-8");
-		
-	//	statusCertificateAndSignature(certificate2,theString2);
 		
 		InputStream is = APIProveHWImplTest.class.getClassLoader().getResourceAsStream(nameFilexml);
 		assertNotNull(is);

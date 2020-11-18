@@ -3,7 +3,7 @@
   <groupId>cnr.isti.sse</groupId>
   <artifactId>loganalyzerbig</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  
+  <packaging>war</packaging>
   
   <properties>
 		<project.build.sourceEncoding>iso-8859-1</project.build.sourceEncoding>
@@ -88,6 +88,11 @@
 		<version>1.2</version>
 	</dependency>
 
+<dependency>
+    <groupId>com.sun.jersey.contribs</groupId>
+    <artifactId>jersey-multipart</artifactId>
+    <version>1.19.4</version>
+</dependency>
 
 
 	<dependency>
@@ -238,7 +243,17 @@
 					
 				</configuration>
 			</plugin> -->
-			
+			<plugin>
+				<groupId>org.eclipse.jetty</groupId>
+				<artifactId>jetty-maven-plugin</artifactId>
+				<!--<version>8.1.14.v20131031</version> -->
+				<version>${jetty-maven-plugin.version}</version>
+				<configuration>
+					<jettyXml>${project.basedir}/src/main/resources/jetty.xml,${project.basedir}/src/main/resources/jetty-http.xml</jettyXml>
+				 <webAppSourceDirectory>target/${project.artifactId}</webAppSourceDirectory>
+					
+				</configuration>
+			</plugin>
 			
 			<plugin>
 				<groupId>org.jacoco</groupId>

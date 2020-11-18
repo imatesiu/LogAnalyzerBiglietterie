@@ -131,4 +131,13 @@ public class MultiGenere {
         return this.titoliOpere;
     }
 
+	@Override
+	public String toString() {
+		return (tipoGenere != null ? "tipoGenere: " + tipoGenere + ", \\n " : "")
+				+ (incidenzaGenere != null ? "incidenzaGenere: " + incidenzaGenere + ", \\n " : "")
+				+ (titoliOpere != null ? "titoliOpere: " + titoliOpere : "");
+	}
+    
+    
+
 }

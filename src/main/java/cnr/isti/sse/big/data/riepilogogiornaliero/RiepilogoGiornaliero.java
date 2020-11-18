@@ -19,6 +19,9 @@ import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.CollapsedStringAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+import cnr.isti.sse.big.data.riepilogomensile.Organizzatore;
+import cnr.isti.sse.big.data.riepilogomensile.Titolare;
+
 
 /**
  * <p>Classe Java per anonymous complex type.

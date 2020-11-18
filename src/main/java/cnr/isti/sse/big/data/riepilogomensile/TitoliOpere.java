@@ -180,4 +180,14 @@ public class TitoliOpere {
         this.nazionalita = value;
     }
 
+	@Override
+	public String toString() {
+		return (titolo != null ? "titolo: " + titolo + ", \\n " : "")
+				+ (produttoreCinema != null ? "produttoreCinema: " + produttoreCinema + ", \\n " : "")
+				+ (autore != null ? "autore: " + autore + ", \\n " : "")
+				+ (esecutore != null ? "esecutore: " + esecutore + ", \\n " : "")
+				+ (nazionalita != null ? "nazionalita: " + nazionalita : "");
+	}
+
+    
 }
