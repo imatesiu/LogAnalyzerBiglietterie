@@ -98,14 +98,14 @@ public class API_RPG_Test extends JerseyTest {
 		final Entity<byte[]> rex = Entity.entity(targetArray, MediaType.MULTIPART_FORM_DATA);
 
 
-		Response response = target("/biglietterie/RPG/").request(MediaType.MULTIPART_FORM_DATA).post(rex);
+		Response response = target("/biglietterie/RPG/").request(MediaType.APPLICATION_JSON).post(rex);
 
 
 
-		String res2 = response.readEntity(new GenericType<String>() {
-		});
+		/*String res2 = response.readEntity(new GenericType<String>() {
+		});*/
 
-		System.out.print(res2);
+		//System.out.print(res2);
 		assertNotNull(response);
 	}
 
@@ -130,14 +130,14 @@ public class API_RPG_Test extends JerseyTest {
 			}
 			Entity<MultiPart> entity = Entity.entity(multipartEntity, multipartEntity.getMediaType());
 			//Entity<List<InputStream>> entity = Entity.entity(lbyte, MediaType.MULTIPART_FORM_DATA);
-			Response response = target("/biglietterie/ListRiepilogoGiornaliero/").request(MediaType.MULTIPART_FORM_DATA).post(entity);
+			Response response = target("/biglietterie/ListRiepilogoGiornaliero/").request(MediaType.APPLICATION_JSON).post(entity);
 
 
 
 			String res2 = response.readEntity(new GenericType<String>() {
 			});
 
-
+			System.out.print(res2);
 			assertNotNull(response);
 		
 	}

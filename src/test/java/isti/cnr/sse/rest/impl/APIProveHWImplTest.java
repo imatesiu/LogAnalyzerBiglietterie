@@ -183,7 +183,7 @@ public class APIProveHWImplTest extends JerseyTest {
 
 			Entity<MultiPart> entity = Entity.entity(multipartEntity, multipartEntity.getMediaType());
 			//Entity<List<InputStream>> entity = Entity.entity(lbyte, MediaType.MULTIPART_FORM_DATA);
-			Response response = target("/biglietterie/ListLogTransazioneFile/").request(MediaType.MULTIPART_FORM_DATA).post(entity);
+			Response response = target("/biglietterie/ListLogTransazioneFile/").request(MediaType.APPLICATION_JSON).post(entity);
 
 
 
@@ -216,7 +216,7 @@ public class APIProveHWImplTest extends JerseyTest {
 			}
 			Entity<MultiPart> entity = Entity.entity(multipartEntity, multipartEntity.getMediaType());
 			//Entity<List<InputStream>> entity = Entity.entity(lbyte, MediaType.MULTIPART_FORM_DATA);
-			Response response = target("/biglietterie/ListLogTransazioneListFile/").request(MediaType.MULTIPART_FORM_DATA).post(entity);
+			Response response = target("/biglietterie/ListLogTransazioneListFile/").request(MediaType.APPLICATION_JSON).post(entity);
 
 
 
