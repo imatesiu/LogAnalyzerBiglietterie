@@ -1,0 +1,11 @@
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Log">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element type="xs:integer" name="NProgressivi"/>
+        <xs:element type="xs:integer" name="CorrispettivoLordo"/>
+        <xs:element type="xs:integer" name="PrevenditaLordo"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

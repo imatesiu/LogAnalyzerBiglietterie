@@ -1,0 +1,56 @@
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="LogRP">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Abbonamenti">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Vendite">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="Quantita"/>
+                    <xs:element type="xs:string" name="CorrispettivoLordo"/>
+                    <xs:element type="xs:string" name="PrevenditaLordo"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="Annullati">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="Quantita"/>
+                    <xs:element type="xs:string" name="CorrispettivoLordo"/>
+                    <xs:element type="xs:string" name="PrevenditaLordo"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="TitoliAccesso">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Vendite">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="Quantita"/>
+                    <xs:element type="xs:string" name="CorrispettivoLordo"/>
+                    <xs:element type="xs:string" name="PrevenditaLordo"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="Annullati">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="Quantita"/>
+                    <xs:element type="xs:string" name="CorrispettivoLordo"/>
+                    <xs:element type="xs:string" name="PrevenditaLordo"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

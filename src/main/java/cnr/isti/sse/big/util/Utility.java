@@ -84,6 +84,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import cnr.isti.sse.big.data.reply.rp.LogRP;
 import cnr.isti.sse.big.data.riepilogomensile.*;
 import cnr.isti.sse.big.data.transazioni.LogTransazione;
 import cnr.isti.sse.big.data.transazioni.Transazione;
@@ -599,11 +600,18 @@ public class Utility {
 
 
 
-	public static void check(List<Organizzatore> organizzatori) {
+	public static LogRP check(List<Organizzatore> organizzatori) {
+		List<ImmutableTriple<Integer, Integer, Integer>> rootv = new ArrayList<ImmutableTriple<Integer,Integer,Integer>>();
+		List<ImmutableTriple<Integer, Integer, Integer>> roota = new ArrayList<ImmutableTriple<Integer,Integer,Integer>>();
+
+		List<ImmutableTriple<Integer, Integer, Integer>> labb = new ArrayList<ImmutableTriple<Integer,Integer,Integer>>();
+		List<ImmutableTriple<Integer, Integer, Integer>> alabb = new ArrayList<ImmutableTriple<Integer,Integer,Integer>>();
+		
 		for(Organizzatore organizzatore: organizzatori) {
+			
+			
 			List<Abbonamenti> abb = organizzatore.getAbbonamenti();
-			List<ImmutableTriple<Integer, Integer, Integer>> labb = new ArrayList<ImmutableTriple<Integer,Integer,Integer>>();
-			List<ImmutableTriple<Integer, Integer, Integer>> alabb = new ArrayList<ImmutableTriple<Integer,Integer,Integer>>();
+
 
 			for(Abbonamenti a: abb) {
 
@@ -645,11 +653,25 @@ public class Utility {
 				}
 				ImmutableTriple<Integer, Integer, Integer> sum = Utility.sumImmutableTriple(limm);
 				log.info("Vendite: [Quantità, LordoCorrispettivo, LordoPrevendita]  "+sum);
+				rootv.add(sum);
 				ImmutableTriple<Integer, Integer, Integer> asum = Utility.sumImmutableTriple(alimm);
+				roota.add(asum);
 				log.info("Annulli: [Quantità, LordoCorrispettivo, LordoPrevendita] "+asum);
 			}
 
 		}
+		
+		ImmutableTriple<Integer, Integer, Integer> rootsumv = Utility.sumImmutableTriple(rootv);
+		ImmutableTriple<Integer, Integer, Integer> rootsuma = Utility.sumImmutableTriple(roota);
+		LogRP.TitoliAccesso titoliAccesso = new LogRP.TitoliAccesso(rootsumv, rootsuma);
+		
+		ImmutableTriple<Integer, Integer, Integer> rootsumav = Utility.sumImmutableTriple(labb);
+		ImmutableTriple<Integer, Integer, Integer> rootsumaa = Utility.sumImmutableTriple(alabb);
+		LogRP.Abbonamenti abb = new LogRP.Abbonamenti(rootsumav, rootsumaa);
+		
+		LogRP l = new LogRP(titoliAccesso,abb);
+		
+		return l;
 
 	}
 

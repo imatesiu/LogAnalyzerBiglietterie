@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.client.Entity;
@@ -45,7 +46,7 @@ public class API_RPG_Test extends JerseyTest {
 	@Override
 	protected DeploymentContext configureDeployment() {
 		forceSet(TestProperties.CONTAINER_PORT, "0");
-		return ServletDeploymentContext.forServlet(new ServletContainer(new ResourceConfig(ApiRestRPGBig.class).register(MultiPartFeature.class)))
+		return ServletDeploymentContext.forServlet(new ServletContainer(new ResourceConfig(MultiPartFeature.class).register(ApiRestRPGBig.class)))
 				.build();
 
 	}
@@ -66,6 +67,10 @@ public class API_RPG_Test extends JerseyTest {
 
 		String Filexml = "RPG_2020_10_13_001.xsi.p7m";
 		runTestRPM(Filexml);
+		List<String> files = new ArrayList<String>();
+		files.add(Filexml);
+		files.add(Filexml);
+		runTestRPM(files);
 
 	}
 
@@ -98,7 +103,7 @@ public class API_RPG_Test extends JerseyTest {
 		String res2 = response.readEntity(new GenericType<String>() {
 		});
 
-
+		System.out.print(res2);
 		assertNotNull(response);
 	}
 
@@ -123,14 +128,14 @@ public class API_RPG_Test extends JerseyTest {
 
 		Entity<MultiPart> entity = Entity.entity(multipartEntity, multipartEntity.getMediaType());
 
-		Response response = target("/biglietterie/RPG/").request(MediaType.MULTIPART_FORM_DATA).post(entity);
+		Response response = target("/biglietterie/ListRiepilogoGiornaliero/").request(MediaType.MULTIPART_FORM_DATA).post(entity);
 
 
 
 		String res2 = response.readEntity(new GenericType<String>() {
 		});
 
-
+		System.out.print(res2);
 		assertNotNull(response);
 	}
 

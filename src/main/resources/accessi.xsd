@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns="http://tempuri.org/accessi" elementFormDefault="qualified" targetNamespace="http://tempuri.org/accessi" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="RiepilogoControlloAccessi">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Titolare" />
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="Evento" />
+			</xs:sequence>
+			<xs:attribute name="Sostituzione" use="required">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="N" />
+						<xs:enumeration value="S" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Titolare">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="DenominazioneTitolareCA" />
+				<xs:element ref="CFTitolareCA" />
+				<xs:element ref="CodiceSistemaCA" />
+				<xs:element ref="DataRiepilogo" />
+				<xs:element ref="DataGenerazioneRiepilogo" />
+				<xs:element ref="OraGenerazioneRiepilogo" />
+				<xs:element ref="ProgressivoRiepilogo" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Evento">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="CFOrganizzatore" />
+				<xs:element ref="DenominazioneOrganizzatore" />
+				<xs:element ref="TipologiaOrganizzatore" />
+				<xs:element ref="SpettacoloIntrattenimento" />
+				<xs:element ref="IncidenzaIntrattenimento" />
+				<xs:element ref="DenominazioneLocale" />
+				<xs:element ref="CodiceLocale" />
+				<xs:element ref="DataEvento" />
+				<xs:element ref="OraEvento" />
+				<xs:element ref="TipoGenere" />
+				<xs:element ref="TitoloEvento" />
+				<xs:element ref="Autore" />
+				<xs:element ref="Esecutore" />
+				<xs:element ref="NazionalitaFilm" />
+				<xs:element ref="NumOpereRappresentate" />
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="SistemaEmissione" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="SistemaEmissione">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="Titoli" />
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="Abbonamenti" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Titoli">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="CodiceOrdinePosto" />
+				<xs:element ref="Capienza" />
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="TotaleTipoTitolo" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="TotaleTipoTitolo">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="TipoTitolo" />
+				<xs:element ref="TotaleTitoliLTA" />
+				<xs:element ref="TotaleTitoliNoAccessoTradiz" />
+				<xs:element ref="TotaleTitoliNoAccessoDigitali" />
+				<xs:element ref="TotaleTitoliAutomatizzatiTradiz" />
+				<xs:element ref="TotaleTitoliAutomatizzatiDigitali" />
+				<xs:element ref="TotaleTitoliManualiTradiz" />
+				<xs:element ref="TotaleTitoliManualiDigitali" />
+				<xs:element ref="TotaleTitoliAnnullatiTradiz" />
+				<xs:element ref="TotaleTitoliAnnullatiDigitali" />
+				<xs:element ref="TotaleTitoliDaspatiTradiz" />
+				<xs:element ref="TotaleTitoliDaspatiDigitali" />
+				<xs:element ref="TotaleTitoliRubatiTradiz" />
+				<xs:element ref="TotaleTitoliRubatiDigitali" />
+				<xs:element ref="TotaleTitoliBLTradiz" />
+				<xs:element ref="TotaleTitoliBLDigitali" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Abbonamenti">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="CodiceOrdinePosto" />
+				<xs:element ref="Capienza" />
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="TotaleTipoTitoloAbbonamento" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="TotaleTipoTitoloAbbonamento">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="TipoTitoloAbbonamento" />
+				<xs:element ref="TotaleTitoliAbbLTA" />
+				<xs:element ref="TotaleTitoliAbbNoAccessoTradiz" />
+				<xs:element ref="TotaleTitoliAbbNoAccessoDigitali" />
+				<xs:element ref="TotaleTitoliAbbAutomatizzatiTradiz" />
+				<xs:element ref="TotaleTitoliAbbAutomatizzatiDigitali" />
+				<xs:element ref="TotaleTitoliAbbManualiTradiz" />
+				<xs:element ref="TotaleTitoliAbbManualiDigitali" />
+				<xs:element ref="TotaleTitoliAbbAnnullatiTradiz" />
+				<xs:element ref="TotaleTitoliAbbAnnullatiDigitali" />
+				<xs:element ref="TotaleTitoliAbbDaspatiTradiz" />
+				<xs:element ref="TotaleTitoliAbbDaspatiDigitali" />
+				<xs:element ref="TotaleTitoliAbbRubatiTradiz" />
+				<xs:element ref="TotaleTitoliAbbRubatiDigitali" />
+				<xs:element ref="TotaleTitoliAbbBLTradiz" />
+				<xs:element ref="TotaleTitoliAbbBLDigitali" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="CFTitolareCA" type="xs:string" />
+	<xs:element name="DenominazioneTitolareCA" type="xs:string" />
+	<xs:element name="CodiceSistemaCA" type="xs:string" />
+	<xs:element name="DataRiepilogo" type="xs:string" />
+	<xs:element name="DataGenerazioneRiepilogo" type="xs:string" />
+	<xs:element name="OraGenerazioneRiepilogo" type="xs:string" />
+	<xs:element name="ProgressivoRiepilogo" type="xs:string" />
+	<xs:element name="CFOrganizzatore" type="xs:string" />
+	<xs:element name="DenominazioneOrganizzatore" type="xs:string" />
+	<xs:element name="TipologiaOrganizzatore" type="xs:string" />
+	<xs:element name="SpettacoloIntrattenimento" type="xs:string" />
+	<xs:element name="IncidenzaIntrattenimento" type="xs:string" />
+	<xs:element name="DenominazioneLocale" type="xs:string" />
+	<xs:element name="CodiceLocale" type="xs:string" />
+	<xs:element name="DataEvento" type="xs:string" />
+	<xs:element name="OraEvento" type="xs:string" />
+	<xs:element name="TipoGenere" type="xs:string" />
+	<xs:element name="TitoloEvento" type="xs:string" />
+	<xs:element name="Autore" type="xs:string" />
+	<xs:element name="Esecutore" type="xs:string" />
+	<xs:element name="NazionalitaFilm" type="xs:string" />
+	<xs:element name="NumOpereRappresentate" type="xs:string" />
+	<xs:element name="CodiceOrdinePosto" type="xs:string" />
+	<xs:element name="Capienza" type="xs:string" />
+	<xs:element name="TipoTitolo" type="xs:string" />
+	<xs:element name="TotaleTitoliLTA" type="xs:string" />
+	<xs:element name="TotaleTitoliNoAccessoTradiz" type="xs:string" />
+	<xs:element name="TotaleTitoliNoAccessoDigitali" type="xs:string" />
+	<xs:element name="TotaleTitoliAutomatizzatiTradiz" type="xs:string" />
+	<xs:element name="TotaleTitoliAutomatizzatiDigitali" type="xs:string" />
+	<xs:element name="TotaleTitoliManualiTradiz" type="xs:string" />
+	<xs:element name="TotaleTitoliManualiDigitali" type="xs:string" />
+	<xs:element name="TotaleTitoliAnnullatiTradiz" type="xs:string" />
+	<xs:element name="TotaleTitoliAnnullatiDigitali" type="xs:string" />
+	<xs:element name="TotaleTitoliDaspatiTradiz" type="xs:string" />
+	<xs:element name="TotaleTitoliDaspatiDigitali" type="xs:string" />
+	<xs:element name="TotaleTitoliRubatiTradiz" type="xs:string" />
+	<xs:element name="TotaleTitoliRubatiDigitali" type="xs:string" />
+	<xs:element name="TotaleTitoliBLTradiz" type="xs:string" />
+	<xs:element name="TotaleTitoliBLDigitali" type="xs:string" />
+	<xs:element name="TipoTitoloAbbonamento" type="xs:string" />
+	<xs:element name="TotaleTitoliAbbLTA" type="xs:string" />
+	<xs:element name="TotaleTitoliAbbNoAccessoTradiz" type="xs:string" />
+	<xs:element name="TotaleTitoliAbbNoAccessoDigitali" type="xs:string" />
+	<xs:element name="TotaleTitoliAbbAutomatizzatiTradiz" type="xs:string" />
+	<xs:element name="TotaleTitoliAbbAutomatizzatiDigitali" type="xs:string" />
+	<xs:element name="TotaleTitoliAbbManualiTradiz" type="xs:string" />
+	<xs:element name="TotaleTitoliAbbManualiDigitali" type="xs:string" />
+	<xs:element name="TotaleTitoliAbbAnnullatiTradiz" type="xs:string" />
+	<xs:element name="TotaleTitoliAbbAnnullatiDigitali" type="xs:string" />
+	<xs:element name="TotaleTitoliAbbDaspatiTradiz" type="xs:string" />
+	<xs:element name="TotaleTitoliAbbDaspatiDigitali" type="xs:string" />
+	<xs:element name="TotaleTitoliAbbRubatiTradiz" type="xs:string" />
+	<xs:element name="TotaleTitoliAbbRubatiDigitali" type="xs:string" />
+	<xs:element name="TotaleTitoliAbbBLTradiz" type="xs:string" />
+	<xs:element name="TotaleTitoliAbbBLDigitali" type="xs:string" />
+</xs:schema>

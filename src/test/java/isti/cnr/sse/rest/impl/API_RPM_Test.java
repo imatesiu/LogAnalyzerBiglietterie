@@ -50,6 +50,8 @@ import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.util.Store;
 import org.bouncycastle.util.StoreException;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.message.internal.ReaderWriter;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
@@ -79,15 +81,20 @@ public class API_RPM_Test extends JerseyTest {
 	@Override
 	protected DeploymentContext configureDeployment() {
 		forceSet(TestProperties.CONTAINER_PORT, "0");
-		return ServletDeploymentContext.forServlet(new ServletContainer(new ResourceConfig(ApiRestRPMBig.class)))
+		return ServletDeploymentContext.forServlet(new ServletContainer(new ResourceConfig(ApiRestRPMBig.class).register(new MultiPartFeature())))
 				.build();
 
 	}
 
 	@Override
 	protected Application configure() {
-		return new ResourceConfig(ApiRestLogBig.class);
+		return new ResourceConfig(ApiRestLogBig.class).register(new MultiPartFeature());
 	}
+	
+	@Override
+    public void configureClient(ClientConfig config) {
+        config.register(MultiPartFeature.class);
+    }
 
 	@Test
 	public void test() throws JAXBException, IOException, URISyntaxException {

@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.JAXBContext;
@@ -28,6 +29,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import com.google.common.primitives.Bytes;
 import com.sun.jersey.core.util.ReaderWriter;
 
+import cnr.isti.sse.big.data.reply.log.Log;
 import cnr.isti.sse.big.data.transazioni.LogTransazione;
 import cnr.isti.sse.big.util.Utility;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -118,7 +120,8 @@ public class ApiRestLogBig {
 			),
 	description = "." )
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	public String putLogTransazioneFiles( @FormDataParam("files") List<FormDataBodyPart> uploadedInputStream,
+	@Produces(MediaType.APPLICATION_JSON)
+	public Log putLogTransazioneFiles( @FormDataParam("files") List<FormDataBodyPart> uploadedInputStream,
 			@FormDataParam("files") List<FormDataContentDisposition> fileDetail, @Context HttpServletRequest request, @Context HttpServletResponse response)
 					throws JAXBException {// DatiCorrispettiviType Corrispettivi,
 		// @Context HttpServletRequest request){
@@ -158,7 +161,7 @@ public class ApiRestLogBig {
 			ImmutableTriple<Integer, Integer, Integer> sum = Utility.sumImmutableTriple(limm);
 			log.info("Logs: [NProgressivi, Corrispettivo Lordo, Prevendita Lordo] "+sum);
 			String text = "KO";
-			return text;
+			return new Log(sum);
 			//throw new WebApplicationException(Response.status(406).entity(text).build());
 
 
@@ -167,7 +170,8 @@ public class ApiRestLogBig {
 			e.printStackTrace();
 			log.error(e);
 		}
-		return "";
+		return null;
+		//return "";
 
 	}
 
