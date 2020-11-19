@@ -94,7 +94,7 @@ import javassist.expr.Instanceof;
 
 public class Utility {
 
-	private static org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(Utility.class);
+	private static org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(Utility.class);
 
 
 	public static byte[] fromFileToByteArray(File file) {
@@ -740,7 +740,7 @@ public class Utility {
 }
 class XmlValidationEventHandler implements ValidationEventHandler {
 
-	private  org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(XmlValidationEventHandler.class);
+	private  org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(XmlValidationEventHandler.class);
 	@Override
 	public boolean handleEvent(ValidationEvent event) {
 		log.error("\nEVENT");

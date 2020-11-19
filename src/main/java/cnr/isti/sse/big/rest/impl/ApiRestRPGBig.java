@@ -41,7 +41,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
 @Path("/biglietterie")
 public class ApiRestRPGBig {
 
-	private static org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(ApiRestRPGBig.class);
+	private static  org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(ApiRestRPGBig.class);
 
 	/*@Path("/RPG")
 	@POST

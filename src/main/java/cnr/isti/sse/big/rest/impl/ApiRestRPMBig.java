@@ -69,7 +69,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
 @Path("/biglietterie")
 public class ApiRestRPMBig {
 	
-	private static org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(ApiRestRPMBig.class);
+	private static  org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(ApiRestRPMBig.class);
 
 	@Path("/RPM")
 	@POST

@@ -40,7 +40,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
 @Path("/biglietterie")
 public class ApiRestLogAccessi {
 
-	private static org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(ApiRestLogAccessi.class);
+	private static  org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(ApiRestLogAccessi.class);
 
 	@Path("/LogAccessi")
 	@POST

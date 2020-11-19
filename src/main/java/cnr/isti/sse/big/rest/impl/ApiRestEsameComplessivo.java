@@ -43,7 +43,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
 @Path("/biglietterie")
 public class ApiRestEsameComplessivo {
 
-	private static org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(ApiRestEsameComplessivo.class);
+	private static org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(ApiRestEsameComplessivo.class);
 
 	
 

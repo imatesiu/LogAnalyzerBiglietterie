@@ -42,7 +42,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
 @Path("/biglietterie")
 public class ApiRestLogBig {
 
-	private static org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(ApiRestLogBig.class);
+	private static  org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(ApiRestLogBig.class);
 
 	@Path("/LogTransazione")
 	@POST
