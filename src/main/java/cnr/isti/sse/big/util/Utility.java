@@ -495,8 +495,11 @@ public class Utility {
 	public static ImmutableTriple<Integer, Integer, Integer> getTitoliAnnullati(List<TitoliAnnullati> titoli) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
 		for(TitoliAnnullati titolo: titoli) {
+			if(titolo.getCorrispettivoLordo()!=null)
 			corrispettivo += Integer.parseInt(titolo.getCorrispettivoLordo().trim());
+			if(titolo.getQuantita()!=null)
 			quantita += Integer.parseInt(titolo.getQuantita().trim());
+			if(titolo.getPrevendita()!=null)
 			prevendita += Integer.parseInt(titolo.getPrevendita().trim());
 			titolo.getTipoTitolo().trim();
 			titolo.getImportoPrestazione().trim();
@@ -509,10 +512,12 @@ public class Utility {
 	public static ImmutableTriple<Integer, Integer, Integer> getTitoliAccesso(List<TitoliAccesso> titoli) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
 		for(TitoliAccesso titolo: titoli) {
+			if(titolo.getCorrispettivoLordo()!=null)
 			corrispettivo += Integer.parseInt(titolo.getCorrispettivoLordo().trim());
+			if(titolo.getQuantita()!=null)
 			quantita += Integer.parseInt(titolo.getQuantita().trim());
-			prevendita += Integer.parseInt(titolo.getPrevendita().trim());
-			titolo.getTipoTitolo().trim();
+			if(titolo.getPrevendita()!=null)
+			prevendita += Integer.parseInt(titolo.getPrevendita().trim());			titolo.getTipoTitolo().trim();
 			titolo.getImportoPrestazione().trim();
 		}
 		return  ImmutableTriple.of(quantita, corrispettivo, prevendita);
@@ -524,8 +529,10 @@ public class Utility {
 	public static ImmutableTriple<Integer, Integer, Integer> getTitoliAccessoIVAPreassolta(List<TitoliAccessoIVAPreassolta> titoliAccessoIVAPreassolta) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
 		for(TitoliAccessoIVAPreassolta titolo: titoliAccessoIVAPreassolta) {
-			corrispettivo += Integer.parseInt(titolo.getImportoFiqurativo().trim());
-			quantita += Integer.parseInt(titolo.getQuantita().trim());
+			if(titolo.getImportoFiqurativo()!=null)
+				corrispettivo += Integer.parseInt(titolo.getImportoFiqurativo());
+			if(titolo.getQuantita()!=null)
+				quantita += Integer.parseInt(titolo.getQuantita());
 			titolo.getTipoTitolo().trim();
 		}
 		return  ImmutableTriple.of(quantita, corrispettivo, prevendita);
@@ -538,8 +545,10 @@ public class Utility {
 			List<TitoliIVAPreassoltaAnnullati> titoliIVAPreassoltaAnnullati) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
 		for(TitoliIVAPreassoltaAnnullati titolo: titoliIVAPreassoltaAnnullati) {
-			corrispettivo += Integer.parseInt(titolo.getImportoFiqurativo().trim());
-			quantita += Integer.parseInt(titolo.getQuantita().trim());
+			if(titolo.getImportoFiqurativo()!=null)
+				corrispettivo += Integer.parseInt(titolo.getImportoFiqurativo());
+			if(titolo.getQuantita()!=null)
+				quantita += Integer.parseInt(titolo.getQuantita());
 			titolo.getTipoTitolo().trim();
 		}
 		return  ImmutableTriple.of(quantita, corrispettivo, prevendita);
@@ -552,9 +561,11 @@ public class Utility {
 	public static ImmutableTriple<Integer, Integer, Integer> getBigliettiAbbonamento(List<BigliettiAbbonamento> bigliettiAbbonamento) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
 		for(BigliettiAbbonamento titolo: bigliettiAbbonamento) {
-			corrispettivo += Integer.parseInt(titolo.getImportoFiqurativo().trim());
-			quantita += Integer.parseInt(titolo.getQuantita().trim());
-			titolo.getTipoTitolo().trim();
+			if(titolo.getImportoFiqurativo()!=null)
+				corrispettivo += Integer.parseInt(titolo.getImportoFiqurativo());
+			if(titolo.getQuantita()!=null)
+				quantita += Integer.parseInt(titolo.getQuantita());
+			titolo.getTipoTitolo();
 		}
 		return  ImmutableTriple.of(quantita, corrispettivo, prevendita);
 
@@ -579,8 +590,10 @@ public class Utility {
 			List<BigliettiAbbonamentoAnnullati> bigliettiAbbonamentoAnnullati) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
 		for(BigliettiAbbonamentoAnnullati titolo: bigliettiAbbonamentoAnnullati) {
-			corrispettivo = Integer.parseInt(titolo.getImportoFiqurativo().trim());
-			quantita = Integer.parseInt(titolo.getQuantita().trim());
+			if(titolo.getImportoFiqurativo()!=null)
+				corrispettivo += Integer.parseInt(titolo.getImportoFiqurativo());
+			if(titolo.getQuantita()!=null)
+				quantita += Integer.parseInt(titolo.getQuantita());
 			titolo.getTipoTitolo().trim();
 		}
 		return  ImmutableTriple.of(quantita, corrispettivo, prevendita);
@@ -593,8 +606,10 @@ public class Utility {
 	public static ImmutableTriple<Integer, Integer, Integer> getAbbonamentiFissi(List<AbbonamentiFissi> abbonamentiFissi) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
 		for(AbbonamentiFissi titolo: abbonamentiFissi) {
-			corrispettivo = Integer.parseInt(titolo.getImportoFiqurativo().trim());
-			quantita = Integer.parseInt(titolo.getQuantita().trim());
+			if(titolo.getImportoFiqurativo()!=null)
+				corrispettivo += Integer.parseInt(titolo.getImportoFiqurativo());
+			if(titolo.getQuantita()!=null)
+				quantita += Integer.parseInt(titolo.getQuantita());
 			titolo.getTipoTitolo().trim();
 		}
 		return  ImmutableTriple.of(quantita, corrispettivo, prevendita);
@@ -646,11 +661,11 @@ public class Utility {
 					List<TitoliAccessoIVAPreassolta> titoliAccessoIVAPreassolta = ordinp.getTitoliAccessoIVAPreassolta();
 					//limm.add(Utility.getTitoliAccessoIVAPreassolta(titoliAccessoIVAPreassolta));
 					List<TitoliIVAPreassoltaAnnullati> titoliIVAPreassoltaAnnullati = ordinp.getTitoliIVAPreassoltaAnnullati();
-					alimm.add( Utility.getTitoliIVAPreassoltaAnnullati(titoliIVAPreassoltaAnnullati));
+					//alimm.add( Utility.getTitoliIVAPreassoltaAnnullati(titoliIVAPreassoltaAnnullati));
 					List<BigliettiAbbonamento> bigliettiAbbonamento = ordinp.getBigliettiAbbonamento();
-					limm.add( Utility.getBigliettiAbbonamento(bigliettiAbbonamento));
+					//limm.add( Utility.getBigliettiAbbonamento(bigliettiAbbonamento));
 					List<BigliettiAbbonamentoAnnullati> bigliettiAbbonamentoAnnullati = ordinp.getBigliettiAbbonamentoAnnullati();
-					alimm.add(Utility.getBigliettiAbbonamentoAnnullati(bigliettiAbbonamentoAnnullati));
+					//alimm.add(Utility.getBigliettiAbbonamentoAnnullati(bigliettiAbbonamentoAnnullati));
 					List<AbbonamentiFissi> abbonamentiFissi = ordinp.getAbbonamentiFissi();
 					limm.add(Utility.getAbbonamentiFissi(abbonamentiFissi));
 
@@ -686,8 +701,10 @@ public class Utility {
 			List<AbbonamentiIVAPreassoltaAnnullati> abbonamentiIVAPreassoltaAnnullati) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
 		for(AbbonamentiIVAPreassoltaAnnullati titolo: abbonamentiIVAPreassoltaAnnullati) {
-			corrispettivo = Integer.parseInt(titolo.getImportoFiqurativo().trim());
-			quantita = Integer.parseInt(titolo.getQuantita().trim());
+			if(titolo.getImportoFiqurativo()!=null)
+				corrispettivo += Integer.parseInt(titolo.getImportoFiqurativo());
+			if(titolo.getQuantita()!=null)
+				quantita += Integer.parseInt(titolo.getQuantita());
 
 		}
 		return  ImmutableTriple.of(quantita, corrispettivo, prevendita);
@@ -700,8 +717,10 @@ public class Utility {
 	private static ImmutableTriple<Integer, Integer, Integer> getAbbonamentiIVAPreassolta(List<AbbonamentiIVAPreassolta> abbonamentiIVAPreassolta) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
 		for(AbbonamentiIVAPreassolta titolo: abbonamentiIVAPreassolta) {
-			corrispettivo = Integer.parseInt(titolo.getImportoFiqurativo().trim());
-			quantita = Integer.parseInt(titolo.getQuantita().trim());
+			if(titolo.getImportoFiqurativo()!=null)
+				corrispettivo += Integer.parseInt(titolo.getImportoFiqurativo());
+			if(titolo.getQuantita()!=null)
+				quantita += Integer.parseInt(titolo.getQuantita());
 
 		}
 		return  ImmutableTriple.of(quantita, corrispettivo, prevendita);
@@ -713,10 +732,12 @@ public class Utility {
 	private static ImmutableTriple<Integer, Integer, Integer> getAbbonamentiAnnullati(List<AbbonamentiAnnullati> abbonamentiAnnullati) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
 		for(AbbonamentiAnnullati titolo: abbonamentiAnnullati) {
+			if(titolo.getCorrispettivoLordo()!=null)
 			corrispettivo += Integer.parseInt(titolo.getCorrispettivoLordo().trim());
+			if(titolo.getQuantita()!=null)
 			quantita += Integer.parseInt(titolo.getQuantita().trim());
+			if(titolo.getPrevendita()!=null)
 			prevendita += Integer.parseInt(titolo.getPrevendita().trim());
-
 		}
 		return  ImmutableTriple.of(quantita, corrispettivo, prevendita);
 
@@ -728,10 +749,12 @@ public class Utility {
 	private static ImmutableTriple<Integer, Integer, Integer> getAbbonamentiEmessi(List<AbbonamentiEmessi> abbonamentiEmessi) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
 		for(AbbonamentiEmessi titolo: abbonamentiEmessi) {
+			if(titolo.getCorrispettivoLordo()!=null)
 			corrispettivo += Integer.parseInt(titolo.getCorrispettivoLordo().trim());
+			if(titolo.getQuantita()!=null)
 			quantita += Integer.parseInt(titolo.getQuantita().trim());
+			if(titolo.getPrevendita()!=null)
 			prevendita += Integer.parseInt(titolo.getPrevendita().trim());
-
 		}
 		return  ImmutableTriple.of(quantita, corrispettivo, prevendita);
 

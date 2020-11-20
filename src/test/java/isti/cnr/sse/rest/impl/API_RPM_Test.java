@@ -105,7 +105,7 @@ public class API_RPM_Test extends JerseyTest {
 	
 
 	
-	String Filexml = "RPM_2020_10_00_001.xsi.p7m";
+	String Filexml = "RPM_2020_11_00_002.xsi.p7m";
 	runTestRPM(Filexml);
 	/*File f = FileUtils.toFile( APIProveHWImplTest.class.getClassLoader().getResource(Filexml));
 	//InputStream content = new FileInputStream(f);

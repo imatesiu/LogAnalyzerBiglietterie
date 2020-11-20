@@ -126,7 +126,40 @@ public class LogRP {
     	
     }
     
-    public LogRP(TitoliAccesso titoli, Abbonamenti abb) {
+    
+	private static org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(LogRP.class);
+
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof LogRP)) {
+			return false;
+		}
+		LogRP other = (LogRP) obj;
+		if (abbonamenti == null) {
+			if (other.abbonamenti != null) {
+				return false;
+			}
+		} else if (!abbonamenti.equals(other.abbonamenti)) {
+			return false;
+		}
+		if (titoliAccesso == null) {
+			if (other.titoliAccesso != null) {
+				return false;
+			}
+		} else if (!titoliAccesso.equals(other.titoliAccesso)) {
+			return false;
+		}
+		return true;
+	}
+
+
+
+	public LogRP(TitoliAccesso titoli, Abbonamenti abb) {
     	abbonamenti = abb;
     	titoliAccesso = titoli;
 	}
@@ -184,8 +217,17 @@ public class LogRP {
         this.titoliAccesso = value;
     }
 
+    
+    
+    @Override
+	public String toString() {
+		return (abbonamenti != null ? "abbonamenti: " + abbonamenti + ",  " : "")
+				+ (titoliAccesso != null ? "titoliAccesso: " + titoliAccesso : "");
+	}
 
-    /**
+
+
+	/**
      * <p>Classe Java per anonymous complex type.
      * 
      * <p>Il seguente frammento di schema specifica il contenuto previsto contenuto in questa classe.
@@ -247,7 +289,43 @@ public class LogRP {
         	annullati = new Annullati(imma);
         }
 
-        /**
+        
+        
+       
+
+
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (!(obj instanceof Abbonamenti)) {
+				return false;
+			}
+			Abbonamenti other = (Abbonamenti) obj;
+			if (annullati == null) {
+				if (other.annullati != null) {
+					return false;
+				}
+			} else if (!annullati.equals(other.annullati)) {
+				log.info("diff Abbonamenti annullati");
+				return false;
+			}
+			if (vendite == null) {
+				if (other.vendite != null) {
+					return false;
+				}
+			} else if (!vendite.equals(other.vendite)) {
+				log.info("diff Abbonamenti vendite");
+				return false;
+			}
+			return true;
+		}
+
+
+
+		/**
          * Recupera il valore della proprietà vendite.
          * 
          * @return
@@ -295,7 +373,13 @@ public class LogRP {
             this.annullati = value;
         }
 
+		@Override
+		public String toString() {
+			return (vendite != null ? "vendite: " + vendite + ",  " : "")
+					+ (annullati != null ? "annullati: " + annullati : "");
+		}
 
+        
        
 
     }
@@ -361,8 +445,47 @@ public class LogRP {
         	vendite = new Vendite(immv);
         	annullati = new Annullati(imma);
         }
+        
 
-        /**
+        @Override
+		public String toString() {
+			return (vendite != null ? "vendite: " + vendite + ",  " : "")
+					+ (annullati != null ? "annullati: " + annullati : "");
+		}
+        
+
+
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (!(obj instanceof TitoliAccesso)) {
+				return false;
+			}
+			TitoliAccesso other = (TitoliAccesso) obj;
+			if (annullati == null) {
+				if (other.annullati != null) {
+					return false;
+				}
+			} else if (!annullati.equals(other.annullati)) {
+				log.info("diff TitoliAccesso annullati");
+				return false;
+			}
+			if (vendite == null) {
+				if (other.vendite != null) {
+					return false;
+				}
+			} else if (!vendite.equals(other.vendite)) {
+				log.info("diff TitoliAccesso vendite");
+				return false;
+			}
+			return true;
+		}
+
+
+		/**
          * Recupera il valore della proprietà vendite.
          * 
          * @return
@@ -456,8 +579,53 @@ public class LogRP {
         	corrispettivoLordo  = BigInteger.valueOf(imm.middle);
         	prevenditaLordo  = BigInteger.valueOf(imm.right);
         }
+        
+        @Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (!(obj instanceof Annullati)) {
+				return false;
+			}
+			Annullati other = (Annullati) obj;
+			if (corrispettivoLordo == null) {
+				if (other.corrispettivoLordo != null) {
+					return false;
+				}
+			} else if (!corrispettivoLordo.equals(other.corrispettivoLordo)) {
+				log.info("diff corrispettivoLordo");
+				return false;
+			}
+			if (prevenditaLordo == null) {
+				if (other.prevenditaLordo != null) {
+					return false;
+				}
+			} else if (!prevenditaLordo.equals(other.prevenditaLordo)) {
+				log.info("diff prevenditaLordo");
 
-        /**
+				return false;
+			}
+			if (quantita == null) {
+				if (other.quantita != null) {
+					return false;
+				}
+			} else if (!quantita.equals(other.quantita)) {
+				log.info("diff quantita");
+
+				return false;
+			}
+			return true;
+		}
+        
+        @Override
+		public String toString() {
+			return (quantita != null ? "quantita: " + quantita + ",  " : "")
+					+ (corrispettivoLordo != null ? "corrispettivoLordo: " + corrispettivoLordo + ",  " : "")
+					+ (prevenditaLordo != null ? "prevenditaLordo: " + prevenditaLordo : "");
+		}
+
+		/**
          * Recupera il valore della proprietà quantita.
          * 
          * @return
@@ -587,7 +755,57 @@ public class LogRP {
         	prevenditaLordo  = BigInteger.valueOf(imm.right);
         }
 
-        /**
+        
+      
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (!(obj instanceof Vendite)) {
+				return false;
+			}
+			Vendite other = (Vendite) obj;
+			if (corrispettivoLordo == null) {
+				if (other.corrispettivoLordo != null) {
+					return false;
+				}
+			} else if (!corrispettivoLordo.equals(other.corrispettivoLordo)) {
+				log.info("diff corrispettivoLordo");
+				return false;
+			}
+			if (prevenditaLordo == null) {
+				if (other.prevenditaLordo != null) {
+					return false;
+				}
+			} else if (!prevenditaLordo.equals(other.prevenditaLordo)) {
+				log.info("diff prevenditaLordo");
+				return false;
+			}
+			if (quantita == null) {
+				if (other.quantita != null) {
+					return false;
+				}
+			} else if (!quantita.equals(other.quantita)) {
+				log.info("diff quantita");
+				return false;
+			}
+			return true;
+		}
+		
+
+		@Override
+		public String toString() {
+			return (quantita != null ? "quantita: " + quantita + ",  " : "")
+					+ (corrispettivoLordo != null ? "corrispettivoLordo: " + corrispettivoLordo + ",  " : "")
+					+ (prevenditaLordo != null ? "prevenditaLordo: " + prevenditaLordo : "");
+		}
+
+
+
+
+		/**
          * Recupera il valore della proprietà quantita.
          * 
          * @return
@@ -680,13 +898,13 @@ public class LogRP {
 		ImmutableTriple<BigInteger, BigInteger, BigInteger>  immv = l.getTitoliAccesso().getVendite().all();
 		ImmutableTriple<BigInteger, BigInteger, BigInteger>  imma = l.getTitoliAccesso().getAnnullati().all();
 		this.getTitoliAccesso().getVendite().updateall(immv);
-		this.getTitoliAccesso().getAnnullati().updateall(immv);
+		this.getTitoliAccesso().getAnnullati().updateall(imma);
 		
 		
 		ImmutableTriple<BigInteger, BigInteger, BigInteger>  immva = l.getAbbonamenti().getVendite().all();
 		ImmutableTriple<BigInteger, BigInteger, BigInteger>  immaa = l.getAbbonamenti().getAnnullati().all();
 		this.getAbbonamenti().getVendite().updateall(immva);
-		this.getAbbonamenti().getAnnullati().updateall(immva);
+		this.getAbbonamenti().getAnnullati().updateall(immaa);
 		
 		}else {
 			this.setAbbonamenti(l.getAbbonamenti());

@@ -25,6 +25,7 @@ import cnr.isti.sse.big.data.reply.accessi.lta.LTAGiornaliera;
 import cnr.isti.sse.big.data.riepilogogiornaliero.RiepilogoGiornaliero;
 import cnr.isti.sse.big.data.riepilogomensile.RiepilogoMensile;
 import cnr.isti.sse.big.data.transazioni.LogTransazione;
+import cnr.isti.sse.big.rest.util.EsameComplessivo;
 import cnr.isti.sse.big.util.Utility;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
@@ -64,35 +65,37 @@ public class ApiRestEsameComplessivo {
 	description = "." )
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
-	public String putLogTransazioneFiles( @FormDataParam("files") List<FormDataBodyPart> uploadedInputStream,
+	public String putFiles( @FormDataParam("files") List<FormDataBodyPart> uploadedInputStream,
 			@FormDataParam("files") List<FormDataContentDisposition> fileDetail, @Context HttpServletRequest request, @Context HttpServletResponse response)
 					throws JAXBException {// DatiCorrispettiviType Corrispettivi,
 		// @Context HttpServletRequest request){
 		response.setHeader("Connection", "Close");
-		log.info("****************List***LTA********************");
+		log.info("****************ESAME COMPLESSIVO********************");
 		try{
 
 			log.info("Message from: "+request.getRemoteAddr());
 
-			
+			EsameComplessivo e = new EsameComplessivo();
 
 			int i = 0;
 			for(FormDataBodyPart filePart: uploadedInputStream) {
 				byte[] your_primitive_bytes = IOUtils.toByteArray(filePart.getEntityAs(InputStream.class));
-
+				String NameFile = fileDetail.get(i).getFileName();
+				log.info(NameFile);
 				boolean	resul = Utility.verifyPKCS7(your_primitive_bytes);
 				log.info(resul);
 				byte[] t = 	Utility.getData(your_primitive_bytes);
 				String Transazione = new String(t);
 				String LT = Transazione.replaceAll("<!DOCTYPE.*", "").replaceAll("[^\\x20-\\x7e]", "");
-				String NameFile = fileDetail.get(i).getFileName().substring(0,3);
-				switch (NameFile) {
+				String NameF = NameFile.substring(0,3);
+				switch (NameF) {
 				case "LTA":{
 					JAXBContext jaxbContext = JAXBContext.newInstance(LTAGiornaliera.class);
 					Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 					StringReader reader = new StringReader(LT);
 					LTAGiornaliera LogT = (LTAGiornaliera) unmarshaller.unmarshal(reader);
-					log.info("OK");
+					e.set(LogT);
+				//	log.info("OK");
 					break;}
 				case "RCA":{
 					JAXBContext jaxbContext = JAXBContext.newInstance(RiepilogoControlloAccessi.class);
@@ -100,7 +103,8 @@ public class ApiRestEsameComplessivo {
 
 					StringReader reader = new StringReader(LT);
 					RiepilogoControlloAccessi LogT = (RiepilogoControlloAccessi) unmarshaller.unmarshal(reader);
-					log.info("OK");
+					e.set(LogT);
+					//log.info("OK");
 					break;}
 				case "RPG":{
 					JAXBContext jaxbContext = JAXBContext.newInstance(RiepilogoGiornaliero.class);
@@ -108,7 +112,8 @@ public class ApiRestEsameComplessivo {
 
 					StringReader reader = new StringReader(LT);
 					RiepilogoGiornaliero RPG = (RiepilogoGiornaliero) unmarshaller.unmarshal(reader);
-					log.info("OK");
+					e.set(RPG);
+					//log.info("OK");
 					break;}
 				case "RPM":{
 					JAXBContext jaxbContext = JAXBContext.newInstance(RiepilogoMensile.class);
@@ -116,7 +121,8 @@ public class ApiRestEsameComplessivo {
 					
 					StringReader reader = new StringReader(LT);
 					RiepilogoMensile RPM = (RiepilogoMensile) unmarshaller.unmarshal(reader);
-					log.info("OK");
+					e.set(RPM);
+					//log.info("OK");
 
 					break;}
 				case "LOG":{
@@ -125,7 +131,8 @@ public class ApiRestEsameComplessivo {
 
 					StringReader reader = new StringReader(LT);
 					LogTransazione LogT = (LogTransazione) unmarshaller.unmarshal(reader);
-					log.info("OK");
+					e.set(LogT);
+					//log.info("OK");
 
 					break;}
 
@@ -135,6 +142,7 @@ public class ApiRestEsameComplessivo {
 
 				i++;
 			}
+			e.esame();
 			/*{
 				byte[] t = 	Utility.getData(your_primitive_bytes);
 				String LogTransazione = new String(t);

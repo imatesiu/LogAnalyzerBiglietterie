@@ -67,7 +67,8 @@ public class API_RPG_Test extends JerseyTest {
 	public void test() throws JAXBException, IOException, URISyntaxException, ClassNotFoundException {
 
 
-		String Filexml = "RPG_2020_10_13_001.xsi.p7m";
+		String Filexml = 	 "RPG_2020_11_06_001.xsi.p7m";
+
 		//runTestRPM(Filexml);
 		List<String> files = new ArrayList<String>();
 		files.add(Filexml);

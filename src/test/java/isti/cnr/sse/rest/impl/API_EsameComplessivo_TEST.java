@@ -110,9 +110,11 @@ public class API_EsameComplessivo_TEST extends JerseyTest {
 	files.add(Filexml);
 	 Filexml = "LOG_2020_10_13_001.xsi.p7m";
 	files.add(Filexml);
-	Filexml = "RPG_2020_10_13_001.xsi.p7m";
+	Filexml = "RPG_2020_11_06_001.xsi.p7m";
 	files.add(Filexml);
-	 Filexml = "RPM_2020_10_00_001.xsi.p7m";
+	Filexml = "RPG_2020_11_05_001.xsi.p7m";
+	files.add(Filexml);
+	 Filexml = "RPM_2020_11_00_002.xsi.p7m";
 	files.add(Filexml);
 	
 	runTest3(files);
@@ -149,7 +151,7 @@ public class API_EsameComplessivo_TEST extends JerseyTest {
 			File f = FileUtils.toFile( API_EsameComplessivo_TEST.class.getClassLoader().getResource(nameFilexml));
 			
 
-
+			assertNotNull(f);
 
 
 
