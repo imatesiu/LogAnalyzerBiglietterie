@@ -453,4 +453,14 @@ public class TitoloAccesso {
         this.annullamento = value;
     }
 
+	@Override
+	public String toString() {
+		return (corrispettivoLordo != null ? "corrispettivoLordo: " + corrispettivoLordo + ",  " : "")
+				+ (prevendita != null ? "prevendita: " + prevendita + ",  " : "")
+				+ (titolo != null ? "titolo: " + titolo + ",  " : "")
+				+ (annullamento != null ? "annullamento: " + annullamento : "");
+	}
+    
+    
+
 }

@@ -1,48 +1,31 @@
 package cnr.isti.sse.big.util;
 
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.net.URL;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.Principal;
 import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
-import javax.naming.InvalidNameException;
-import javax.security.auth.x500.X500Principal;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -50,11 +33,6 @@ import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.ValidationEvent;
 import javax.xml.bind.ValidationEventHandler;
-import javax.xml.crypto.dsig.Reference;
-import javax.xml.crypto.dsig.XMLSignature;
-import javax.xml.crypto.dsig.XMLSignatureFactory;
-import javax.xml.crypto.dsig.dom.DOMValidateContext;
-import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMResult;
@@ -65,30 +43,36 @@ import javax.xml.validation.SchemaFactory;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x500.style.BCStyle;
-import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cms.CMSException;
-import org.bouncycastle.cms.CMSProcessable;
-import org.bouncycastle.cms.CMSProcessableByteArray;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.SignerInformation;
 import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoVerifierBuilder;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.util.Store;
 import org.bouncycastle.util.StoreException;
-import org.glassfish.grizzly.utils.Pair;
 import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import cnr.isti.sse.big.data.reply.rp.LogRP;
-import cnr.isti.sse.big.data.riepilogomensile.*;
+import cnr.isti.sse.big.data.riepilogomensile.Abbonamenti;
+import cnr.isti.sse.big.data.riepilogomensile.AbbonamentiAnnullati;
+import cnr.isti.sse.big.data.riepilogomensile.AbbonamentiEmessi;
+import cnr.isti.sse.big.data.riepilogomensile.AbbonamentiFissi;
+import cnr.isti.sse.big.data.riepilogomensile.AbbonamentiIVAPreassolta;
+import cnr.isti.sse.big.data.riepilogomensile.AbbonamentiIVAPreassoltaAnnullati;
+import cnr.isti.sse.big.data.riepilogomensile.AltriProventiGenerici;
+import cnr.isti.sse.big.data.riepilogomensile.BigliettiAbbonamento;
+import cnr.isti.sse.big.data.riepilogomensile.BigliettiAbbonamentoAnnullati;
+import cnr.isti.sse.big.data.riepilogomensile.Evento;
+import cnr.isti.sse.big.data.riepilogomensile.OrdineDiPosto;
+import cnr.isti.sse.big.data.riepilogomensile.Organizzatore;
+import cnr.isti.sse.big.data.riepilogomensile.TitoliAccesso;
+import cnr.isti.sse.big.data.riepilogomensile.TitoliAccessoIVAPreassolta;
+import cnr.isti.sse.big.data.riepilogomensile.TitoliAnnullati;
+import cnr.isti.sse.big.data.riepilogomensile.TitoliIVAPreassoltaAnnullati;
 import cnr.isti.sse.big.data.transazioni.LogTransazione;
 import cnr.isti.sse.big.data.transazioni.Transazione;
-import javassist.expr.Instanceof;
 
 
 
@@ -256,7 +240,7 @@ public class Utility {
 
 
 	public static ImmutableTriple<Integer, Integer, Integer>  check(LogTransazione logT) {
-
+		log.info("********CHECK LOG******");
 		List<Transazione> listT = logT.getTransazione();
 		// TODO Auto-generated method stub
 		int totCor = 0;
@@ -519,12 +503,77 @@ public class Utility {
 			if(titolo.getPrevendita()!=null)
 			prevendita += Integer.parseInt(titolo.getPrevendita().trim());			titolo.getTipoTitolo().trim();
 			titolo.getImportoPrestazione().trim();
+			
+			checkIVA(titolo);
 		}
 		return  ImmutableTriple.of(quantita, corrispettivo, prevendita);
 	}
 
 
 
+
+	private static boolean checkIVA(TitoliAccesso titolo) {
+		int corrispettivo = 0,quantita = 0,prevendita = 0;
+		if(titolo.getCorrispettivoLordo()!=null)
+			corrispettivo += Integer.parseInt(titolo.getCorrispettivoLordo().trim());
+		if(titolo.getQuantita()!=null)
+			quantita += Integer.parseInt(titolo.getQuantita().trim());
+		if(titolo.getPrevendita()!=null)
+			prevendita += Integer.parseInt(titolo.getPrevendita().trim());
+		
+		int ivacorr = Integer.parseInt(titolo.getIVACorrispettivo().trim());
+		int ivaprev = Integer.parseInt(titolo.getIVAPrevendita().trim());
+		DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance();
+		symbols.setDecimalSeparator('.');
+		DecimalFormat df = new DecimalFormat("#.##", symbols);
+	//	df.format(number)
+		 double corr =  Double.parseDouble(df.format(corrispettivo/quantita ) )/100 ;
+		
+		 //double baseiscorporocorriva22 = Double.parseDouble(df.format(corr*100/122 ));
+		double baseiscorporocorriva10 = Double.parseDouble(df.format(corr*100/110));
+		
+		
+		ImmutableTriple<Double, Double, Double> basei = calcBaseImpIncidenza(100,corr,22,16);
+		
+		double ivac22 = Double.parseDouble(df.format(basei.middle*22/100));
+		double ivac10 = Double.parseDouble(df.format(baseiscorporocorriva10*10/100));
+		
+		
+		
+		int ivaf10 = (int) (ivac10*quantita*100);
+		int ivaf22 = (int) (ivac22*quantita*100);
+		
+		if((ivacorr != ivaf10) & (ivacorr != ivaf22) ) {
+			log.error("IVa errata in "+titolo);
+			if((ivacorr < ivaf10) & (ivacorr < ivaf22) ) {
+				log.error("IVa Minore in "+titolo);
+			}
+		}
+		
+		//int scorporopreviva22 = ivaprev*100/122;
+		//int scorporopreviva10 = ivaprev*100/110;
+
+		return false;
+		
+	}
+	
+	private static ImmutableTriple<Double, Double, Double> calcBaseImpIncidenza(double incidenza, double lordo, double impostaIVA, double impostaintratt) {
+		//divido il lordo in base all'incidenza
+		double lordoincidenza = lordo*incidenza/100;
+		// scoporo iva + imposta
+		double baseimposta = lordoincidenza*100/(100+impostaIVA+impostaintratt);
+		double imposta = baseimposta*impostaintratt/100;
+
+		double baseimpiva = baseimposta + ((lordo-lordoincidenza)*100/(100+impostaIVA));
+		double iva = baseimpiva*impostaIVA/100;
+		
+		DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance();
+		symbols.setDecimalSeparator('.');
+		DecimalFormat df = new DecimalFormat("#.##", symbols);
+		
+		return ImmutableTriple.of(Double.parseDouble(df.format(baseimposta)),Double.parseDouble(df.format( baseimpiva)), Double.valueOf(0));
+		
+	}
 
 	public static ImmutableTriple<Integer, Integer, Integer> getTitoliAccessoIVAPreassolta(List<TitoliAccessoIVAPreassolta> titoliAccessoIVAPreassolta) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
@@ -561,8 +610,8 @@ public class Utility {
 	public static ImmutableTriple<Integer, Integer, Integer> getBigliettiAbbonamento(List<BigliettiAbbonamento> bigliettiAbbonamento) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
 		for(BigliettiAbbonamento titolo: bigliettiAbbonamento) {
-			if(titolo.getImportoFiqurativo()!=null)
-				corrispettivo += Integer.parseInt(titolo.getImportoFiqurativo());
+			if(titolo.getImportoFigurativo()!=null)
+				corrispettivo += Integer.parseInt(titolo.getImportoFigurativo());
 			if(titolo.getQuantita()!=null)
 				quantita += Integer.parseInt(titolo.getQuantita());
 			titolo.getTipoTitolo();
@@ -579,6 +628,19 @@ public class Utility {
 			int cor = (int)im.middle;
 			corrispettivo+=cor;
 			int pr = (int)im.right;
+			prevendita+=pr;
+		}
+		return  ImmutableTriple.of(quantita, corrispettivo, prevendita);
+	}
+	
+	public static ImmutableTriple<Integer, Integer, Integer>  sumImmutableTripleBig(List<ImmutableTriple<BigInteger, BigInteger, BigInteger> > listImmutableTriple) {
+		int corrispettivo = 0,quantita = 0,prevendita = 0;
+		for(ImmutableTriple<BigInteger, BigInteger, BigInteger>  im :listImmutableTriple) {
+			int quant = (int)im.left.floatValue();
+			quantita+=quant;
+			int cor = (int)im.middle.floatValue();
+			corrispettivo+=cor;
+			int pr = (int)im.right.floatValue();
 			prevendita+=pr;
 		}
 		return  ImmutableTriple.of(quantita, corrispettivo, prevendita);
@@ -625,6 +687,9 @@ public class Utility {
 
 		List<ImmutableTriple<Integer, Integer, Integer>> labb = new ArrayList<ImmutableTriple<Integer,Integer,Integer>>();
 		List<ImmutableTriple<Integer, Integer, Integer>> alabb = new ArrayList<ImmutableTriple<Integer,Integer,Integer>>();
+		
+		List<ImmutableTriple<Integer, Integer, Integer>> rootlabbbiglietto = new ArrayList<ImmutableTriple<Integer,Integer,Integer>>();
+		List<ImmutableTriple<Integer, Integer, Integer>> rootalabbbiglietto = new ArrayList<ImmutableTriple<Integer,Integer,Integer>>();
 
 		for(Organizzatore organizzatore: organizzatori) {
 
@@ -653,6 +718,10 @@ public class Utility {
 				List<ImmutableTriple<Integer, Integer, Integer>> limm = new ArrayList<ImmutableTriple<Integer,Integer,Integer>>();
 				List<ImmutableTriple<Integer, Integer, Integer>> alimm = new ArrayList<ImmutableTriple<Integer,Integer,Integer>>();
 
+				List<ImmutableTriple<Integer, Integer, Integer>> labbbiglietto = new ArrayList<ImmutableTriple<Integer,Integer,Integer>>();
+				List<ImmutableTriple<Integer, Integer, Integer>> alabbbiglietto = new ArrayList<ImmutableTriple<Integer,Integer,Integer>>();
+
+				
 				for(OrdineDiPosto ordinp: ordinip) {
 					List<TitoliAccesso> titoliaccesso = ordinp.getTitoliAccesso();
 					limm.add(Utility.getTitoliAccesso(titoliaccesso));
@@ -663,9 +732,9 @@ public class Utility {
 					List<TitoliIVAPreassoltaAnnullati> titoliIVAPreassoltaAnnullati = ordinp.getTitoliIVAPreassoltaAnnullati();
 					//alimm.add( Utility.getTitoliIVAPreassoltaAnnullati(titoliIVAPreassoltaAnnullati));
 					List<BigliettiAbbonamento> bigliettiAbbonamento = ordinp.getBigliettiAbbonamento();
-					//limm.add( Utility.getBigliettiAbbonamento(bigliettiAbbonamento));
+					labbbiglietto.add( Utility.getBigliettiAbbonamento(bigliettiAbbonamento));
 					List<BigliettiAbbonamentoAnnullati> bigliettiAbbonamentoAnnullati = ordinp.getBigliettiAbbonamentoAnnullati();
-					//alimm.add(Utility.getBigliettiAbbonamentoAnnullati(bigliettiAbbonamentoAnnullati));
+					alabbbiglietto.add(Utility.getBigliettiAbbonamentoAnnullati(bigliettiAbbonamentoAnnullati));
 					List<AbbonamentiFissi> abbonamentiFissi = ordinp.getAbbonamentiFissi();
 					limm.add(Utility.getAbbonamentiFissi(abbonamentiFissi));
 
@@ -676,6 +745,15 @@ public class Utility {
 				ImmutableTriple<Integer, Integer, Integer> asum = Utility.sumImmutableTriple(alimm);
 				roota.add(asum);
 				log.info("Annulli: [Quantità, LordoCorrispettivo, LordoPrevendita] "+asum);
+				
+				ImmutableTriple<Integer, Integer, Integer> sumba = Utility.sumImmutableTriple(labbbiglietto);
+				log.info("Biglietti Abb Emissioni: [Quantità, Importo figurativo, LordoPrevendita]  "+sumba);
+				rootlabbbiglietto.add(sumba);
+				ImmutableTriple<Integer, Integer, Integer> asumba = Utility.sumImmutableTriple(alabbbiglietto);
+				rootalabbbiglietto.add(asumba);
+				log.info("Biglietti Abb Annulli: [Quantità, Importo figurativo, LordoPrevendita] "+asumba);
+				
+				
 			}
 
 		}
@@ -687,8 +765,13 @@ public class Utility {
 		ImmutableTriple<Integer, Integer, Integer> rootsumav = Utility.sumImmutableTriple(labb);
 		ImmutableTriple<Integer, Integer, Integer> rootsumaa = Utility.sumImmutableTriple(alabb);
 		LogRP.Abbonamenti abb = new LogRP.Abbonamenti(rootsumav, rootsumaa);
+		
+		
+		ImmutableTriple<Integer, Integer, Integer> rootsumabbbiglietto = Utility.sumImmutableTriple(rootlabbbiglietto);
+		ImmutableTriple<Integer, Integer, Integer> rootsumaabbbiglietto = Utility.sumImmutableTriple(rootalabbbiglietto);
+		LogRP.BigliettiAbbonamenti babb = new LogRP.BigliettiAbbonamenti(rootsumabbbiglietto, rootsumaabbbiglietto);
 
-		LogRP l = new LogRP(titoliAccesso,abb);
+		LogRP l = new LogRP(titoliAccesso,abb,babb);
 
 		return l;
 

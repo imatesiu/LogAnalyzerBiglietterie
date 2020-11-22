@@ -878,4 +878,183 @@ public class TitoloAccesso {
         this.oraIngresso = value;
     }
 
+	
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if(obj instanceof cnr.isti.sse.big.data.transazioni.Transazione) {
+			cnr.isti.sse.big.data.transazioni.Transazione tt = (cnr.isti.sse.big.data.transazioni.Transazione) obj;
+			if (!cartaAttivazione.equals(tt.getCartaAttivazione())) {
+				return false;
+			}
+			if (!sigilloFiscale.equals(tt.getSigilloFiscale())) {
+				return false;
+			}
+			if (!progressivoFiscale.equals(tt.getNumeroProgressivo())) {
+				return false;
+			}
+			return true;
+		}
+		if (getClass() != obj.getClass())
+			return false;
+		TitoloAccesso other = (TitoloAccesso) obj;
+		if (abbonamento == null) {
+			if (other.abbonamento != null)
+				return false;
+		} else if (!abbonamento.equals(other.abbonamento))
+			return false;
+		if (annullamento == null) {
+			if (other.annullamento != null)
+				return false;
+		} else if (!annullamento.equals(other.annullamento))
+			return false;
+		if (cartaAttivazione == null) {
+			if (other.cartaAttivazione != null)
+				return false;
+		} else if (!cartaAttivazione.equals(other.cartaAttivazione))
+			return false;
+		if (cartaAttivazioneANN == null) {
+			if (other.cartaAttivazioneANN != null)
+				return false;
+		} else if (!cartaAttivazioneANN.equals(other.cartaAttivazioneANN))
+			return false;
+		if (cfAbbonamento == null) {
+			if (other.cfAbbonamento != null)
+				return false;
+		} else if (!cfAbbonamento.equals(other.cfAbbonamento))
+			return false;
+		if (codSupporto == null) {
+			if (other.codSupporto != null)
+				return false;
+		} else if (!codSupporto.equals(other.codSupporto))
+			return false;
+		if (codiceAbbonamento == null) {
+			if (other.codiceAbbonamento != null)
+				return false;
+		} else if (!codiceAbbonamento.equals(other.codiceAbbonamento))
+			return false;
+		if (codiceOrdine == null) {
+			if (other.codiceOrdine != null)
+				return false;
+		} else if (!codiceOrdine.equals(other.codiceOrdine))
+			return false;
+		if (corrispettivoLordo == null) {
+			if (other.corrispettivoLordo != null)
+				return false;
+		} else if (!corrispettivoLordo.equals(other.corrispettivoLordo))
+			return false;
+		if (dataANN == null) {
+			if (other.dataANN != null)
+				return false;
+		} else if (!dataANN.equals(other.dataANN))
+			return false;
+		if (dataEmissione == null) {
+			if (other.dataEmissione != null)
+				return false;
+		} else if (!dataEmissione.equals(other.dataEmissione))
+			return false;
+		if (dataIngresso == null) {
+			if (other.dataIngresso != null)
+				return false;
+		} else if (!dataIngresso.equals(other.dataIngresso))
+			return false;
+		if (dataLTA == null) {
+			if (other.dataLTA != null)
+				return false;
+		} else if (!dataLTA.equals(other.dataLTA))
+			return false;
+		if (idSupAlt == null) {
+			if (other.idSupAlt != null)
+				return false;
+		} else if (!idSupAlt.equals(other.idSupAlt))
+			return false;
+		if (idSupporto == null) {
+			if (other.idSupporto != null)
+				return false;
+		} else if (!idSupporto.equals(other.idSupporto))
+			return false;
+		if (oraANN == null) {
+			if (other.oraANN != null)
+				return false;
+		} else if (!oraANN.equals(other.oraANN))
+			return false;
+		if (oraEmissione == null) {
+			if (other.oraEmissione != null)
+				return false;
+		} else if (!oraEmissione.equals(other.oraEmissione))
+			return false;
+		if (oraIngresso == null) {
+			if (other.oraIngresso != null)
+				return false;
+		} else if (!oraIngresso.equals(other.oraIngresso))
+			return false;
+		if (oraLTA == null) {
+			if (other.oraLTA != null)
+				return false;
+		} else if (!oraLTA.equals(other.oraLTA))
+			return false;
+		if (partecipante == null) {
+			if (other.partecipante != null)
+				return false;
+		} else if (!partecipante.equals(other.partecipante))
+			return false;
+		if (posto == null) {
+			if (other.posto != null)
+				return false;
+		} else if (!posto.equals(other.posto))
+			return false;
+		if (progressivoAbbonamento == null) {
+			if (other.progressivoAbbonamento != null)
+				return false;
+		} else if (!progressivoAbbonamento.equals(other.progressivoAbbonamento))
+			return false;
+		if (progressivoFiscale == null) {
+			if (other.progressivoFiscale != null)
+				return false;
+		} else if (!progressivoFiscale.equals(other.progressivoFiscale))
+			return false;
+		if (progressivoFiscaleANN == null) {
+			if (other.progressivoFiscaleANN != null)
+				return false;
+		} else if (!progressivoFiscaleANN.equals(other.progressivoFiscaleANN))
+			return false;
+		if (qEventiAbilitati == null) {
+			if (other.qEventiAbilitati != null)
+				return false;
+		} else if (!qEventiAbilitati.equals(other.qEventiAbilitati))
+			return false;
+		if (sigilloFiscale == null) {
+			if (other.sigilloFiscale != null)
+				return false;
+		} else if (!sigilloFiscale.equals(other.sigilloFiscale))
+			return false;
+		if (sigilloFiscaleANN == null) {
+			if (other.sigilloFiscaleANN != null)
+				return false;
+		} else if (!sigilloFiscaleANN.equals(other.sigilloFiscaleANN))
+			return false;
+		if (sistemaEmissione == null) {
+			if (other.sistemaEmissione != null)
+				return false;
+		} else if (!sistemaEmissione.equals(other.sistemaEmissione))
+			return false;
+		if (stato == null) {
+			if (other.stato != null)
+				return false;
+		} else if (!stato.equals(other.stato))
+			return false;
+		if (tipoTitolo == null) {
+			if (other.tipoTitolo != null)
+				return false;
+		} else if (!tipoTitolo.equals(other.tipoTitolo))
+			return false;
+		return true;
+	}
+    
+    
+
 }

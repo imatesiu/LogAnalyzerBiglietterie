@@ -236,4 +236,16 @@ public class TitoliAccesso {
         this.importoPrestazione = value;
     }
 
+	@Override
+	public String toString() {
+		return (tipoTitolo != null ? "tipoTitolo: " + tipoTitolo + ",  " : "")
+				+ (quantita != null ? "quantita: " + quantita + ",  " : "")
+				+ (corrispettivoLordo != null ? "corrispettivoLordo: " + corrispettivoLordo + ",  " : "")
+				+ (prevendita != null ? "prevendita: " + prevendita + ",  " : "")
+				+ (ivaCorrispettivo != null ? "ivaCorrispettivo: " + ivaCorrispettivo + ",  " : "")
+				+ (ivaPrevendita != null ? "ivaPrevendita: " + ivaPrevendita + ",  " : "")
+				+ (importoPrestazione != null ? "importoPrestazione: " + importoPrestazione : "");
+	}
+    
+
 }

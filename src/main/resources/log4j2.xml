@@ -7,7 +7,10 @@
             </PatternLayout>
         </File>
     <Console name="STDOUT" target="SYSTEM_OUT">
-      <PatternLayout pattern="%d{dd-MM-yyyy HH:mm:ss.SSS} %-5p %c{1}:%L - %m%n"/>
+      <PatternLayout pattern=" %style{ %d{dd-MM-yyyy HH:mm:ss.SSS}}{cyan} %highlight{${LOG_LEVEL_PATTERN:-%5p}}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=green, DEBUG=green bold, TRACE=blue}  %style{ %c{1}:%L }{magenta} - %m%n"/>
+    </Console>
+     <Console name="STDOUT2" target="SYSTEM_OUT">
+      <PatternLayout pattern=" %d{dd-MM-yyyy HH:mm:ss.SSS} %-5p %c{1}:%L - %m%n"/>
     </Console>
   </Appenders>
   <Loggers>
@@ -15,7 +18,7 @@
       <AppenderRef ref="LogToFile"/>
     </Logger>
     <Root level="info">
-      <AppenderRef ref="STDOUT"/>
+      <AppenderRef ref="STDOUT2"/>
       <AppenderRef ref="LogToFile"/>
     </Root>
   </Loggers>

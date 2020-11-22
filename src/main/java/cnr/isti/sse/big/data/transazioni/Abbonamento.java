@@ -502,4 +502,17 @@ public class Abbonamento {
         this.annullamento = value;
     }
 
+	@Override
+	public String toString() {
+		return (codiceAbbonamento != null ? "codiceAbbonamento: " + codiceAbbonamento + ",  " : "")
+				+ (progressivoAbbonamento != null ? "progressivoAbbonamento: " + progressivoAbbonamento + ",  " : "")
+				+ (turno != null ? "turno: " + turno + ",  " : "")
+				+ (quantitaEventiAbilitati != null ? "quantitaEventiAbilitati: " + quantitaEventiAbilitati + ",  " : "")
+				+ (rateo != null ? "rateo: " + rateo + ",  " : "")
+				+ (corrispettivoLordo != null ? "corrispettivoLordo: " + corrispettivoLordo + ",  " : "")
+				+ (annullamento != null ? "annullamento: " + annullamento : "");
+	}
+
+    
+    
 }

@@ -807,4 +807,232 @@ public class Transazione {
         this.causaleAnnullamento = value;
     }
 
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if(obj instanceof cnr.isti.sse.big.data.reply.accessi.lta.TitoloAccesso) {
+			cnr.isti.sse.big.data.reply.accessi.lta.TitoloAccesso tt = (cnr.isti.sse.big.data.reply.accessi.lta.TitoloAccesso) obj;
+			if (!cartaAttivazione.equals(tt.getCartaAttivazione())) {
+				return false;
+			}
+			if (!sigilloFiscale.equals(tt.getSigilloFiscale())) {
+				return false;
+			}
+			if (!numeroProgressivo.equals(tt.getProgressivoFiscale())) {
+				return false;
+			}
+			return true;
+		}
+		if (!(obj instanceof Transazione)) {
+			return false;
+		}
+		Transazione other = (Transazione) obj;
+		if (abbonamento == null) {
+			if (other.abbonamento != null) {
+				return false;
+			}
+		} else if (!abbonamento.equals(other.abbonamento)) {
+			return false;
+		}
+		if (acquirenteRegistrazione == null) {
+			if (other.acquirenteRegistrazione != null) {
+				return false;
+			}
+		} else if (!acquirenteRegistrazione.equals(other.acquirenteRegistrazione)) {
+			return false;
+		}
+		if (acquirenteTransazione == null) {
+			if (other.acquirenteTransazione != null) {
+				return false;
+			}
+		} else if (!acquirenteTransazione.equals(other.acquirenteTransazione)) {
+			return false;
+		}
+		if (bigliettoAbbonamento == null) {
+			if (other.bigliettoAbbonamento != null) {
+				return false;
+			}
+		} else if (!bigliettoAbbonamento.equals(other.bigliettoAbbonamento)) {
+			return false;
+		}
+		if (cartaAttivazione == null) {
+			if (other.cartaAttivazione != null) {
+				return false;
+			}
+		} else if (!cartaAttivazione.equals(other.cartaAttivazione)) {
+			return false;
+		}
+		if (cartaOriginaleAnnullato == null) {
+			if (other.cartaOriginaleAnnullato != null) {
+				return false;
+			}
+		} else if (!cartaOriginaleAnnullato.equals(other.cartaOriginaleAnnullato)) {
+			return false;
+		}
+		if (causale == null) {
+			if (other.causale != null) {
+				return false;
+			}
+		} else if (!causale.equals(other.causale)) {
+			return false;
+		}
+		if (causaleAnnullamento == null) {
+			if (other.causaleAnnullamento != null) {
+				return false;
+			}
+		} else if (!causaleAnnullamento.equals(other.causaleAnnullamento)) {
+			return false;
+		}
+		if (cfOrganizzatore == null) {
+			if (other.cfOrganizzatore != null) {
+				return false;
+			}
+		} else if (!cfOrganizzatore.equals(other.cfOrganizzatore)) {
+			return false;
+		}
+		if (cfTitolare == null) {
+			if (other.cfTitolare != null) {
+				return false;
+			}
+		} else if (!cfTitolare.equals(other.cfTitolare)) {
+			return false;
+		}
+		if (codiceOrdine == null) {
+			if (other.codiceOrdine != null) {
+				return false;
+			}
+		} else if (!codiceOrdine.equals(other.codiceOrdine)) {
+			return false;
+		}
+		if (codiceRichiedenteEmissioneSigillo == null) {
+			if (other.codiceRichiedenteEmissioneSigillo != null) {
+				return false;
+			}
+		} else if (!codiceRichiedenteEmissioneSigillo.equals(other.codiceRichiedenteEmissioneSigillo)) {
+			return false;
+		}
+		if (dataEmissione == null) {
+			if (other.dataEmissione != null) {
+				return false;
+			}
+		} else if (!dataEmissione.equals(other.dataEmissione)) {
+			return false;
+		}
+		if (imponibileIntrattenimenti == null) {
+			if (other.imponibileIntrattenimenti != null) {
+				return false;
+			}
+		} else if (!imponibileIntrattenimenti.equals(other.imponibileIntrattenimenti)) {
+			return false;
+		}
+		if (ivaPreassolta == null) {
+			if (other.ivaPreassolta != null) {
+				return false;
+			}
+		} else if (!ivaPreassolta.equals(other.ivaPreassolta)) {
+			return false;
+		}
+		if (numeroProgressivo == null) {
+			if (other.numeroProgressivo != null) {
+				return false;
+			}
+		} else if (!numeroProgressivo.equals(other.numeroProgressivo)) {
+			return false;
+		}
+		if (oraEmissione == null) {
+			if (other.oraEmissione != null) {
+				return false;
+			}
+		} else if (!oraEmissione.equals(other.oraEmissione)) {
+			return false;
+		}
+		if (originaleAnnullato == null) {
+			if (other.originaleAnnullato != null) {
+				return false;
+			}
+		} else if (!originaleAnnullato.equals(other.originaleAnnullato)) {
+			return false;
+		}
+		if (posto == null) {
+			if (other.posto != null) {
+				return false;
+			}
+		} else if (!posto.equals(other.posto)) {
+			return false;
+		}
+		if (prestampa == null) {
+			if (other.prestampa != null) {
+				return false;
+			}
+		} else if (!prestampa.equals(other.prestampa)) {
+			return false;
+		}
+		if (riferimentoAnnullamento == null) {
+			if (other.riferimentoAnnullamento != null) {
+				return false;
+			}
+		} else if (!riferimentoAnnullamento.equals(other.riferimentoAnnullamento)) {
+			return false;
+		}
+		if (sigilloFiscale == null) {
+			if (other.sigilloFiscale != null) {
+				return false;
+			}
+		} else if (!sigilloFiscale.equals(other.sigilloFiscale)) {
+			return false;
+		}
+		if (sistemaEmissione == null) {
+			if (other.sistemaEmissione != null) {
+				return false;
+			}
+		} else if (!sistemaEmissione.equals(other.sistemaEmissione)) {
+			return false;
+		}
+		if (tipoTassazione == null) {
+			if (other.tipoTassazione != null) {
+				return false;
+			}
+		} else if (!tipoTassazione.equals(other.tipoTassazione)) {
+			return false;
+		}
+		if (tipoTitolo == null) {
+			if (other.tipoTitolo != null) {
+				return false;
+			}
+		} else if (!tipoTitolo.equals(other.tipoTitolo)) {
+			return false;
+		}
+		if (titoloAccesso == null) {
+			if (other.titoloAccesso != null) {
+				return false;
+			}
+		} else if (!titoloAccesso.equals(other.titoloAccesso)) {
+			return false;
+		}
+		if (valuta == null) {
+			if (other.valuta != null) {
+				return false;
+			}
+		} else if (!valuta.equals(other.valuta)) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return (titoloAccesso != null ? "titoloAccesso: " + titoloAccesso + ",  " : "")
+				+ (abbonamento != null ? "abbonamento: " + abbonamento + ",  " : "")
+				+ (bigliettoAbbonamento != null ? "bigliettoAbbonamento: " + bigliettoAbbonamento + ",  " : "")
+				+ (cartaAttivazione != null ? "cartaAttivazione: " + cartaAttivazione + ",  " : "")
+				+ (sigilloFiscale != null ? "sigilloFiscale: " + sigilloFiscale + ",  " : "")
+				+ (dataEmissione != null ? "dataEmissione: " + dataEmissione + ",  " : "")
+				+ (numeroProgressivo != null ? "numeroProgressivo: " + numeroProgressivo : ""+System.getProperty("line.separator"));
+	}
+    
+    
+
 }
