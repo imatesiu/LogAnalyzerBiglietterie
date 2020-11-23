@@ -110,7 +110,7 @@ public class ApiRestLTA {
 
 	}
 
-	@Path("/SingleFileLTA")
+	/*@Path("/SingleFileLTA")
 	@POST
 	@ApiResponse(
 			responseCode = "200",
@@ -149,7 +149,7 @@ public class ApiRestLTA {
 		}
 		return "";
 
-	}
+	}*/
 
 
 

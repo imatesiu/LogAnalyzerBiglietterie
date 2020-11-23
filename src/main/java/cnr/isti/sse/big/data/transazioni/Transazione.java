@@ -95,7 +95,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
     "riferimentoAnnullamento"
 })
 @XmlRootElement(name = "Transazione")
-public class Transazione {
+public class Transazione implements Comparable<Transazione> {
 
     @XmlElement(name = "TitoloAccesso")
     protected TitoloAccesso titoloAccesso;
@@ -1031,6 +1031,13 @@ public class Transazione {
 				+ (sigilloFiscale != null ? "sigilloFiscale: " + sigilloFiscale + ",  " : "")
 				+ (dataEmissione != null ? "dataEmissione: " + dataEmissione + ",  " : "")
 				+ (numeroProgressivo != null ? "numeroProgressivo: " + numeroProgressivo : ""+System.getProperty("line.separator"));
+	}
+
+	@Override
+	public int compareTo(Transazione o) {
+		// TODO Auto-generated method stub
+		return Integer.valueOf(this.numeroProgressivo) - Integer.valueOf(o.getNumeroProgressivo());
+	
 	}
     
     

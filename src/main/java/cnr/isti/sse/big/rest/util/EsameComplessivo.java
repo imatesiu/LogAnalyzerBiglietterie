@@ -138,6 +138,7 @@ public class EsameComplessivo {
 	
 	public LogRP checkRPGs() {
 		LogRP f = new LogRP();
+		log.info("***RPGs***");
 		for(RiepilogoGiornaliero rp : this.getRpg() ) {
 			List<Organizzatore> organizzatori = rp.getOrganizzatore();
 			LogRP  l  =  Utility.check(organizzatori);
@@ -154,7 +155,7 @@ public class EsameComplessivo {
 			List<Organizzatore> organizzatori = rpm.getOrganizzatore();
 			log.info("***RPM***");
 			lm  =  Utility.check(organizzatori);
-			log.info("***RPGs***");
+			
 			
 			if(!lg.equals(lm)) {
 				log.error("RPGs Diverso da RPM");
@@ -164,8 +165,12 @@ public class EsameComplessivo {
 		}
 		
 		ImmutableTriple<Integer, Integer, Integer> sum = checkLogs();
-		log.info(lg);
+		log.info(lm);
+		log.info("***check RPM vs LOGTransazioni***");
+		checkRPMtoLog(lm,sum);
+		log.info("***check RPGs vs LOGTransazioni***");
 		checkRPMtoLog(lg,sum);
+		log.info("***check LTA***");
 		checkLTA();
 		
 

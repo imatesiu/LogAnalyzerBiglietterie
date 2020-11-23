@@ -64,7 +64,7 @@ public class ApiRestEsameComplessivo {
 			),
 	description = "." )
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	@Produces(MediaType.APPLICATION_JSON)
+	//@Produces(MediaType.APPLICATION_JSON)
 	public String putFiles( @FormDataParam("files") List<FormDataBodyPart> uploadedInputStream,
 			@FormDataParam("files") List<FormDataContentDisposition> fileDetail, @Context HttpServletRequest request, @Context HttpServletResponse response)
 					throws JAXBException {// DatiCorrispettiviType Corrispettivi,
@@ -86,7 +86,7 @@ public class ApiRestEsameComplessivo {
 				log.info(resul);
 				byte[] t = 	Utility.getData(your_primitive_bytes);
 				String Transazione = new String(t);
-				String LT = Transazione.replaceAll("<!DOCTYPE.*", "").replaceAll("[^\\x20-\\x7e]", "");
+				String LT = Transazione.replaceAll("<!DOCTYPE[^<>]*(?:<![^<>]*>[^<>]*)*>", "").replaceAll("[^\\x20-\\x7e]", "");//
 				String NameF = NameFile.substring(0,3);
 				switch (NameF) {
 				case "LTA":{

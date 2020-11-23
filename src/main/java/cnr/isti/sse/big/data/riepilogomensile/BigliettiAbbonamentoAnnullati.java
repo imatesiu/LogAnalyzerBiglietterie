@@ -45,8 +45,8 @@ import javax.xml.bind.annotation.XmlType;
     "codiceAbbonamento",
     "tipoTitolo",
     "quantita",
-    "importoFiqurativo",
-    "ivaFiqurativa"
+    "importoFigurativo",
+    "ivaFigurativa"
 })
 @XmlRootElement(name = "BigliettiAbbonamentoAnnullati")
 public class BigliettiAbbonamentoAnnullati {
@@ -59,10 +59,10 @@ public class BigliettiAbbonamentoAnnullati {
     protected String tipoTitolo;
     @XmlElement(name = "Quantita", required = true)
     protected String quantita;
-    @XmlElement(name = "ImportoFiqurativo", required = true)
-    protected String importoFiqurativo;
-    @XmlElement(name = "IVAFiqurativa", required = true)
-    protected String ivaFiqurativa;
+    @XmlElement(name = "ImportoFigurativo", required = true)
+    protected String importoFigurativo;
+    @XmlElement(name = "IVAFigurativa", required = true)
+    protected String ivaFigurativa;
 
     /**
      * Recupera il valore della proprietà codiceFiscale.
@@ -168,8 +168,8 @@ public class BigliettiAbbonamentoAnnullati {
      *     {@link String }
      *     
      */
-    public String getImportoFiqurativo() {
-        return importoFiqurativo;
+    public String getImportoFigurativo() {
+        return importoFigurativo;
     }
 
     /**
@@ -180,8 +180,8 @@ public class BigliettiAbbonamentoAnnullati {
      *     {@link String }
      *     
      */
-    public void setImportoFiqurativo(String value) {
-        this.importoFiqurativo = value;
+    public void setImportoFigurativo(String value) {
+        this.importoFigurativo = value;
     }
 
     /**
@@ -192,8 +192,8 @@ public class BigliettiAbbonamentoAnnullati {
      *     {@link String }
      *     
      */
-    public String getIVAFiqurativa() {
-        return ivaFiqurativa;
+    public String getIVAFigurativa() {
+        return ivaFigurativa;
     }
 
     /**
@@ -204,8 +204,8 @@ public class BigliettiAbbonamentoAnnullati {
      *     {@link String }
      *     
      */
-    public void setIVAFiqurativa(String value) {
-        this.ivaFiqurativa = value;
+    public void setIVAFigurativa(String value) {
+        this.ivaFigurativa = value;
     }
 
 }

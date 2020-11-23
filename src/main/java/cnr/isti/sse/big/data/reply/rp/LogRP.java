@@ -1117,8 +1117,8 @@ public class LogRP {
 		
 		ImmutableTriple<BigInteger, BigInteger, BigInteger>  immvba = l.getBigliettiabbonamenti().getVendite().all();
 		ImmutableTriple<BigInteger, BigInteger, BigInteger>  immaba = l.getBigliettiabbonamenti().getAnnullati().all();
-		this.getBigliettiabbonamenti().getVendite().updateall(immva);
-		this.getBigliettiabbonamenti().getAnnullati().updateall(immaa);
+		//this.getBigliettiabbonamenti().getVendite().updateall(immvba);
+		//this.getBigliettiabbonamenti().getAnnullati().updateall(immaba);
 		
 		}else {
 			this.setAbbonamenti(l.getAbbonamenti());

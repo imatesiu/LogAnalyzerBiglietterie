@@ -23,6 +23,7 @@ import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -246,6 +247,7 @@ public class Utility {
 		int totCor = 0;
 		int totPr = 0;
 		int prog = 0;
+		Collections.sort(listT, new Sortbyroll());
 		int numeroprogressivi = 0;
 		for(Transazione t : listT ) {
 			String p = t.getNumeroProgressivo();
@@ -493,7 +495,7 @@ public class Utility {
 	}
 
 
-	public static ImmutableTriple<Integer, Integer, Integer> getTitoliAccesso(List<TitoliAccesso> titoli) {
+	public static ImmutableTriple<Integer, Integer, Integer> getTitoliAccesso(List<TitoliAccesso> titoli, String incidenza) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
 		for(TitoliAccesso titolo: titoli) {
 			if(titolo.getCorrispettivoLordo()!=null)
@@ -503,8 +505,10 @@ public class Utility {
 			if(titolo.getPrevendita()!=null)
 			prevendita += Integer.parseInt(titolo.getPrevendita().trim());			titolo.getTipoTitolo().trim();
 			titolo.getImportoPrestazione().trim();
-			
-			checkIVA(titolo);
+			if(incidenza==null) {
+				incidenza = "0";
+			}
+			checkIVA(titolo, Integer.parseInt(incidenza));
 		}
 		return  ImmutableTriple.of(quantita, corrispettivo, prevendita);
 	}
@@ -512,7 +516,7 @@ public class Utility {
 
 
 
-	private static boolean checkIVA(TitoliAccesso titolo) {
+	private static boolean checkIVA(TitoliAccesso titolo, int incidenza) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
 		if(titolo.getCorrispettivoLordo()!=null)
 			corrispettivo += Integer.parseInt(titolo.getCorrispettivoLordo().trim());
@@ -529,22 +533,30 @@ public class Utility {
 	//	df.format(number)
 		 double corr =  Double.parseDouble(df.format(corrispettivo/quantita ) )/100 ;
 		
-		 //double baseiscorporocorriva22 = Double.parseDouble(df.format(corr*100/122 ));
+		double baseiscorporocorriva22 = Double.parseDouble(df.format(corr*100/122 ));
 		double baseiscorporocorriva10 = Double.parseDouble(df.format(corr*100/110));
 		
 		
-		ImmutableTriple<Double, Double, Double> basei = calcBaseImpIncidenza(100,corr,22,16);
+		ImmutableTriple<Double, Double, Double> basei = calcBaseImpIncidenza(incidenza,corr,22,16);
 		
-		double ivac22 = Double.parseDouble(df.format(basei.middle*22/100));
+		double ivac22 = Double.parseDouble(df.format(baseiscorporocorriva22*22/100));
+		
+		double ivac22_i = Double.parseDouble(df.format(basei.middle*22/100));
 		double ivac10 = Double.parseDouble(df.format(baseiscorporocorriva10*10/100));
 		
-		
+		DecimalFormat df2 = new DecimalFormat("#", symbols);
 		
 		int ivaf10 = (int) (ivac10*quantita*100);
 		int ivaf22 = (int) (ivac22*quantita*100);
 		
-		if((ivacorr != ivaf10) & (ivacorr != ivaf22) ) {
+		int ivaf22_i = (int) Double.parseDouble(df2.format((ivac22_i*quantita)*100));
+		
+		if((ivacorr != ivaf10) & (ivacorr != ivaf22) & (ivacorr != ivaf22_i) ) {
 			log.error("IVa errata in "+titolo);
+			log.error(ivaf10);
+			log.error(ivaf22);
+			log.error(ivaf22_i);
+			log.error("imp intra"+basei);
 			if((ivacorr < ivaf10) & (ivacorr < ivaf22) ) {
 				log.error("IVa Minore in "+titolo);
 			}
@@ -558,18 +570,19 @@ public class Utility {
 	}
 	
 	private static ImmutableTriple<Double, Double, Double> calcBaseImpIncidenza(double incidenza, double lordo, double impostaIVA, double impostaintratt) {
-		//divido il lordo in base all'incidenza
-		double lordoincidenza = lordo*incidenza/100;
-		// scoporo iva + imposta
-		double baseimposta = lordoincidenza*100/(100+impostaIVA+impostaintratt);
-		double imposta = baseimposta*impostaintratt/100;
-
-		double baseimpiva = baseimposta + ((lordo-lordoincidenza)*100/(100+impostaIVA));
-		double iva = baseimpiva*impostaIVA/100;
-		
 		DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance();
 		symbols.setDecimalSeparator('.');
 		DecimalFormat df = new DecimalFormat("#.##", symbols);
+		
+		//divido il lordo in base all'incidenza
+		double lordoincidenza = (lordo*incidenza)/100;
+		// scoporo iva + imposta
+		double baseimposta = Double.parseDouble(df.format(((lordoincidenza*100)/(100+impostaIVA+impostaintratt))));
+		double imposta = baseimposta*impostaintratt/100;
+
+		double baseimpiva = baseimposta +((lordo-lordoincidenza)*100/(100+impostaIVA));
+		double iva = baseimpiva*impostaIVA/100;
+		
 		
 		return ImmutableTriple.of(Double.parseDouble(df.format(baseimposta)),Double.parseDouble(df.format( baseimpiva)), Double.valueOf(0));
 		
@@ -652,8 +665,8 @@ public class Utility {
 			List<BigliettiAbbonamentoAnnullati> bigliettiAbbonamentoAnnullati) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
 		for(BigliettiAbbonamentoAnnullati titolo: bigliettiAbbonamentoAnnullati) {
-			if(titolo.getImportoFiqurativo()!=null)
-				corrispettivo += Integer.parseInt(titolo.getImportoFiqurativo());
+			if(titolo.getImportoFigurativo()!=null)
+				corrispettivo += Integer.parseInt(titolo.getImportoFigurativo());
 			if(titolo.getQuantita()!=null)
 				quantita += Integer.parseInt(titolo.getQuantita());
 			titolo.getTipoTitolo().trim();
@@ -668,8 +681,8 @@ public class Utility {
 	public static ImmutableTriple<Integer, Integer, Integer> getAbbonamentiFissi(List<AbbonamentiFissi> abbonamentiFissi) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
 		for(AbbonamentiFissi titolo: abbonamentiFissi) {
-			if(titolo.getImportoFiqurativo()!=null)
-				corrispettivo += Integer.parseInt(titolo.getImportoFiqurativo());
+			if(titolo.getImportoFigurativo()!=null)
+				corrispettivo += Integer.parseInt(titolo.getImportoFigurativo());
 			if(titolo.getQuantita()!=null)
 				quantita += Integer.parseInt(titolo.getQuantita());
 			titolo.getTipoTitolo().trim();
@@ -701,6 +714,7 @@ public class Utility {
 
 				labb.add(Utility.getAbbonamentiEmessi(a.getAbbonamentiEmessi()));
 				alabb.add(Utility.getAbbonamentiAnnullati(a.getAbbonamentiAnnullati()));
+
 				Utility.getAbbonamentiIVAPreassolta(a.getAbbonamentiIVAPreassolta());
 				Utility.getAbbonamentiIVAPreassoltaAnnullati(a.getAbbonamentiIVAPreassoltaAnnullati());
 
@@ -712,6 +726,7 @@ public class Utility {
 			List<Evento> leventi = organizzatore.getEvento();
 			for(Evento evento :leventi ) {
 				log.info(evento.getIntrattenimento());
+				String incidenzaI = evento.getIntrattenimento().getIncidenza();
 				log.info(evento.getMultiGenere());
 				List<OrdineDiPosto> ordinip = evento.getOrdineDiPosto();
 				int numerotitoli = 0;
@@ -724,7 +739,7 @@ public class Utility {
 				
 				for(OrdineDiPosto ordinp: ordinip) {
 					List<TitoliAccesso> titoliaccesso = ordinp.getTitoliAccesso();
-					limm.add(Utility.getTitoliAccesso(titoliaccesso));
+					limm.add(Utility.getTitoliAccesso(titoliaccesso, incidenzaI));
 					List<TitoliAnnullati> titoliAnnullati = ordinp.getTitoliAnnullati();
 					alimm.add(Utility.getTitoliAnnullati(titoliAnnullati));
 					List<TitoliAccessoIVAPreassolta> titoliAccessoIVAPreassolta = ordinp.getTitoliAccessoIVAPreassolta();
@@ -736,7 +751,7 @@ public class Utility {
 					List<BigliettiAbbonamentoAnnullati> bigliettiAbbonamentoAnnullati = ordinp.getBigliettiAbbonamentoAnnullati();
 					alabbbiglietto.add(Utility.getBigliettiAbbonamentoAnnullati(bigliettiAbbonamentoAnnullati));
 					List<AbbonamentiFissi> abbonamentiFissi = ordinp.getAbbonamentiFissi();
-					limm.add(Utility.getAbbonamentiFissi(abbonamentiFissi));
+					//labbbiglietto.add(Utility.getAbbonamentiFissi(abbonamentiFissi));
 
 				}
 				ImmutableTriple<Integer, Integer, Integer> sum = Utility.sumImmutableTriple(limm);
