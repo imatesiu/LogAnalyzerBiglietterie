@@ -236,4 +236,28 @@ public class TitoliAnnullati {
         this.importoPrestazione = value;
     }
 
+	@Override
+	public String toString() {
+		return (tipoTitolo != null ? "tipoTitolo: " + tipoTitolo + ", \\n " : "")
+				+ (quantita != null ? "quantita: " + quantita + ", \\n " : "")
+				+ (corrispettivoLordo != null ? "corrispettivoLordo: " + corrispettivoLordo + ", \\n " : "")
+				+ (prevendita != null ? "prevendita: " + prevendita + ", \\n " : "")
+				+ (ivaCorrispettivo != null ? "ivaCorrispettivo: " + ivaCorrispettivo + ", \\n " : "")
+				+ (ivaPrevendita != null ? "ivaPrevendita: " + ivaPrevendita + ", \\n " : "")
+				+ (importoPrestazione != null ? "importoPrestazione: " + importoPrestazione : "")
+				+ (ivaCorrispettivo != null ? (ivaPrevendita != null ? "ivaCorrispettivo+ivaPrevendita: " + sum(ivaPrevendita,ivaCorrispettivo) :""):"");
+
+	}
+    
+	private String sum(String ivaPrevendita2, String ivaCorrispettivo2) {
+		int sum = 0;
+		try {
+			 sum = Integer.parseInt(ivaPrevendita2)+Integer.parseInt(ivaCorrispettivo2);
+		}catch (Exception e) {
+			
+		}
+		
+		return  String.valueOf(sum);
+	}
+
 }

@@ -495,4 +495,29 @@ public class Evento {
         return this.sistemaEmissione;
     }
 
+	@Override
+	public String toString() {
+		return (cfOrganizzatore != null ? "cfOrganizzatore: " + cfOrganizzatore + ", \\n " : "")
+				+ (denominazioneOrganizzatore != null
+						? "denominazioneOrganizzatore: " + denominazioneOrganizzatore + ", \n "
+						: "")
+				+ (tipologiaOrganizzatore != null ? "tipologiaOrganizzatore: " + tipologiaOrganizzatore + ", \n " : "")
+				+ (spettacoloIntrattenimento != null
+						? "spettacoloIntrattenimento: " + spettacoloIntrattenimento + ", \n "
+						: "")
+				+ (incidenzaIntrattenimento != null ? "incidenzaIntrattenimento: " + incidenzaIntrattenimento + ", \n "
+						: "")
+				+ (denominazioneLocale != null ? "denominazioneLocale: " + denominazioneLocale + ", \\n " : "")
+				+ (codiceLocale != null ? "codiceLocale: " + codiceLocale + ", \\n " : "")
+				+ (dataEvento != null ? "dataEvento: " + dataEvento + ", \n " : "")
+				+ (oraEvento != null ? "oraEvento: " + oraEvento + ", \n " : "")
+				+ (tipoGenere != null ? "tipoGenere: " + tipoGenere + ", \n " : "")
+				+ (titoloEvento != null ? "titoloEvento: " + titoloEvento + ", \n " : "")
+				+ (autore != null ? "autore: " + autore + ", \\n " : "")
+				+ (esecutore != null ? "esecutore: " + esecutore + ", \\n " : "")
+				+ (nazionalitaFilm != null ? "nazionalitaFilm: " + nazionalitaFilm + ", \\n " : "")
+				+ (numOpereRappresentate != null ? "numOpereRappresentate: " + numOpereRappresentate + ", \n " : "")
+				+ (sistemaEmissione != null ? "sistemaEmissione: " + sistemaEmissione : "");
+	}
+    
 }

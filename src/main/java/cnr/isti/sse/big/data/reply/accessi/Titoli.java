@@ -131,4 +131,13 @@ public class Titoli {
         return this.totaleTipoTitolo;
     }
 
+	@Override
+	public String toString() {
+		return (codiceOrdinePosto != null ? "codiceOrdinePosto: " + codiceOrdinePosto + ", \\n " : "")
+				+ (capienza != null ? "capienza: " + capienza + ", \\n " : "")
+				+ (totaleTipoTitolo != null ? "totaleTipoTitolo: " + totaleTipoTitolo : "");
+	}
+
+    
+    
 }

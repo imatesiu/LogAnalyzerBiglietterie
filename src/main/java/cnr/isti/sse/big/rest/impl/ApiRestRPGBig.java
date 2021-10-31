@@ -138,7 +138,7 @@ public class ApiRestRPGBig {
 
 				byte[] t = 	Utility.getData(your_primitive_bytes);
 				String rgiorna = new String(t);
-				String giorna = rgiorna.replaceAll("<!DOCTYPE RiepilogoGiornaliero SYSTEM.*", "");
+				String giorna = rgiorna.replaceAll("<!DOCTYPE RiepilogoGiornaliero SYSTEM.*d\">", "");
 
 
 				JAXBContext jaxbContext = JAXBContext.newInstance(RiepilogoGiornaliero.class);

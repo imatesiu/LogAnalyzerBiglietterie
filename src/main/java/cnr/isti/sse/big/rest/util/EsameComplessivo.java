@@ -165,6 +165,7 @@ public class EsameComplessivo {
 		}
 		
 		ImmutableTriple<Integer, Integer, Integer> sum = checkLogs();
+		log.info(sum);
 		log.info(lm);
 		log.info("***check RPM vs LOGTransazioni***");
 		checkRPMtoLog(lm,sum);
@@ -172,16 +173,23 @@ public class EsameComplessivo {
 		checkRPMtoLog(lg,sum);
 		log.info("***check LTA***");
 		checkLTA();
-		
-
+		log.info("***check RCA***");
+		checkRCA();
 		//log.info("ok");
 
 	}
+	private void checkRCA() {
+		log.info(getRca());
+		
+	}
+
+
+
 	private void checkRPMtoLog(LogRP lm, ImmutableTriple<Integer, Integer, Integer> sum) {
 		ImmutableTriple<Integer, Integer, Integer> listsum = lm.sumAll();
 		log.info(listsum);
 		if(!listsum.equals(sum)) {
-			log.error("Differenza tra Ripilogo e Log Transazioni");
+			log.error("*****Differenza tra Ripilogo e Log Transazioni");
 		}else {
 			log.info("Nessuna Differenza tra Ripilogo e Log Transazioni");
 		}

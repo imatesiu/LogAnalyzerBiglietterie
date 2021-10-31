@@ -101,7 +101,7 @@
 			<xs:sequence>
 				<xs:element ref="CodiceOrdine" />
 				<xs:element ref="Capienza" />
-				<xs:element ref="IVAEccedenteOmaqqi" />
+				<xs:element ref="IVAEccedenteOmaggi" />
 				<xs:element minOccurs="0" maxOccurs="unbounded" ref="TitoliAccesso" />
 				<xs:element minOccurs="0" maxOccurs="unbounded" ref="TitoliAnnullati" />
 				<xs:element minOccurs="0" maxOccurs="unbounded" ref="TitoliAccessoIVAPreassolta" />
@@ -289,7 +289,7 @@
 	<xs:element name="Incidenza" type="xs:string" />
 	<xs:element name="IncidenzaGenere" type="xs:string" />
 	<xs:element name="IVACorrispettivo" type="xs:string" />
-	<xs:element name="IVAEccedenteOmaqqi" type="xs:string" />
+	<xs:element name="IVAEccedenteOmaggi" type="xs:string" />
 	<xs:element name="IVAFiqurativa" type="xs:string" />
 	<xs:element name="IVAPrevendita" type="xs:string" />
 	<xs:element name="Nazionalita" type="xs:string" />

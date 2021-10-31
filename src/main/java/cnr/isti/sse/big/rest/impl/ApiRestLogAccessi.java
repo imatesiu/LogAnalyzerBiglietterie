@@ -71,7 +71,7 @@ public class ApiRestLogAccessi {
 
 			byte[] t = 	Utility.getData(ricevute);
 			String LogTransazione = new String(t);
-			String LT = LogTransazione.replaceAll("<!DOCTYPE RiepilogoControlloAccessi SYSTEM.*", "");
+			String LT = LogTransazione.replaceAll("<!DOCTYPE RiepilogoControlloAccessi SYSTEM.*d\">", "");
 			JAXBContext jaxbContext = JAXBContext.newInstance(RiepilogoControlloAccessi.class);
 			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 			Utility.validateXmlLogTransazione(unmarshaller);	
@@ -136,7 +136,7 @@ public class ApiRestLogAccessi {
 
 				byte[] t = 	Utility.getData(your_primitive_bytes);
 				String LogTransazione = new String(t);
-				String LT = LogTransazione.replaceAll("<!DOCTYPE RiepilogoControlloAccessi SYSTEM.*", "");
+				String LT = LogTransazione.replaceAll("<!DOCTYPE RiepilogoControlloAccessi SYSTEM.*d\">", "");
 				JAXBContext jaxbContext = JAXBContext.newInstance(RiepilogoControlloAccessi.class);
 				Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 				Utility.validateXmlLogTransazione(unmarshaller);	

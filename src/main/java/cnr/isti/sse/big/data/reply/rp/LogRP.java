@@ -284,7 +284,8 @@ public class LogRP {
     
     @Override
 	public String toString() {
-		return (abbonamenti != null ? "abbonamenti: " + abbonamenti + ",  " : "")
+		return (abbonamenti != null ? "abbonamenti: " + abbonamenti + ", \n " : "")
+				+ (bigliettiabbonamenti != null ? "bigliettiabbonamenti: " + bigliettiabbonamenti + ", \n " : "")
 				+ (titoliAccesso != null ? "titoliAccesso: " + titoliAccesso : "");
 	}
 

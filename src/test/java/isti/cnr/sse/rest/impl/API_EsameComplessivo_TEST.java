@@ -113,11 +113,11 @@ public class API_EsameComplessivo_TEST extends JerseyTest {
 		
 	/*String Filexml = "es2/LOG_2020_11_05_001.xsi.p7m";
 	//runTest2(Filexml);*/
-		String Filexml = "es2/RPG_2020_11_05_001.xsi.p7m";
+		String Filexml = "es3/RPM_2020_11_00_001.xsi.p7m";
 	
 	files.add(Filexml);
 	 Filexml = "es2/LOG_2020_11_05_001.xsi.p7m";
-	files.add(Filexml);
+	//files.add(Filexml);
 	/*Filexml = "es2/LTA_2020_11_05_001.xsi.p7m";
 	files.add(Filexml);
 	Filexml = "es2/LTA_2020_11_06_001.xsi.p7m";

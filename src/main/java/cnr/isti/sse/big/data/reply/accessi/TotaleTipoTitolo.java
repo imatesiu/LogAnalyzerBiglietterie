@@ -488,4 +488,49 @@ public class TotaleTipoTitolo {
         this.totaleTitoliBLDigitali = value;
     }
 
+	@Override
+	public String toString() {
+		return (tipoTitolo != null ? "tipoTitolo: " + tipoTitolo + ", \\n " : "")
+				+ (totaleTitoliLTA != null ? "totaleTitoliLTA: " + totaleTitoliLTA + ", \\n " : "")
+				+ (totaleTitoliNoAccessoTradiz != null
+						? "totaleTitoliNoAccessoTradiz: " + totaleTitoliNoAccessoTradiz + ", \\n "
+						: "")
+				+ (totaleTitoliNoAccessoDigitali != null
+						? "totaleTitoliNoAccessoDigitali: " + totaleTitoliNoAccessoDigitali + ", \\n "
+						: "")
+				+ (totaleTitoliAutomatizzatiTradiz != null
+						? "totaleTitoliAutomatizzatiTradiz: " + totaleTitoliAutomatizzatiTradiz + ", \\n "
+						: "")
+				+ (totaleTitoliAutomatizzatiDigitali != null
+						? "totaleTitoliAutomatizzatiDigitali: " + totaleTitoliAutomatizzatiDigitali + ", \\n "
+						: "")
+				+ (totaleTitoliManualiTradiz != null
+						? "totaleTitoliManualiTradiz: " + totaleTitoliManualiTradiz + ", \\n "
+						: "")
+				+ (totaleTitoliManualiDigitali != null
+						? "totaleTitoliManualiDigitali: " + totaleTitoliManualiDigitali + ", \\n "
+						: "")
+				+ (totaleTitoliAnnullatiTradiz != null
+						? "totaleTitoliAnnullatiTradiz: " + totaleTitoliAnnullatiTradiz + ", \\n "
+						: "")
+				+ (totaleTitoliAnnullatiDigitali != null
+						? "totaleTitoliAnnullatiDigitali: " + totaleTitoliAnnullatiDigitali + ", \\n "
+						: "")
+				+ (totaleTitoliDaspatiTradiz != null
+						? "totaleTitoliDaspatiTradiz: " + totaleTitoliDaspatiTradiz + ", \\n "
+						: "")
+				+ (totaleTitoliDaspatiDigitali != null
+						? "totaleTitoliDaspatiDigitali: " + totaleTitoliDaspatiDigitali + ", \\n "
+						: "")
+				+ (totaleTitoliRubatiTradiz != null ? "totaleTitoliRubatiTradiz: " + totaleTitoliRubatiTradiz + ", \\n "
+						: "")
+				+ (totaleTitoliRubatiDigitali != null
+						? "totaleTitoliRubatiDigitali: " + totaleTitoliRubatiDigitali + ", \\n "
+						: "")
+				+ (totaleTitoliBLTradiz != null ? "totaleTitoliBLTradiz: " + totaleTitoliBLTradiz + ", \\n " : "")
+				+ (totaleTitoliBLDigitali != null ? "totaleTitoliBLDigitali: " + totaleTitoliBLDigitali : "");
+	}
+    
+    
+
 }

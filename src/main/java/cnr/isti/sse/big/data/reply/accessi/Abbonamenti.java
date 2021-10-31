@@ -131,4 +131,12 @@ public class Abbonamenti {
         return this.totaleTipoTitoloAbbonamento;
     }
 
+	@Override
+	public String toString() {
+		return (codiceOrdinePosto != null ? "codiceOrdinePosto: " + codiceOrdinePosto + ", \\n " : "")
+				+ (capienza != null ? "capienza: " + capienza + ", \\n " : "")
+				+ (totaleTipoTitoloAbbonamento != null ? "totaleTipoTitoloAbbonamento: " + totaleTipoTitoloAbbonamento
+						: "");
+	}
+    
 }

@@ -84,7 +84,7 @@ public class ApiRestLTA {
 
 				byte[] t = 	Utility.getData(your_primitive_bytes);
 				String LogTransazione = new String(t);
-				String LT = LogTransazione.replaceAll("<!DOCTYPE LTA_Giornaliera SYSTEM.*", "").replaceAll("[^\\x20-\\x7e]", "");
+				String LT = LogTransazione.replaceAll("<!DOCTYPE LTA_Giornaliera SYSTEM.*d\">", "").replaceAll("[^\\x20-\\x7e]", "");
 				JAXBContext jaxbContext = JAXBContext.newInstance(LTAGiornaliera.class);
 				Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 				Utility.validateXmlLogTransazione(unmarshaller);	

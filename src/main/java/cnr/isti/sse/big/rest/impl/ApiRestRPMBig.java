@@ -100,11 +100,11 @@ public class ApiRestRPMBig {
 				
 				byte[] t = 	Utility.getData(rpg);
 				String rmensile = new String(t);
-				String mensile = rmensile.replaceAll("<!DOCTYPE RiepilogoMensile SYSTEM.*", "");
+				String mensile = rmensile.replaceAll("<!DOCTYPE RiepilogoMensile SYSTEM.*d\">", "");
 			
 			JAXBContext jaxbContext = JAXBContext.newInstance(RiepilogoMensile.class);
 			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-			Utility.validateXmlLogTransazione(unmarshaller);	
+			Utility.validateXmlRiepilogoMensile(unmarshaller);	
 			
 			StringReader reader = new StringReader(mensile);
 			RiepilogoMensile RPM = (RiepilogoMensile) unmarshaller.unmarshal(reader);
@@ -159,7 +159,7 @@ public class ApiRestRPMBig {
 				
 				byte[] t = 	Utility.getData(rpg);
 				String rmensile = new String(t);
-				String mensile = rmensile.replaceAll("<!DOCTYPE RiepilogoMensile SYSTEM.*", "");
+				String mensile = rmensile.replaceAll("<!DOCTYPE RiepilogoMensile SYSTEM.*d\">", "");
 			
 			JAXBContext jaxbContext = JAXBContext.newInstance(RiepilogoMensile.class);
 			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();

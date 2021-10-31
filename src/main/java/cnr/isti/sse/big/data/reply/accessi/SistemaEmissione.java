@@ -108,4 +108,12 @@ public class SistemaEmissione {
         return this.abbonamenti;
     }
 
+	@Override
+	public String toString() {
+		return (titoli != null ? "titoli: " + titoli + ", \n " : "")
+				+ (abbonamenti != null ? "abbonamenti: " + abbonamenti : "");
+	}
+    
+    
+
 }

@@ -244,7 +244,20 @@ public class TitoliAccesso {
 				+ (prevendita != null ? "prevendita: " + prevendita + ",  " : "")
 				+ (ivaCorrispettivo != null ? "ivaCorrispettivo: " + ivaCorrispettivo + ",  " : "")
 				+ (ivaPrevendita != null ? "ivaPrevendita: " + ivaPrevendita + ",  " : "")
-				+ (importoPrestazione != null ? "importoPrestazione: " + importoPrestazione : "");
+				+ (importoPrestazione != null ? "importoPrestazione: " + importoPrestazione + ", " : "")
+				+ (ivaCorrispettivo != null ? (ivaPrevendita != null ? "ivaCorrispettivo+ivaPrevendita: " + sum(ivaPrevendita,ivaCorrispettivo) :""):"");
+				
+	}
+
+	private String sum(String ivaPrevendita2, String ivaCorrispettivo2) {
+		int sum = 0;
+		try {
+			 sum = Integer.parseInt(ivaPrevendita2)+Integer.parseInt(ivaCorrispettivo2);
+		}catch (Exception e) {
+			
+		}
+		
+		return  String.valueOf(sum);
 	}
     
 

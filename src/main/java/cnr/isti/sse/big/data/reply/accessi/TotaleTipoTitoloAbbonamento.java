@@ -488,4 +488,49 @@ public class TotaleTipoTitoloAbbonamento {
         this.totaleTitoliAbbBLDigitali = value;
     }
 
+	@Override
+	public String toString() {
+		return (tipoTitoloAbbonamento != null ? "tipoTitoloAbbonamento: " + tipoTitoloAbbonamento + ", \\n " : "")
+				+ (totaleTitoliAbbLTA != null ? "totaleTitoliAbbLTA: " + totaleTitoliAbbLTA + ", \\n " : "")
+				+ (totaleTitoliAbbNoAccessoTradiz != null
+						? "totaleTitoliAbbNoAccessoTradiz: " + totaleTitoliAbbNoAccessoTradiz + ", \\n "
+						: "")
+				+ (totaleTitoliAbbNoAccessoDigitali != null
+						? "totaleTitoliAbbNoAccessoDigitali: " + totaleTitoliAbbNoAccessoDigitali + ", \\n "
+						: "")
+				+ (totaleTitoliAbbAutomatizzatiTradiz != null
+						? "totaleTitoliAbbAutomatizzatiTradiz: " + totaleTitoliAbbAutomatizzatiTradiz + ", \\n "
+						: "")
+				+ (totaleTitoliAbbAutomatizzatiDigitali != null
+						? "totaleTitoliAbbAutomatizzatiDigitali: " + totaleTitoliAbbAutomatizzatiDigitali + ", \\n "
+						: "")
+				+ (totaleTitoliAbbManualiTradiz != null
+						? "totaleTitoliAbbManualiTradiz: " + totaleTitoliAbbManualiTradiz + ", \\n "
+						: "")
+				+ (totaleTitoliAbbManualiDigitali != null
+						? "totaleTitoliAbbManualiDigitali: " + totaleTitoliAbbManualiDigitali + ", \\n "
+						: "")
+				+ (totaleTitoliAbbAnnullatiTradiz != null
+						? "totaleTitoliAbbAnnullatiTradiz: " + totaleTitoliAbbAnnullatiTradiz + ", \\n "
+						: "")
+				+ (totaleTitoliAbbAnnullatiDigitali != null
+						? "totaleTitoliAbbAnnullatiDigitali: " + totaleTitoliAbbAnnullatiDigitali + ", \\n "
+						: "")
+				+ (totaleTitoliAbbDaspatiTradiz != null
+						? "totaleTitoliAbbDaspatiTradiz: " + totaleTitoliAbbDaspatiTradiz + ", \\n "
+						: "")
+				+ (totaleTitoliAbbDaspatiDigitali != null
+						? "totaleTitoliAbbDaspatiDigitali: " + totaleTitoliAbbDaspatiDigitali + ", \\n "
+						: "")
+				+ (totaleTitoliAbbRubatiTradiz != null
+						? "totaleTitoliAbbRubatiTradiz: " + totaleTitoliAbbRubatiTradiz + ", \\n "
+						: "")
+				+ (totaleTitoliAbbRubatiDigitali != null
+						? "totaleTitoliAbbRubatiDigitali: " + totaleTitoliAbbRubatiDigitali + ", \\n "
+						: "")
+				+ (totaleTitoliAbbBLTradiz != null ? "totaleTitoliAbbBLTradiz: " + totaleTitoliAbbBLTradiz + ", \\n "
+						: "")
+				+ (totaleTitoliAbbBLDigitali != null ? "totaleTitoliAbbBLDigitali: " + totaleTitoliAbbBLDigitali : "");
+	}
+
 }

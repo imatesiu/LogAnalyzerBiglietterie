@@ -76,22 +76,29 @@ public class ApiRestEsameComplessivo {
 			log.info("Message from: "+request.getRemoteAddr());
 
 			EsameComplessivo e = new EsameComplessivo();
-
+			byte[] t = new byte[1];
 			int i = 0;
 			for(FormDataBodyPart filePart: uploadedInputStream) {
 				byte[] your_primitive_bytes = IOUtils.toByteArray(filePart.getEntityAs(InputStream.class));
 				String NameFile = fileDetail.get(i).getFileName();
 				log.info(NameFile);
+				if(NameFile.contains("p7m")) {
 				boolean	resul = Utility.verifyPKCS7(your_primitive_bytes);
 				log.info(resul);
-				byte[] t = 	Utility.getData(your_primitive_bytes);
+				 t = 	Utility.getData(your_primitive_bytes);
+				}else {
+					t = your_primitive_bytes;
+				}
 				String Transazione = new String(t);
-				String LT = Transazione.replaceAll("<!DOCTYPE[^<>]*(?:<![^<>]*>[^<>]*)*>", "").replaceAll("[^\\x20-\\x7e]", "");//
+				String LT = Transazione.replaceAll("<!DOCTYPE[^<>]*(?:<![^<>]*>[^<>]*)*d\">", "").replaceAll("[^\\x20-\\x7e]", "");//
+			     LT = LT.replaceAll("<!DOCTYPE[^<>]*(?:<![^<>]*>[^<>]*)*d'>", "").replaceAll("[^\\x20-\\x7e]", "");//
+
 				String NameF = NameFile.substring(0,3);
 				switch (NameF) {
 				case "LTA":{
 					JAXBContext jaxbContext = JAXBContext.newInstance(LTAGiornaliera.class);
 					Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+					Utility.validateXmlLTA(unmarshaller);
 					StringReader reader = new StringReader(LT);
 					LTAGiornaliera LogT = (LTAGiornaliera) unmarshaller.unmarshal(reader);
 					e.set(LogT);
@@ -100,7 +107,7 @@ public class ApiRestEsameComplessivo {
 				case "RCA":{
 					JAXBContext jaxbContext = JAXBContext.newInstance(RiepilogoControlloAccessi.class);
 					Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-
+					Utility.validateXmlRCA(unmarshaller);
 					StringReader reader = new StringReader(LT);
 					RiepilogoControlloAccessi LogT = (RiepilogoControlloAccessi) unmarshaller.unmarshal(reader);
 					e.set(LogT);
@@ -109,7 +116,7 @@ public class ApiRestEsameComplessivo {
 				case "RPG":{
 					JAXBContext jaxbContext = JAXBContext.newInstance(RiepilogoGiornaliero.class);
 					Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-
+					Utility.validateXmlRiepilogoGiornaliero(unmarshaller);
 					StringReader reader = new StringReader(LT);
 					RiepilogoGiornaliero RPG = (RiepilogoGiornaliero) unmarshaller.unmarshal(reader);
 					e.set(RPG);
@@ -118,7 +125,7 @@ public class ApiRestEsameComplessivo {
 				case "RPM":{
 					JAXBContext jaxbContext = JAXBContext.newInstance(RiepilogoMensile.class);
 					Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-					
+					Utility.validateXmlRiepilogoMensile(unmarshaller);	
 					StringReader reader = new StringReader(LT);
 					RiepilogoMensile RPM = (RiepilogoMensile) unmarshaller.unmarshal(reader);
 					e.set(RPM);
@@ -128,6 +135,7 @@ public class ApiRestEsameComplessivo {
 				case "LOG":{
 					JAXBContext jaxbContext = JAXBContext.newInstance(LogTransazione.class);
 					Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+					Utility.validateXmlLogTransazione(unmarshaller);	
 
 					StringReader reader = new StringReader(LT);
 					LogTransazione LogT = (LogTransazione) unmarshaller.unmarshal(reader);

@@ -70,10 +70,14 @@ public class ApiRestLogBig {
 
 			boolean	result = Utility.verifyPKCS7(ricevute);
 			log.info(result);
-
-			byte[] t = 	Utility.getData(ricevute);
-			String LogTransazione = new String(t);
-			String LT = LogTransazione.replaceAll("<!DOCTYPE LogTransazione SYSTEM.*", "");
+			String LogTransazione = "";
+			if(result) {
+				byte[] t = 	Utility.getData(ricevute);
+				LogTransazione = new String(t);
+			}else {
+				LogTransazione = new String(ricevute);
+			}
+			String LT = LogTransazione.replaceAll("<!DOCTYPE LogTransazione SYSTEM.*>", "");
 			JAXBContext jaxbContext = JAXBContext.newInstance(LogTransazione.class);
 			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 			Utility.validateXmlLogTransazione(unmarshaller);	
@@ -138,10 +142,19 @@ public class ApiRestLogBig {
 
 				boolean	resul = Utility.verifyPKCS7(your_primitive_bytes);
 				log.info(resul);
-
-				byte[] t = 	Utility.getData(your_primitive_bytes);
+				
+				/*byte[] t = 	Utility.getData(your_primitive_bytes);
 				String LogTransazione = new String(t);
-				String LT = LogTransazione.replaceAll("<!DOCTYPE LogTransazione SYSTEM.*", "");
+				String LT = LogTransazione.replaceAll("<!DOCTYPE LogTransazione SYSTEM.*", "");*/
+				String LogTransazione = "";
+				
+				if(resul) {
+					byte[] t = 	Utility.getData(your_primitive_bytes);
+					LogTransazione = new String(t);
+				}else {
+					LogTransazione = new String(your_primitive_bytes);
+				}
+				String LT = LogTransazione.replaceAll("<!DOCTYPE LogTransazione SYSTEM.*d\">", "");
 				JAXBContext jaxbContext = JAXBContext.newInstance(LogTransazione.class);
 				Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 				Utility.validateXmlLogTransazione(unmarshaller);	
