@@ -84,10 +84,12 @@
 	</xs:element>
 	<xs:element name="Partecipante">
 		<xs:complexType>
-			<xs:attribute name="Nome" type="xs:string" />
-			<xs:attribute name="Cognome" type="xs:string" />
-			<xs:attribute name="DataNascita" type="xs:string" />
-			<xs:attribute name="LuogoNascita" type="xs:string" />
+			<xs:sequence>
+			<xs:element name="Nome" type="xs:string" />
+			<xs:element name="Cognome" type="xs:string" />
+			<xs:element name="DataNascita" type="xs:string" />
+			<xs:element name="LuogoNascita" type="xs:string" />
+			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
 	

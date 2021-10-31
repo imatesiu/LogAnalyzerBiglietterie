@@ -39,12 +39,15 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
+	"codicesistemaemissione",
     "titoli",
     "abbonamenti"
 })
 @XmlRootElement(name = "SistemaEmissione")
 public class SistemaEmissione {
-
+	
+	 @XmlElement(name = "CodiceSistemaEmissione")
+	 protected String codicesistemaemissione;
     @XmlElement(name = "Titoli")
     protected List<Titoli> titoli;
     @XmlElement(name = "Abbonamenti")
@@ -112,6 +115,18 @@ public class SistemaEmissione {
 	public String toString() {
 		return (titoli != null ? "titoli: " + titoli + ", \n " : "")
 				+ (abbonamenti != null ? "abbonamenti: " + abbonamenti : "");
+	}
+
+	public String getCodicesistemaemissione() {
+		return codicesistemaemissione;
+	}
+
+	public void setCodicesistemaemissione(String codicesistemaemissione) {
+		this.codicesistemaemissione = codicesistemaemissione;
+	}
+
+	public void setAbbonamenti(List<Abbonamenti> abbonamenti) {
+		this.abbonamenti = abbonamenti;
 	}
     
     

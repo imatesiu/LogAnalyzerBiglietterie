@@ -1,6 +1,5 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" version="1.0">
-
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns="http://siae.it/log" elementFormDefault="qualified" targetNamespace="http://siae.it/log" xmlns:xs="http://www.w3.org/2001/XMLSchema">
 	<xs:element name="LogTransazione">
 		<xs:complexType>
 			<xs:sequence>

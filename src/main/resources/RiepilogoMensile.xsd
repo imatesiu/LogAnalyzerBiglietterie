@@ -93,6 +93,7 @@
 				<xs:element minOccurs="0" maxOccurs="1" ref="Autore" />
 				<xs:element minOccurs="0" maxOccurs="1" ref="Esecutore" />
 				<xs:element minOccurs="0" maxOccurs="1" ref="Nazionalita" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="Distributore" />
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -293,6 +294,7 @@
 	<xs:element name="IVAFiqurativa" type="xs:string" />
 	<xs:element name="IVAPrevendita" type="xs:string" />
 	<xs:element name="Nazionalita" type="xs:string" />
+	<xs:element name="Distributore" type="xs:string" />
 	<xs:element name="OraEvento" type="xs:string" />
 	<xs:element name="Prevendita" type="xs:string" />
 	<xs:element name="ProduttoreCinema" type="xs:string" />

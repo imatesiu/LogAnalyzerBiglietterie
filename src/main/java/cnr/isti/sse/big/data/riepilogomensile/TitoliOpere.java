@@ -44,7 +44,8 @@ import javax.xml.bind.annotation.XmlType;
     "produttoreCinema",
     "autore",
     "esecutore",
-    "nazionalita"
+    "nazionalita",
+    "distributore"
 })
 @XmlRootElement(name = "TitoliOpere")
 public class TitoliOpere {
@@ -59,6 +60,8 @@ public class TitoliOpere {
     protected String esecutore;
     @XmlElement(name = "Nazionalita")
     protected String nazionalita;
+    @XmlElement(name = "Distributore")
+    protected String distributore;
 
     /**
      * Recupera il valore della proprietà titolo.

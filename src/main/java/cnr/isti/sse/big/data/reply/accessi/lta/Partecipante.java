@@ -11,6 +11,7 @@ package cnr.isti.sse.big.data.reply.accessi.lta;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
@@ -36,17 +37,22 @@ import javax.xml.bind.annotation.XmlType;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "")
+@XmlType(name = "", propOrder = {
+	    "nome",
+	    "cognome",
+	    "dataNascita",
+	    "luogoNascita"
+	})
 @XmlRootElement(name = "Partecipante")
 public class Partecipante {
 
-    @XmlAttribute(name = "Nome")
+	@XmlElement(name = "Nome")
     protected String nome;
-    @XmlAttribute(name = "Cognome")
+	@XmlElement(name = "Cognome")
     protected String cognome;
-    @XmlAttribute(name = "DataNascita")
+	@XmlElement(name = "DataNascita")
     protected String dataNascita;
-    @XmlAttribute(name = "LuogoNascita")
+	@XmlElement(name = "LuogoNascita")
     protected String luogoNascita;
 
     /**

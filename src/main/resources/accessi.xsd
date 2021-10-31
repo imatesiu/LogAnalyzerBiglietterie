@@ -54,6 +54,7 @@
 	<xs:element name="SistemaEmissione">
 		<xs:complexType>
 			<xs:sequence>
+				<xs:element minOccurs="1" maxOccurs="1" ref="CodiceSistemaEmissione" />
 				<xs:element minOccurs="0" maxOccurs="unbounded" ref="Titoli" />
 				<xs:element minOccurs="0" maxOccurs="unbounded" ref="Abbonamenti" />
 			</xs:sequence>
@@ -121,6 +122,7 @@
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
+	<xs:element name="CodiceSistemaEmissione" type="xs:string" />
 	<xs:element name="CFTitolareCA" type="xs:string" />
 	<xs:element name="DenominazioneTitolareCA" type="xs:string" />
 	<xs:element name="CodiceSistemaCA" type="xs:string" />

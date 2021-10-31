@@ -230,7 +230,7 @@ public class Utility {
 		
 	}
 	public static void validateXmlRiepilogoGiornaliero(Unmarshaller unmarshaller)  {
-		validateXml(unmarshaller, "RiepilogoGiornaliero.xsd");
+		validateXml(unmarshaller, "riepilogogionaliero.xsd");
 		
 	}
 	

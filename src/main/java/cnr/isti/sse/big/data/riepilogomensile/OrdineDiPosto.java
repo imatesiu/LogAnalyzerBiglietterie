@@ -29,7 +29,7 @@ import javax.xml.bind.annotation.XmlType;
  *       &lt;sequence>
  *         &lt;element ref="{http://siae.it/mensile}CodiceOrdine"/>
  *         &lt;element ref="{http://siae.it/mensile}Capienza"/>
- *         &lt;element ref="{http://siae.it/mensile}IVAEccedenteOmaqqi"/>
+ *         &lt;element ref="{http://siae.it/mensile}IVAEccedenteOmaggi"/>
  *         &lt;element ref="{http://siae.it/mensile}TitoliAccesso" maxOccurs="unbounded" minOccurs="0"/>
  *         &lt;element ref="{http://siae.it/mensile}TitoliAnnullati" maxOccurs="unbounded" minOccurs="0"/>
  *         &lt;element ref="{http://siae.it/mensile}TitoliAccessoIVAPreassolta" maxOccurs="unbounded" minOccurs="0"/>
@@ -49,7 +49,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(name = "", propOrder = {
     "codiceOrdine",
     "capienza",
-    "ivaEccedenteOmaqqi",
+    "ivaEccedenteOmaggi",
     "titoliAccesso",
     "titoliAnnullati",
     "titoliAccessoIVAPreassolta",
@@ -65,8 +65,8 @@ public class OrdineDiPosto {
     protected String codiceOrdine;
     @XmlElement(name = "Capienza", required = true)
     protected String capienza;
-    @XmlElement(name = "IVAEccedenteOmaqqi", required = true)
-    protected String ivaEccedenteOmaqqi;
+    @XmlElement(name = "IVAEccedenteOmaggi", required = true)
+    protected String ivaEccedenteOmaggi;
     @XmlElement(name = "TitoliAccesso")
     protected List<TitoliAccesso> titoliAccesso;
     @XmlElement(name = "TitoliAnnullati")
@@ -138,8 +138,8 @@ public class OrdineDiPosto {
      *     {@link String }
      *     
      */
-    public String getIVAEccedenteOmaqqi() {
-        return ivaEccedenteOmaqqi;
+    public String getIVAEccedenteOmaggi() {
+        return ivaEccedenteOmaggi;
     }
 
     /**
@@ -150,8 +150,8 @@ public class OrdineDiPosto {
      *     {@link String }
      *     
      */
-    public void setIVAEccedenteOmaqqi(String value) {
-        this.ivaEccedenteOmaqqi = value;
+    public void setIVAEccedenteOmaggi(String value) {
+        this.ivaEccedenteOmaggi = value;
     }
 
     /**
