@@ -27,8 +27,8 @@ import javax.xml.bind.annotation.XmlType;
  *       &lt;sequence>
  *         &lt;element ref="{http://siae.it/mensile}TipoTitolo"/>
  *         &lt;element ref="{http://siae.it/mensile}Quantita"/>
- *         &lt;element ref="{http://siae.it/mensile}ImportoFiqurativo"/>
- *         &lt;element ref="{http://siae.it/mensile}IVAFiqurativa"/>
+ *         &lt;element ref="{http://siae.it/mensile}ImportoFigurativo"/>
+ *         &lt;element ref="{http://siae.it/mensile}IVAFigurativa"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
@@ -41,8 +41,8 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(name = "", propOrder = {
     "tipoTitolo",
     "quantita",
-    "importoFiqurativo",
-    "ivaFiqurativa"
+    "ImportoFigurativo",
+    "IVAFigurativa"
 })
 @XmlRootElement(name = "TitoliIVAPreassoltaAnnullati")
 public class TitoliIVAPreassoltaAnnullati {
@@ -51,10 +51,10 @@ public class TitoliIVAPreassoltaAnnullati {
     protected String tipoTitolo;
     @XmlElement(name = "Quantita", required = true)
     protected String quantita;
-    @XmlElement(name = "ImportoFiqurativo", required = true)
-    protected String importoFiqurativo;
-    @XmlElement(name = "IVAFiqurativa", required = true)
-    protected String ivaFiqurativa;
+    @XmlElement(name = "ImportoFigurativo", required = true)
+    protected String ImportoFigurativo;
+    @XmlElement(name = "IVAFigurativa", required = true)
+    protected String IVAFigurativa;
 
     /**
      * Recupera il valore della proprietà tipoTitolo.
@@ -105,51 +105,51 @@ public class TitoliIVAPreassoltaAnnullati {
     }
 
     /**
-     * Recupera il valore della proprietà importoFiqurativo.
+     * Recupera il valore della proprietà ImportoFigurativo.
      * 
      * @return
      *     possible object is
      *     {@link String }
      *     
      */
-    public String getImportoFiqurativo() {
-        return importoFiqurativo;
+    public String getImportoFigurativo() {
+        return ImportoFigurativo;
     }
 
     /**
-     * Imposta il valore della proprietà importoFiqurativo.
+     * Imposta il valore della proprietà ImportoFigurativo.
      * 
      * @param value
      *     allowed object is
      *     {@link String }
      *     
      */
-    public void setImportoFiqurativo(String value) {
-        this.importoFiqurativo = value;
+    public void setImportoFigurativo(String value) {
+        this.ImportoFigurativo = value;
     }
 
     /**
-     * Recupera il valore della proprietà ivaFiqurativa.
+     * Recupera il valore della proprietà IVAFigurativa.
      * 
      * @return
      *     possible object is
      *     {@link String }
      *     
      */
-    public String getIVAFiqurativa() {
-        return ivaFiqurativa;
+    public String getIVAFigurativa() {
+        return IVAFigurativa;
     }
 
     /**
-     * Imposta il valore della proprietà ivaFiqurativa.
+     * Imposta il valore della proprietà IVAFigurativa.
      * 
      * @param value
      *     allowed object is
      *     {@link String }
      *     
      */
-    public void setIVAFiqurativa(String value) {
-        this.ivaFiqurativa = value;
+    public void setIVAFigurativa(String value) {
+        this.IVAFigurativa = value;
     }
 
 }

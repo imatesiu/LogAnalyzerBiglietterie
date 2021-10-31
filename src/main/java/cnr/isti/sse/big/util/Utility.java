@@ -191,10 +191,10 @@ public class Utility {
 
 
 			SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+			
 			//---
 
 			Schema schema = schemaFactory.newSchema(new StreamSource(new StringReader(text)));
-
 
 
 
@@ -668,8 +668,8 @@ public class Utility {
 	public static ImmutableTriple<Integer, Integer, Integer> getTitoliAccessoIVAPreassolta(List<TitoliAccessoIVAPreassolta> titoliAccessoIVAPreassolta) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
 		for(TitoliAccessoIVAPreassolta titolo: titoliAccessoIVAPreassolta) {
-			if(titolo.getImportoFiqurativo()!=null)
-				corrispettivo += Integer.parseInt(titolo.getImportoFiqurativo());
+			if(titolo.getImportoFigurativo()!=null)
+				corrispettivo += Integer.parseInt(titolo.getImportoFigurativo());
 			if(titolo.getQuantita()!=null)
 				quantita += Integer.parseInt(titolo.getQuantita());
 			titolo.getTipoTitolo().trim();
@@ -684,8 +684,8 @@ public class Utility {
 			List<TitoliIVAPreassoltaAnnullati> titoliIVAPreassoltaAnnullati) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
 		for(TitoliIVAPreassoltaAnnullati titolo: titoliIVAPreassoltaAnnullati) {
-			if(titolo.getImportoFiqurativo()!=null)
-				corrispettivo += Integer.parseInt(titolo.getImportoFiqurativo());
+			if(titolo.getImportoFigurativo()!=null)
+				corrispettivo += Integer.parseInt(titolo.getImportoFigurativo());
 			if(titolo.getQuantita()!=null)
 				quantita += Integer.parseInt(titolo.getQuantita());
 			titolo.getTipoTitolo().trim();
@@ -911,8 +911,8 @@ public class Utility {
 			List<AbbonamentiIVAPreassoltaAnnullati> abbonamentiIVAPreassoltaAnnullati) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
 		for(AbbonamentiIVAPreassoltaAnnullati titolo: abbonamentiIVAPreassoltaAnnullati) {
-			if(titolo.getImportoFiqurativo()!=null)
-				corrispettivo += Integer.parseInt(titolo.getImportoFiqurativo());
+			if(titolo.getImportoFigurativo()!=null)
+				corrispettivo += Integer.parseInt(titolo.getImportoFigurativo());
 			if(titolo.getQuantita()!=null)
 				quantita += Integer.parseInt(titolo.getQuantita());
 
@@ -927,8 +927,8 @@ public class Utility {
 	private static ImmutableTriple<Integer, Integer, Integer> getAbbonamentiIVAPreassolta(List<AbbonamentiIVAPreassolta> abbonamentiIVAPreassolta) {
 		int corrispettivo = 0,quantita = 0,prevendita = 0;
 		for(AbbonamentiIVAPreassolta titolo: abbonamentiIVAPreassolta) {
-			if(titolo.getImportoFiqurativo()!=null)
-				corrispettivo += Integer.parseInt(titolo.getImportoFiqurativo());
+			if(titolo.getImportoFigurativo()!=null)
+				corrispettivo += Integer.parseInt(titolo.getImportoFigurativo());
 			if(titolo.getQuantita()!=null)
 				quantita += Integer.parseInt(titolo.getQuantita());
 

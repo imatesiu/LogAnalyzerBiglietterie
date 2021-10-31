@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xs:schema xmlns="http://siae.it/mensile" elementFormDefault="qualified" targetNamespace="http://siae.it/mensile" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
 	<xs:element name="RiepilogoMensile">
 		<xs:complexType>
 			<xs:sequence>
@@ -15,6 +15,9 @@
 				</xs:simpleType>
 			</xs:attribute>
 			<xs:attribute name="Mese" type="xs:string" use="required" />
+			<xs:attribute name="DataGenerazione" type="xs:string" use="required" />
+			<xs:attribute name="OraGenerazione" type="xs:string" use="required" />
+			<xs:attribute name="ProgressivoGenerazione" type="xs:string" use="required" />			
 			<xs:attribute default="E" name="Valuta">
 				<xs:simpleType>
 					<xs:restriction base="xs:NMTOKEN">
@@ -144,8 +147,8 @@
 			<xs:sequence>
 				<xs:element ref="TipoTitolo" />
 				<xs:element ref="Quantita" />
-				<xs:element ref="ImportoFiqurativo" />
-				<xs:element ref="IVAFiqurativa" />
+				<xs:element ref="ImportoFigurativo" />
+				<xs:element ref="IVAFigurativa" />
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -154,8 +157,8 @@
 			<xs:sequence>
 				<xs:element ref="TipoTitolo" />
 				<xs:element ref="Quantita" />
-				<xs:element ref="ImportoFiqurativo" />
-				<xs:element ref="IVAFiqurativa" />
+				<xs:element ref="ImportoFigurativo" />
+				<xs:element ref="IVAFigurativa" />
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -166,8 +169,8 @@
 				<xs:element ref="CodiceAbbonamento" />
 				<xs:element ref="TipoTitolo" />
 				<xs:element ref="Quantita" />
-				<xs:element ref="ImportoFiqurativo" />
-				<xs:element ref="IVAFiqurativa" />
+				<xs:element ref="ImportoFigurativo" />
+				<xs:element ref="IVAFigurativa" />
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -178,8 +181,8 @@
 				<xs:element ref="CodiceAbbonamento" />
 				<xs:element ref="TipoTitolo" />
 				<xs:element ref="Quantita" />
-				<xs:element ref="ImportoFiqurativo" />
-				<xs:element ref="IVAFiqurativa" />
+				<xs:element ref="ImportoFigurativo" />
+				<xs:element ref="IVAFigurativa" />
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -190,8 +193,8 @@
 				<xs:element ref="CodiceAbbonamento" />
 				<xs:element ref="TipoTitolo" />
 				<xs:element ref="Quantita" />
-				<xs:element ref="ImportoFiqurativo" />
-				<xs:element ref="IVAFiqurativa" />
+				<xs:element ref="ImportoFigurativo" />
+				<xs:element ref="IVAFigurativa" />
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -247,8 +250,8 @@
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element ref="Quantita" />
-				<xs:element ref="ImportoFiqurativo" />
-				<xs:element ref="IVAFiqurativa" />
+				<xs:element ref="ImportoFigurativo" />
+				<xs:element ref="IVAFigurativa" />
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -256,8 +259,8 @@
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element ref="Quantita" />
-				<xs:element ref="ImportoFiqurativo" />
-				<xs:element ref="IVAFiqurativa" />
+				<xs:element ref="ImportoFigurativo" />
+				<xs:element ref="IVAFigurativa" />
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -285,13 +288,13 @@
 	<xs:element name="Esecutore" type="xs:string" />
 	<xs:element name="GenerePrevalente" type="xs:string" />
 	<xs:element name="ImponibileIntrattenimenti" type="xs:string" />
-	<xs:element name="ImportoFiqurativo" type="xs:string" />
+	<xs:element name="ImportoFigurativo" type="xs:string" />
 	<xs:element name="ImportoPrestazione" type="xs:string" />
 	<xs:element name="Incidenza" type="xs:string" />
 	<xs:element name="IncidenzaGenere" type="xs:string" />
 	<xs:element name="IVACorrispettivo" type="xs:string" />
 	<xs:element name="IVAEccedenteOmaggi" type="xs:string" />
-	<xs:element name="IVAFiqurativa" type="xs:string" />
+	<xs:element name="IVAFigurativa" type="xs:string" />
 	<xs:element name="IVAPrevendita" type="xs:string" />
 	<xs:element name="Nazionalita" type="xs:string" />
 	<xs:element name="Distributore" type="xs:string" />

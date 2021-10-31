@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xs:schema xmlns="http://siae.it/gionaliero" elementFormDefault="qualified" targetNamespace="http://siae.it/gionaliero" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
 	<xs:element name="RiepilogoGiornaliero">
 		<xs:complexType>
 			<xs:sequence>
@@ -15,6 +15,9 @@
 				</xs:simpleType>
 			</xs:attribute>
 			<xs:attribute name="Data" type="xs:string" use="required" />
+			<xs:attribute name="DataGenerazione" type="xs:string" use="required" />
+			<xs:attribute name="OraGenerazione" type="xs:string" use="required" />
+			<xs:attribute name="ProgressivoGenerazione" type="xs:string" use="required" />			
 			<xs:attribute default="E" name="Valuta">
 				<xs:simpleType>
 					<xs:restriction base="xs:NMTOKEN">
@@ -50,8 +53,8 @@
 			<xs:sequence>
 				<xs:element ref="Intrattenimento" />
 				<xs:element ref="Locale" />
-				<xs:element ref="Data" />
-				<xs:element ref="Ora" />
+				<xs:element ref="DataEvento" />
+				<xs:element ref="OraEvento" />
 				<xs:element minOccurs="1" maxOccurs="unbounded" ref="MultiGenere" />
 				<xs:element minOccurs="1" maxOccurs="unbounded" ref="OrdineDiPosto" />
 			</xs:sequence>
@@ -257,6 +260,8 @@
 	<xs:element name="Nazionalita" type="xs:string" />
 	<xs:element name="Distributore" type="xs:string" />
 	<xs:element name="Ora" type="xs:string" />
+	<xs:element name="DataEvento" type="xs:string" />
+	<xs:element name="OraEvento" type="xs:string" />
 	<xs:element name="Prevendita" type="xs:string" />
 	<xs:element name="ProduttoreCinema" type="xs:string" />
 	<xs:element name="Quantita" type="xs:string" />

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xs:schema xmlns="http://tempuri.org/accessi" elementFormDefault="qualified" targetNamespace="http://tempuri.org/accessi" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
 	<xs:element name="RiepilogoControlloAccessi">
 		<xs:complexType>
 			<xs:sequence>
@@ -132,8 +132,23 @@
 	<xs:element name="ProgressivoRiepilogo" type="xs:string" />
 	<xs:element name="CFOrganizzatore" type="xs:string" />
 	<xs:element name="DenominazioneOrganizzatore" type="xs:string" />
-	<xs:element name="TipologiaOrganizzatore" type="xs:string" />
-	<xs:element name="SpettacoloIntrattenimento" type="xs:string" />
+	<xs:element name="TipologiaOrganizzatore"  >
+	<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="E" />
+						<xs:enumeration value="P" />
+						<xs:enumeration value="G" />
+					</xs:restriction>
+				</xs:simpleType>
+	</xs:element>
+	<xs:element name="SpettacoloIntrattenimento"  >
+	<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="I" />
+						<xs:enumeration value="S" />
+					</xs:restriction>
+				</xs:simpleType>
+	</xs:element>
 	<xs:element name="IncidenzaIntrattenimento" type="xs:string" />
 	<xs:element name="DenominazioneLocale" type="xs:string" />
 	<xs:element name="CodiceLocale" type="xs:string" />

@@ -65,9 +65,9 @@ public class Evento {
     protected String oraEvento;
     @XmlElement(name = "MultiGenere", required = true)
     protected List<MultiGenere> multiGenere;
-    @XmlElement(name = "OrdineDiPosto", required = true)
+    @XmlElement(name = "OrdineDiPosto")
     protected List<OrdineDiPosto> ordineDiPosto;
-    @XmlElement(name = "AltriProventiEvento", required = true)
+    @XmlElement(name = "AltriProventiEvento")
     protected AltriProventiEvento altriProventiEvento;
 
     /**

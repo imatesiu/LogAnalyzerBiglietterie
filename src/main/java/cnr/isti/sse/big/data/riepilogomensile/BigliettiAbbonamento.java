@@ -29,8 +29,8 @@ import javax.xml.bind.annotation.XmlType;
  *         &lt;element ref="{http://siae.it/mensile}CodiceAbbonamento"/>
  *         &lt;element ref="{http://siae.it/mensile}TipoTitolo"/>
  *         &lt;element ref="{http://siae.it/mensile}Quantita"/>
- *         &lt;element ref="{http://siae.it/mensile}ImportoFiqurativo"/>
- *         &lt;element ref="{http://siae.it/mensile}IVAFiqurativa"/>
+ *         &lt;element ref="{http://siae.it/mensile}ImportoFigurativo"/>
+ *         &lt;element ref="{http://siae.it/mensile}IVAFigurativa"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
@@ -161,7 +161,7 @@ public class BigliettiAbbonamento {
     }
 
     /**
-     * Recupera il valore della proprietà importoFiqurativo.
+     * Recupera il valore della proprietà ImportoFigurativo.
      * 
      * @return
      *     possible object is
@@ -173,7 +173,7 @@ public class BigliettiAbbonamento {
     }
 
     /**
-     * Imposta il valore della proprietà importoFiqurativo.
+     * Imposta il valore della proprietà ImportoFigurativo.
      * 
      * @param value
      *     allowed object is
@@ -185,7 +185,7 @@ public class BigliettiAbbonamento {
     }
 
     /**
-     * Recupera il valore della proprietà ivaFiqurativa.
+     * Recupera il valore della proprietà IVAFigurativa.
      * 
      * @return
      *     possible object is
@@ -197,7 +197,7 @@ public class BigliettiAbbonamento {
     }
 
     /**
-     * Imposta il valore della proprietà ivaFiqurativa.
+     * Imposta il valore della proprietà IVAFigurativa.
      * 
      * @param value
      *     allowed object is

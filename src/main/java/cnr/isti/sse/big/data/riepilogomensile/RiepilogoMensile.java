@@ -74,6 +74,12 @@ public class RiepilogoMensile {
     protected String sostituzione;
     @XmlAttribute(name = "Mese", required = true)
     protected String mese;
+    @XmlAttribute(name = "DataGenerazione", required = true)
+    protected String datagenerazione;
+    @XmlAttribute(name = "OraGenerazione", required = true)
+    protected String oragenerazione;
+    @XmlAttribute(name = "ProgressivoGenerazione", required = true)
+    protected String progressivogenerazione;
     @XmlAttribute(name = "Valuta")
     @XmlJavaTypeAdapter(CollapsedStringAdapter.class)
     protected String valuta;
@@ -207,4 +213,33 @@ public class RiepilogoMensile {
         this.valuta = value;
     }
 
+	public String getDatagenerazione() {
+		return datagenerazione;
+	}
+
+	public void setDatagenerazione(String datagenerazione) {
+		this.datagenerazione = datagenerazione;
+	}
+
+	public String getOragenerazione() {
+		return oragenerazione;
+	}
+
+	public void setOragenerazione(String oragenerazione) {
+		this.oragenerazione = oragenerazione;
+	}
+
+	public String getProgressivogenerazione() {
+		return progressivogenerazione;
+	}
+
+	public void setProgressivogenerazione(String progressivogenerazione) {
+		this.progressivogenerazione = progressivogenerazione;
+	}
+
+	public void setOrganizzatore(List<Organizzatore> organizzatore) {
+		this.organizzatore = organizzatore;
+	}
+
+    
 }
