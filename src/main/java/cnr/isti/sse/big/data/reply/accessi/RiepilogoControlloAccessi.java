@@ -143,7 +143,7 @@ public class RiepilogoControlloAccessi {
 
 	@Override
 	public String toString() {
-		return (titolare != null ? "titolare: " + titolare + ", \\n " : "")
+		return (titolare != null ? "\n titolare: " + titolare + ", \\n " : "")
 				+ (evento != null ? "evento: " + evento + ", \\n " : "")
 				+ (sostituzione != null ? "sostituzione: " + sostituzione : "");
 	}

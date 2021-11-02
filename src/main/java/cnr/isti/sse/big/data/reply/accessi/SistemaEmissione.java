@@ -114,7 +114,7 @@ public class SistemaEmissione {
 	@Override
 	public String toString() {
 		return (titoli != null ? "titoli: " + titoli + ", \n " : "")
-				+ (abbonamenti != null ? "abbonamenti: " + abbonamenti : "");
+				+ (abbonamenti != null ? "abbonamenti: " + abbonamenti : "\n");
 	}
 
 	public String getCodicesistemaemissione() {

@@ -236,4 +236,18 @@ public class Titolare {
         this.progressivoRiepilogo = value;
     }
 
+	@Override
+	public String toString() {
+		return (denominazioneTitolareCA != null ? "denominazioneTitolareCA: " + denominazioneTitolareCA + ", \\n " : "")
+				+ (cfTitolareCA != null ? "cfTitolareCA: " + cfTitolareCA + ", \\n " : "")
+				+ (codiceSistemaCA != null ? "codiceSistemaCA: " + codiceSistemaCA + ", \\n " : "")
+				+ (dataRiepilogo != null ? "dataRiepilogo: " + dataRiepilogo + ", \\n " : "")
+				+ (dataGenerazioneRiepilogo != null ? "dataGenerazioneRiepilogo: " + dataGenerazioneRiepilogo + ", \\n "
+						: "")
+				+ (oraGenerazioneRiepilogo != null ? "oraGenerazioneRiepilogo: " + oraGenerazioneRiepilogo + ", \\n "
+						: "")
+				+ (progressivoRiepilogo != null ? "progressivoRiepilogo: " + progressivoRiepilogo : "\n");
+	}
+
+    
 }

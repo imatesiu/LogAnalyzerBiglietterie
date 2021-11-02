@@ -135,7 +135,7 @@ public class Titoli {
 	public String toString() {
 		return (codiceOrdinePosto != null ? "codiceOrdinePosto: " + codiceOrdinePosto + ", \\n " : "")
 				+ (capienza != null ? "capienza: " + capienza + ", \\n " : "")
-				+ (totaleTipoTitolo != null ? "totaleTipoTitolo: " + totaleTipoTitolo : "");
+				+ (totaleTipoTitolo != null ? "totaleTipoTitolo: " + totaleTipoTitolo : "\n");
 	}
 
     

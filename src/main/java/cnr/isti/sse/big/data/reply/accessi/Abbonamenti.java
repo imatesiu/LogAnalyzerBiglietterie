@@ -133,10 +133,10 @@ public class Abbonamenti {
 
 	@Override
 	public String toString() {
-		return (codiceOrdinePosto != null ? "codiceOrdinePosto: " + codiceOrdinePosto + ", \\n " : "")
+		return (codiceOrdinePosto != null ? "\n codiceOrdinePosto: " + codiceOrdinePosto + ", \\n " : "")
 				+ (capienza != null ? "capienza: " + capienza + ", \\n " : "")
 				+ (totaleTipoTitoloAbbonamento != null ? "totaleTipoTitoloAbbonamento: " + totaleTipoTitoloAbbonamento
-						: "");
+						: "\n");
 	}
     
 }

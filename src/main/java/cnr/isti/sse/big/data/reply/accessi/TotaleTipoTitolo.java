@@ -490,7 +490,7 @@ public class TotaleTipoTitolo {
 
 	@Override
 	public String toString() {
-		return (tipoTitolo != null ? "tipoTitolo: " + tipoTitolo + ", \\n " : "")
+		return (tipoTitolo != null ? "\n tipoTitolo: " + tipoTitolo + ", \\n " : "")
 				+ (totaleTitoliLTA != null ? "totaleTitoliLTA: " + totaleTitoliLTA + ", \\n " : "")
 				+ (totaleTitoliNoAccessoTradiz != null
 						? "totaleTitoliNoAccessoTradiz: " + totaleTitoliNoAccessoTradiz + ", \\n "
