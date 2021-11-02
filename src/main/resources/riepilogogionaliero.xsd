@@ -246,9 +246,7 @@
 	<xs:element name="CodiceOrdine" type="xs:string" />
 	<xs:element name="CorrispettivoLordo" type="xs:string" />
 	<xs:element name="Data" type="xs:string" />
-	<xs:element name="Denominazione">
-		<xs:complexType />
-	</xs:element>
+	<xs:element name="Denominazione" type="xs:string" />
 	<xs:element name="Esecutore" type="xs:string" />
 	<xs:element name="ImportoFigurativo" type="xs:string" />
 	<xs:element name="ImportoPrestazione" type="xs:string" />

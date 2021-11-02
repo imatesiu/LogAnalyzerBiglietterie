@@ -54,7 +54,7 @@ import javax.xml.bind.annotation.XmlType;
 public class Organizzatore {
 
     @XmlElement(name = "Denominazione", required = true)
-    protected Denominazione denominazione;
+    protected String denominazione;
     @XmlElement(name = "CodiceFiscale", required = true)
     protected String codiceFiscale;
     @XmlElement(name = "TipoOrganizzatore", required = true)
@@ -74,7 +74,7 @@ public class Organizzatore {
      *     {@link Denominazione }
      *     
      */
-    public Denominazione getDenominazione() {
+    public String getDenominazione() {
         return denominazione;
     }
 
@@ -86,7 +86,7 @@ public class Organizzatore {
      *     {@link Denominazione }
      *     
      */
-    public void setDenominazione(Denominazione value) {
+    public void setDenominazione(String value) {
         this.denominazione = value;
     }
 

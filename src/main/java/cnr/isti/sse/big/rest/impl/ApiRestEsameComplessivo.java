@@ -92,6 +92,7 @@ public class ApiRestEsameComplessivo {
 				String Transazione = new String(t);
 				String LT = Transazione.replaceAll("<!DOCTYPE[^<>]*(?:<![^<>]*>[^<>]*)*d\">", "").replaceAll("[^\\x20-\\x7e]", "");//
 			     LT = LT.replaceAll("<!DOCTYPE[^<>]*(?:<![^<>]*>[^<>]*)*d'>", "").replaceAll("[^\\x20-\\x7e]", "");//
+			   // LT = LT.replaceAll("\\<\\!D", "").replaceAll("\\]\\]\\>", "");//
 
 				String NameF = NameFile.substring(0,3);
 				switch (NameF) {

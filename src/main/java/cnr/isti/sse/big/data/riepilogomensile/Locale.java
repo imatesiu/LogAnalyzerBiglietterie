@@ -44,7 +44,7 @@ import javax.xml.bind.annotation.XmlType;
 public class Locale {
 
     @XmlElement(name = "Denominazione", required = true)
-    protected Denominazione denominazione;
+    protected String denominazione;
     @XmlElement(name = "CodiceLocale", required = true)
     protected String codiceLocale;
 
@@ -56,7 +56,7 @@ public class Locale {
      *     {@link Denominazione }
      *     
      */
-    public Denominazione getDenominazione() {
+    public String getDenominazione() {
         return denominazione;
     }
 
@@ -68,7 +68,7 @@ public class Locale {
      *     {@link Denominazione }
      *     
      */
-    public void setDenominazione(Denominazione value) {
+    public void setDenominazione(String value) {
         this.denominazione = value;
     }
 

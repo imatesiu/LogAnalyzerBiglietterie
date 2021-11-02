@@ -282,9 +282,7 @@
 	<xs:element name="CodiceOrdine" type="xs:string" />
 	<xs:element name="CorrispettivoLordo" type="xs:string" />
 	<xs:element name="DataEvento" type="xs:string" />
-	<xs:element name="Denominazione">
-		<xs:complexType />
-	</xs:element>
+	<xs:element name="Denominazione" type="xs:string" />
 	<xs:element name="Esecutore" type="xs:string" />
 	<xs:element name="GenerePrevalente" type="xs:string" />
 	<xs:element name="ImponibileIntrattenimenti" type="xs:string" />
