@@ -82,7 +82,7 @@ public class ApiRestEsameComplessivo {
 				byte[] your_primitive_bytes = IOUtils.toByteArray(filePart.getEntityAs(InputStream.class));
 				String NameFile = fileDetail.get(i).getFileName();
 				log.info(NameFile);
-				if(NameFile.contains("p7m")) {
+				if(NameFile.contains("p7m") ||NameFile.contains("P7M") ) {
 				boolean	resul = Utility.verifyPKCS7(your_primitive_bytes);
 				log.info(resul);
 				 t = 	Utility.getData(your_primitive_bytes);
