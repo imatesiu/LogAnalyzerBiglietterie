@@ -1024,14 +1024,37 @@ public class Transazione implements Comparable<Transazione> {
 
 	@Override
 	public String toString() {
-		return (titoloAccesso != null ? "titoloAccesso: " + titoloAccesso + ",  " : "")
-				+ (abbonamento != null ? "abbonamento: " + abbonamento + ",  " : "")
-				+ (bigliettoAbbonamento != null ? "bigliettoAbbonamento: " + bigliettoAbbonamento + ",  " : "")
-				+ (cartaAttivazione != null ? "cartaAttivazione: " + cartaAttivazione + ",  " : "")
-				+ (sigilloFiscale != null ? "sigilloFiscale: " + sigilloFiscale + ",  " : "")
-				+ (dataEmissione != null ? "dataEmissione: " + dataEmissione + ",  " : "")
-				+ (numeroProgressivo != null ? "numeroProgressivo: " + numeroProgressivo : ""+System.getProperty("line.separator"));
+		return (numeroProgressivo != null ? "numeroProgressivo=" + numeroProgressivo + ", " : "")
+				+ (titoloAccesso != null ? "titoloAccesso=" + titoloAccesso + ", " : "")
+				+ (abbonamento != null ? "abbonamento=" + abbonamento + ", " : "")
+				+ (bigliettoAbbonamento != null ? "bigliettoAbbonamento=" + bigliettoAbbonamento + ", " : "")
+				+ (acquirenteRegistrazione != null ? "acquirenteRegistrazione=" + acquirenteRegistrazione + ", " : "")
+				+ (acquirenteTransazione != null ? "acquirenteTransazione=" + acquirenteTransazione + ", " : "")
+				+ (riferimentoAnnullamento != null ? "riferimentoAnnullamento=" + riferimentoAnnullamento + ", " : "")
+				+ (cfOrganizzatore != null ? "cfOrganizzatore=" + cfOrganizzatore + ", " : "")
+				+ (cfTitolare != null ? "cfTitolare=" + cfTitolare + ", " : "")
+				+ (ivaPreassolta != null ? "ivaPreassolta=" + ivaPreassolta + ", " : "")
+				+ (tipoTassazione != null ? "tipoTassazione=" + tipoTassazione + ", " : "")
+				+ (valuta != null ? "valuta=" + valuta + ", " : "")
+				+ (sistemaEmissione != null ? "sistemaEmissione=" + sistemaEmissione + ", " : "")
+				+ (cartaAttivazione != null ? "cartaAttivazione=" + cartaAttivazione + ", " : "")
+				+ (sigilloFiscale != null ? "sigilloFiscale=" + sigilloFiscale + ", " : "")
+				+ (dataEmissione != null ? "dataEmissione=" + dataEmissione + ", " : "")
+				+ (oraEmissione != null ? "oraEmissione=" + oraEmissione + ", " : "")
+				+ (tipoTitolo != null ? "tipoTitolo=" + tipoTitolo + ", " : "")
+				+ (codiceOrdine != null ? "codiceOrdine=" + codiceOrdine + ", " : "")
+				+ (causale != null ? "causale=" + causale + ", " : "") + (posto != null ? "posto=" + posto + ", " : "")
+				+ (codiceRichiedenteEmissioneSigillo != null
+						? "codiceRichiedenteEmissioneSigillo=" + codiceRichiedenteEmissioneSigillo + ", "
+						: "")
+				+ (prestampa != null ? "prestampa=" + prestampa + ", " : "")
+				+ (imponibileIntrattenimenti != null ? "imponibileIntrattenimenti=" + imponibileIntrattenimenti + ", "
+						: "")
+				+ (originaleAnnullato != null ? "originaleAnnullato=" + originaleAnnullato + ", " : "")
+				+ (cartaOriginaleAnnullato != null ? "cartaOriginaleAnnullato=" + cartaOriginaleAnnullato + ", " : "")
+				+ (causaleAnnullamento != null ? "causaleAnnullamento=" + causaleAnnullamento : "");
 	}
+	
 
 	@Override
 	public int compareTo(Transazione o) {
