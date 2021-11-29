@@ -73,6 +73,7 @@ import cnr.isti.sse.big.data.riepilogomensile.TitoliAccessoIVAPreassolta;
 import cnr.isti.sse.big.data.riepilogomensile.TitoliAnnullati;
 import cnr.isti.sse.big.data.riepilogomensile.TitoliIVAPreassoltaAnnullati;
 import cnr.isti.sse.big.data.transazioni.LogTransazione;
+import cnr.isti.sse.big.data.transazioni.RiferimentoAnnullamento;
 import cnr.isti.sse.big.data.transazioni.Transazione;
 
 
@@ -331,6 +332,7 @@ public class Utility {
 				}
 
 			}
+			checkRifAnn(t.getRiferimentoAnnullamento(), t, listT);
 		}
 		log.info("Numero Titoli: "+ totalnumTitoli);
 		log.info("Numero Abbomanenti: "+ totalnumAbbonamenti);
@@ -351,6 +353,37 @@ public class Utility {
 	}
 
 
+
+	private static void checkRifAnn(RiferimentoAnnullamento riferimentoAnnullamento, Transazione tnew, List<Transazione> listT) {
+		if(riferimentoAnnullamento!=null) {
+			log.info("********RiferimentoAnnullamento******");
+			log.info("Transazione Rivendita/CambioN "+ tnew);
+			String ProgAnnulamento = riferimentoAnnullamento.getOriginaleRiferimentoAnnullamento();
+			Transazione t = searchTransazione(ProgAnnulamento,listT);
+
+			String progoriginale = t.getOriginaleAnnullato();
+			String annS = t.getTitoloAccesso().getAnnullamento();
+			log.info("Transazione Annullo "+ t);
+			
+			Transazione toriginale = searchTransazione(progoriginale,listT);
+			log.info("Transazione Originale "+ toriginale);
+		
+		}
+		
+		
+	}
+	
+	private static Transazione searchTransazione(String progressivo, List<Transazione> listT) {
+		for(Transazione t : listT) {
+			String p = t.getNumeroProgressivo();
+			if(progressivo==p) {
+				return t;
+			}
+		}
+		
+		return null;
+		
+	}
 
 	private boolean callVerP7s(InputStream fileFW,InputStream fileFirma ) {
 		try {
@@ -562,10 +595,20 @@ public class Utility {
 		int ivacorr = Integer.parseInt(titolo.getIVACorrispettivo().trim());
 		int ivaprev = Integer.parseInt(titolo.getIVAPrevendita().trim());
 		log.info("*****Analizzo IVA TITOLO****");
-		log.info("Titolo: "+titolo);
+		//log.info("Titolo: "+titolo);
 		return checkIVA_base(corrispettivo,quantita,  prevendita,  incidenza,  ivacorr, ivaprev,  titolo);
 	}	
 		
+	/**
+	 * @param corrispettivo
+	 * @param quantita
+	 * @param prevendita
+	 * @param incidenza
+	 * @param ivacorr
+	 * @param ivaprev
+	 * @param titolo
+	 * @return
+	 */
 	private static BaseImpIncidenza checkIVA_base(int corrispettivo,int quantita, int prevendita, int incidenza, int ivacorr, int ivaprev, Object titolo) {	
 		DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance();
 		symbols.setDecimalSeparator('.');
@@ -596,14 +639,14 @@ public class Utility {
 		
 		if((ivacorr != t_ivaf10) & (ivacorr != t_ivaf22) & (ivacorr+ivaprev != t_ivaf22_i) ) {
 			//log.error("t_IVa errata in "+titolo);
-			log.error(t_ivaf10);
+			/*log.error(t_ivaf10);
 			log.error(t_ivaf22);
 			log.error(t_ivaf22_i);
 			log.error(ivacorr+ivaprev);
 			log.error("imp intra"+t_basei);
 			if((ivacorr < t_ivaf10) & (ivacorr < t_ivaf22) ) {
 				log.error("t_IVa Minore in "+titolo);
-			}
+			}*/
 		}else {
 			return t_basei;
 		}
@@ -630,13 +673,13 @@ public class Utility {
 		
 		if((ivacorr != ivaf10) & (ivacorr != ivaf22) & (ivacorr != ivaf22_i) ) {
 			//log.error("IVa errata in "+titolo);
-			log.error(ivaf10);
+		/*	log.error(ivaf10);
 			log.error(ivaf22);
 			log.error(ivaf22_i);
 			log.error("imp intra"+basei);
 			if((ivacorr < ivaf10) & (ivacorr < ivaf22) ) {
 				log.error("IVa Minore in "+titolo);
-			}
+			}*/
 		}
 		
 		//int scorporopreviva22 = ivaprev*100/122;
