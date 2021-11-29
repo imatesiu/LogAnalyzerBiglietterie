@@ -50,11 +50,50 @@
 			<xs:attribute name="DataEmissione" type="xs:string" use="required" />
 			<xs:attribute name="OraEmissione" type="xs:string" use="required" />
 			<xs:attribute name="NumeroProgressivo" type="xs:string" use="required" />
-			<xs:attribute name="TipoTitolo" type="xs:string" use="required" />
-			<xs:attribute name="CodiceOrdine" type="xs:string" use="required" />
-			<xs:attribute name="Causale" type="xs:string" />
+			<xs:attribute name="TipoTitolo"  use="required" >
+			<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="I1" />
+						<xs:enumeration value="R1" />
+						<xs:enumeration value="R2" />
+						<xs:enumeration value="R3" />
+						<xs:enumeration value="RX" />
+						<xs:enumeration value="O1" />
+						<xs:enumeration value="O2" /><xs:enumeration value="O3" /><xs:enumeration value="O4" />
+						<xs:enumeration value="O5" /><xs:enumeration value="O6" /><xs:enumeration value="OX" />
+						
+						<xs:enumeration value="S1" />
+						<xs:enumeration value="CB" /><xs:enumeration value="CF" /><xs:enumeration value="CO" />
+						
+					</xs:restriction>
+				</xs:simpleType>
+			
+			</xs:attribute>
+			<xs:attribute name="CodiceOrdine"  type="xs:string"  use="required" />
+		<!--	<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="UN" />
+						<xs:enumeration value="AA" /><xs:enumeration value="PT" /><xs:enumeration value="PR" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>  -->
+			<xs:attribute name="Causale"  >
+			<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:pattern value="[a-zA-Z]"></xs:pattern>
+						
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
 			<xs:attribute name="Posto" type="xs:string" />
-			<xs:attribute name="CodiceRichiedenteEmissioneSigillo" type="xs:string" use="required" />
+			<xs:attribute name="CodiceRichiedenteEmissioneSigillo" use="required" >
+			<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:pattern value="(SW|PV|CL|CW|AP)[0-9]*"></xs:pattern>
+						
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
 			<xs:attribute name="Prestampa" type="xs:string" />
 			<xs:attribute name="ImponibileIntrattenimenti" type="xs:string" />
 			<xs:attribute name="OriginaleAnnullato" type="xs:string" />
@@ -210,7 +249,13 @@
 	</xs:element>
 	<xs:element name="CartaRiferimentoAnnullamento" type="xs:string" />
 	<xs:element name="CausaleRiferimentoAnnullamento" type="xs:string" />
-	<xs:element name="CellulareAcquirente" type="xs:string" />
+	<xs:element name="CellulareAcquirente"  >
+	<xs:simpleType>
+					<xs:restriction base="xs:string">
+							<xs:pattern value="[0-9]"></xs:pattern>
+					</xs:restriction>
+				</xs:simpleType>
+	</xs:element>
 	<xs:element name="CodiceAbbonamento" type="xs:string" />
 	<xs:element name="CodicePrestazione" type="xs:string" />
 	<xs:element name="CodiceFiscale" type="xs:string" />
