@@ -355,6 +355,7 @@ public class Utility {
 
 
 	private static void checkRifAnn(RiferimentoAnnullamento riferimentoAnnullamento, Transazione tnew, List<Transazione> listT) {
+		try {
 		if(riferimentoAnnullamento!=null) {
 			log.info("********RiferimentoAnnullamento******");
 			log.info("Transazione Rivendita/CambioN "+ tnew);
@@ -369,14 +370,16 @@ public class Utility {
 			log.info("Transazione Originale "+ toriginale);
 		
 		}
-		
+		}catch (Exception e) {
+			log.error("+++++++++RiferimentoAnnullamento+++++++");
+		}
 		
 	}
 	
 	private static Transazione searchTransazione(String progressivo, List<Transazione> listT) {
 		for(Transazione t : listT) {
 			String p = t.getNumeroProgressivo();
-			if(progressivo==p) {
+			if(progressivo.contentEquals(p)) {
 				return t;
 			}
 		}
