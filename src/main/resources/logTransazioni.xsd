@@ -47,23 +47,17 @@
 			<xs:attribute name="SistemaEmissione" type="xs:string" use="required" />
 			<xs:attribute name="CartaAttivazione" type="xs:string" use="required" />
 			<xs:attribute name="SigilloFiscale" type="xs:string" use="required" />
-			<xs:attribute name="DataEmissione" type="xs:string" use="required" />
-			<xs:attribute name="OraEmissione" type="xs:string" use="required" />
+			<xs:attribute name="DataEmissione" type="DatetType"   use="required" />
+			
+			<xs:attribute name="OraEmissione" type="timeType" use="required"  />
+			
+			
+			
 			<xs:attribute name="NumeroProgressivo" type="xs:string" use="required" />
 			<xs:attribute name="TipoTitolo"  use="required" >
 			<xs:simpleType>
 					<xs:restriction base="xs:string">
-						<xs:enumeration value="I1" />
-						<xs:enumeration value="R1" />
-						<xs:enumeration value="R2" />
-						<xs:enumeration value="R3" />
-						<xs:enumeration value="RX" />
-						<xs:enumeration value="O1" />
-						<xs:enumeration value="O2" /><xs:enumeration value="O3" /><xs:enumeration value="O4" />
-						<xs:enumeration value="O5" /><xs:enumeration value="O6" /><xs:enumeration value="OX" />
-						
-						<xs:enumeration value="S1" />
-						<xs:enumeration value="CB" /><xs:enumeration value="CF" /><xs:enumeration value="CO" />
+						<xs:pattern value="(I|O|R|S)[A-Z0-9]*"></xs:pattern>
 						
 					</xs:restriction>
 				</xs:simpleType>
@@ -80,7 +74,7 @@
 			<xs:attribute name="Causale"  >
 			<xs:simpleType>
 					<xs:restriction base="xs:string">
-						<xs:pattern value="[a-zA-Z]"></xs:pattern>
+						<xs:pattern value="[a-zA-Z0-9]+"></xs:pattern>
 						
 					</xs:restriction>
 				</xs:simpleType>
@@ -249,13 +243,8 @@
 	</xs:element>
 	<xs:element name="CartaRiferimentoAnnullamento" type="xs:string" />
 	<xs:element name="CausaleRiferimentoAnnullamento" type="xs:string" />
-	<xs:element name="CellulareAcquirente"  >
-	<xs:simpleType>
-					<xs:restriction base="xs:string">
-							<xs:pattern value="[0-9]"></xs:pattern>
-					</xs:restriction>
-				</xs:simpleType>
-	</xs:element>
+	<xs:element name="CellulareAcquirente" type="numType" />
+	
 	<xs:element name="CodiceAbbonamento" type="xs:string" />
 	<xs:element name="CodicePrestazione" type="xs:string" />
 	<xs:element name="CodiceFiscale" type="xs:string" />
@@ -264,21 +253,22 @@
 	<xs:element name="CodiceUnivocoNumeroTransazione" type="xs:string" />
 	<xs:element name="CorrispettivoLordo" type="xs:string" />
 	<xs:element name="CRO" type="xs:string" />
-	<xs:element name="DataEvento" type="xs:string" />
-	<xs:element name="DataOraEsecuzionePagamento" type="xs:string" />
-	<xs:element name="DataOraInizioCheckout" type="xs:string" />
-	<xs:element name="DataOraRegistrazione" type="xs:string" />
+	<xs:element name="DataEvento" type="DatetType" />
+			
+	<xs:element name="DataOraEsecuzionePagamento" type="datetimeType" />
+	<xs:element name="DataOraInizioCheckout" type="datetimeType" />
+	<xs:element name="DataOraRegistrazione" type="datetimeType" />
 	<xs:element name="EmailAcquirente" type="xs:string" />
 	<xs:element name="ImportoPrestazione" type="xs:string" />
 	<xs:element name="ImportoFigurativo" type="xs:string" />
-	<xs:element name="IndirizzoIPRegistrazione" type="xs:string" />
-	<xs:element name="IndirizzoIPTransazione" type="xs:string" />
+	<xs:element name="IndirizzoIPRegistrazione" type="ipType" />
+	<xs:element name="IndirizzoIPTransazione" type="ipType" />
 	<xs:element name="IndirizzoSpedizioneTitolo" type="xs:string" />
 	<xs:element name="IVACorrispettivo" type="xs:string" />
 	<xs:element name="IVAFigurativa" type="xs:string" />
 	<xs:element name="IVAPrevendita" type="xs:string" />
 	<xs:element name="MetodoSpedizioneTitolo" type="xs:string" />
-	<xs:element name="OraEvento" type="xs:string" />
+	<xs:element name="OraEvento" type="timeType" />
 	<xs:element name="OriginaleAnnullato" type="xs:string" />
 	<xs:element name="OriginaleRiferimentoAnnullamento" type="xs:string" />
 	<xs:element name="Prevendita" type="xs:string" />
@@ -314,4 +304,41 @@
 	</xs:element>
 	<xs:element name="Nome" type="xs:string" />
 	<xs:element name="Cognome" type="xs:string" />
+	
+	<xs:simpleType name="DatetType">
+		<xs:restriction base="xs:string">
+						<xs:pattern value="((19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01]))"></xs:pattern>
+		</xs:restriction>
+	</xs:simpleType>
+	
+	<xs:simpleType name="timeType">
+					<xs:restriction base="xs:string">
+						<xs:pattern value="[0-9]{2}[0-9]{2}"></xs:pattern>
+						
+					</xs:restriction>
+				</xs:simpleType>
+				<xs:simpleType name="datetimeType">
+					<xs:restriction base="xs:string">
+						<xs:pattern value="((19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01]))-[0-9]{2}[0-9]{2}"></xs:pattern>
+						
+					</xs:restriction>
+				</xs:simpleType>
+				
+				<xs:simpleType name="numType">
+					<xs:restriction base="xs:string">
+							<xs:pattern value="[0-9]*"></xs:pattern>
+					</xs:restriction>
+				</xs:simpleType>
+				
+				<xs:simpleType name="ipType">
+					<xs:restriction base="xs:string">
+							<xs:pattern value="[0-9]+.[0-9]+.[0-9]+.[0-9]+"></xs:pattern>
+					</xs:restriction>
+				</xs:simpleType>
+				
+				<xs:simpleType name="emailType">
+					<xs:restriction base="xs:string">
+							<xs:pattern value="[a-z0-9A-Z]+@[a-z0-9A-Z]+.[a-z0-9A-Z]+"></xs:pattern>
+					</xs:restriction>
+				</xs:simpleType>
 </xs:schema>
