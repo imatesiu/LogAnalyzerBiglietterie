@@ -358,16 +358,23 @@ public class Utility {
 		try {
 		if(riferimentoAnnullamento!=null) {
 			log.info("********RiferimentoAnnullamento******");
-			log.info("Transazione Rivendita/CambioN "+ tnew);
+			log.info("Transazione Rivendita/CambioN: "+ tnew);
 			String ProgAnnulamento = riferimentoAnnullamento.getOriginaleRiferimentoAnnullamento();
+			String causaleAnnulamento = riferimentoAnnullamento.getCausaleRiferimentoAnnullamento();
+			log.info("CausaleRiferimentoAnnullamento: "+causaleAnnulamento);
 			Transazione t = searchTransazione(ProgAnnulamento,listT);
 
 			String progoriginale = t.getOriginaleAnnullato();
 			String annS = t.getTitoloAccesso().getAnnullamento();
-			log.info("Transazione Annullo "+ t);
+			String causale = t.getCausaleAnnullamento();
+			log.info("Transazione Annullo: "+ t);
+			log.info("CausaleAnnullamento: "+causale);
+			if(!causaleAnnulamento.equals(causale)) {
+				log.error("####causaleAnnulamento non coerente####");
+			}
 			
 			Transazione toriginale = searchTransazione(progoriginale,listT);
-			log.info("Transazione Originale "+ toriginale);
+			log.info("Transazione Originale: "+ toriginale);
 		
 		}
 		}catch (Exception e) {
