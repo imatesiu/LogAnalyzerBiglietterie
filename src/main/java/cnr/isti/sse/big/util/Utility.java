@@ -359,10 +359,17 @@ public class Utility {
 		if(riferimentoAnnullamento!=null) {
 			log.info("********RiferimentoAnnullamento******");
 			log.info("Transazione Rivendita/CambioN: "+ tnew);
+			String CodiceEmissioneS_riv = tnew.getCodiceRichiedenteEmissioneSigillo();
+			String cod = CodiceEmissioneS_riv.substring(0, 2);
+			
 			String ProgAnnulamento = riferimentoAnnullamento.getOriginaleRiferimentoAnnullamento();
 			String causaleAnnulamento = riferimentoAnnullamento.getCausaleRiferimentoAnnullamento();
 			log.info("CausaleRiferimentoAnnullamento: "+causaleAnnulamento);
 			Transazione t = searchTransazione(ProgAnnulamento,listT);
+			
+			if(!t.getCodiceRichiedenteEmissioneSigillo().substring(0, 2).equals(cod)){
+				log.error("CodiceRichiedenteEmissioneSigillo non congruente con l'emissione titolo riv o cambio nom");
+			}
 
 			String progoriginale = t.getOriginaleAnnullato();
 			String annS = t.getTitoloAccesso().getAnnullamento();
