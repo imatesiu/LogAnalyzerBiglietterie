@@ -208,6 +208,7 @@ public class EsameComplessivo {
 				llta.addAll(evento.getTitoloAccesso());
 			}
 		}
+		log.info("***********NumeroTitoli_LTA: "+llta.size()+" ******* ");
 		/*
 		for( Transazione tr : ltransa) {
 	       	 System.out.println(tr);
@@ -220,6 +221,9 @@ public class EsameComplessivo {
 		log.info("Missing items from listTwo " + titolinonpasatidagliaccessi);
         for( Transazione tr : titolinonpasatidagliaccessi) {
         	log.info(tr);
+        	if(tr.getCausaleAnnullamento().isEmpty()) {
+        		log.error(tr);
+        	}
         }
         log.info("*********** ******* passanoquellidellog * *************** *********");
 		List<cnr.isti.sse.big.data.reply.accessi.lta.TitoloAccesso> passanoquellidellog = new ArrayList<cnr.isti.sse.big.data.reply.accessi.lta.TitoloAccesso>();
