@@ -95,7 +95,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
     "riferimentoAnnullamento"
 })
 @XmlRootElement(name = "Transazione")
-public class Transazione implements Comparable<Transazione> {
+public class Transazione implements Comparable<cnr.isti.sse.big.data.reply.accessi.lta.TitoloAccesso> {
 
     @XmlElement(name = "TitoloAccesso")
     protected TitoloAccesso titoloAccesso;
@@ -1056,13 +1056,17 @@ public class Transazione implements Comparable<Transazione> {
 	}
 	
 
-	@Override
+	
 	public int compareTo(Transazione o) {
 		// TODO Auto-generated method stub
 		return Integer.valueOf(this.numeroProgressivo) - Integer.valueOf(o.getNumeroProgressivo());
 	
 	}
-    
-    
+	@Override
+	public int compareTo(cnr.isti.sse.big.data.reply.accessi.lta.TitoloAccesso o) {
+		// TODO Auto-generated method stub
+		return Integer.valueOf(this.numeroProgressivo) - Integer.valueOf(o.getProgressivoFiscale());
+	
+	}
 
 }
