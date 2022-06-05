@@ -58,7 +58,7 @@
 				<xs:element ref="OraEvento" />
 				<xs:element minOccurs="1" maxOccurs="unbounded" ref="MultiGenere" />
 				<xs:element minOccurs="1" maxOccurs="unbounded" ref="OrdineDiPosto" />
-				<xs:element ref="AltriProventiEvento" />
+				<xs:element  minOccurs="0" ref="AltriProventiEvento" />
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
