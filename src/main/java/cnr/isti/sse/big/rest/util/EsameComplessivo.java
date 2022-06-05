@@ -221,6 +221,7 @@ public class EsameComplessivo {
 		log.info("Missing items from listTwo " + titolinonpasatidagliaccessi);
         for( Transazione tr : titolinonpasatidagliaccessi) {
         	log.info(tr);
+        	if(tr.getCausaleAnnullamento()!=null)
         	if(tr.getCausaleAnnullamento().isEmpty()) {
         		log.error(tr);
         	}
