@@ -257,7 +257,7 @@ public class Utility {
 		int prog = 0;
 		Collections.sort(listT, new Sortbyroll());
 		int numeroprogressivi = 0;
-		int totalnumTitoli = 0,totalnumAbbonamenti =0 ,totalnumBigAbbonamenti = 0;
+		int totalnumTitoli = 0,totalnumAbbonamenti =0 ,totalnumBigAbbonamenti = 0, r = 0;
 		for(Transazione t : listT ) {
 			String p = t.getNumeroProgressivo();
 			int progparsed = Integer.parseInt(p.trim());
@@ -266,22 +266,31 @@ public class Utility {
 			}
 			if(prog!=progparsed) {
 				log.error("Progressivo Mancante "+prog);
+				prog = progparsed;
+			}else {
+				numeroprogressivi++;
 			}
 			prog++;
-			numeroprogressivi++;
+			
 			//log.info(p);
 			if(t.getTitoloAccesso()!=null) {
 				totalnumTitoli++;
 				String c = t.getTitoloAccesso().getCorrispettivoLordo();
 				//String i = t.getTitoloAccesso().getImportoFigurativo();
 				String pr = t.getTitoloAccesso().getPrevendita();
+				int ic=0, ipr=0;
 				try {
-
-					int ic = Integer.parseInt(c.trim());
+					if(c!=null)
+					 ic = Integer.parseInt(c.trim());
 					//	int ii = Integer.parseInt(i.trim());
-					int ipr = Integer.parseInt(pr.trim());
+					if(pr!=null)
+					 ipr = Integer.parseInt(pr.trim());
 					totCor = totCor + ic;
 					totPr = totPr + ipr;
+					if(t.getTipoTitolo().contains("R")) {
+						r++;
+						//log.info("R, " + t);
+					}
 					//System.out.println(p);
 					//System.out.println(c);
 					//	log.info(i);
@@ -296,10 +305,12 @@ public class Utility {
 				totalnumAbbonamenti++;
 				String c = t.getAbbonamento().getCorrispettivoLordo();
 				String pr = t.getAbbonamento().getPrevendita();
+				int ic=0, ipr=0;
 				try {
-
-					int ic = Integer.parseInt(c.trim());
-					int ipr = Integer.parseInt(pr.trim());
+					if(c!=null)
+					 ic = Integer.parseInt(c.trim());
+					if(pr!=null)
+					 ipr = Integer.parseInt(pr.trim());
 					totCor = totCor + ic;
 					totPr = totPr + ipr;
 					//System.out.println(p);
@@ -316,9 +327,11 @@ public class Utility {
 
 				String c = t.getBigliettoAbbonamento().getImportoFigurativo();
 				//String pr = t.getBigliettoAbbonamento().getPrevendita();
+				int ic=0;
 				try {
 					totalnumBigAbbonamenti++;
-					int ic = Integer.parseInt(c.trim());
+					if(c!=null)
+					 ic = Integer.parseInt(c.trim());
 				//	int ipr = Integer.parseInt(pr.trim());
 					//totCor = totCor + ic;
 					//totPr = totPr + ipr;
@@ -335,6 +348,7 @@ public class Utility {
 			checkRifAnn(t.getRiferimentoAnnullamento(), t, listT);
 		}
 		log.info("Numero Titoli: "+ totalnumTitoli);
+		log.info("Numero TitoliRidotti: "+ r);
 		log.info("Numero Abbomanenti: "+ totalnumAbbonamenti);
 		log.info("Numero BigliettiAbbomanenti: "+ totalnumBigAbbonamenti);
 		float totCorrispettivo = (float)totCor/100;
@@ -363,16 +377,22 @@ public class Utility {
 			String cod = CodiceEmissioneS_riv.substring(0, 2);
 			
 			String ProgAnnulamento = riferimentoAnnullamento.getOriginaleRiferimentoAnnullamento();
+			
+			if(ProgAnnulamento.equals("11143")) {
+				log.info("");
+			}
 			String causaleAnnulamento = riferimentoAnnullamento.getCausaleRiferimentoAnnullamento();
 			log.info("CausaleRiferimentoAnnullamento: "+causaleAnnulamento);
 			Transazione t = searchTransazione(ProgAnnulamento,listT);
-			
+			if(t==null) {
+				log.info( t);
+			}
 			if(!t.getCodiceRichiedenteEmissioneSigillo().substring(0, 2).equals(cod)){
 				log.error("CodiceRichiedenteEmissioneSigillo non congruente con l'emissione titolo riv o cambio nom");
 			}
 
 			String progoriginale = t.getOriginaleAnnullato();
-			String annS = t.getTitoloAccesso().getAnnullamento();
+			//String annS = t.getTitoloAccesso().getAnnullamento();
 			String causale = t.getCausaleAnnullamento();
 			log.info("Transazione Annullo: "+ t);
 			log.info("CausaleAnnullamento: "+causale);
