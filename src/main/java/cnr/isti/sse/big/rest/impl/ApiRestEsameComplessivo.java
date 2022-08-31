@@ -25,6 +25,7 @@ import cnr.isti.sse.big.data.reply.accessi.RiepilogoControlloAccessi;
 import cnr.isti.sse.big.data.reply.accessi.lta.LTAGiornaliera;
 import cnr.isti.sse.big.data.riepilogogiornaliero.RiepilogoGiornaliero;
 import cnr.isti.sse.big.data.riepilogomensile.RiepilogoMensile;
+import cnr.isti.sse.big.data.sigillo.LogSigillo;
 import cnr.isti.sse.big.data.transazioni.LogTransazione;
 import cnr.isti.sse.big.rest.util.EsameComplessivo;
 import cnr.isti.sse.big.util.Utility;
@@ -87,6 +88,8 @@ public class ApiRestEsameComplessivo {
 				String LT = Transazione.replaceAll("<!DOCTYPE[^<>]*(?:<![^<>]*>[^<>]*)*d\">", "")
 						.replaceAll("[^\\x20-\\x7e]", "");//
 				LT = LT.replaceAll("<!DOCTYPE[^<>]*(?:<![^<>]*>[^<>]*)*d'>", "").replaceAll("[^\\x20-\\x7e]", "");//
+				LT = LT.replaceAll("<!DOCTYPE[^<>]*(?:<![^<>]*>[^<>]*)*''>", "").replaceAll("[^\\x20-\\x7e]", "");//
+
 				// LT = LT.replaceAll("\\<\\!D", "").replaceAll("\\]\\]\\>", "");//
 
 				String NameF = NameFile.substring(0, 3);
@@ -96,8 +99,15 @@ public class ApiRestEsameComplessivo {
 					Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 					Utility.validateXmlLTA(unmarshaller);
 					StringReader reader = new StringReader(LT);
-					LTAGiornaliera LogT = (LTAGiornaliera) unmarshaller.unmarshal(reader);
-					e.set(LogT);
+					LTAGiornaliera LogT;
+					try {
+						
+					 LogT = (LTAGiornaliera) unmarshaller.unmarshal(reader);
+					 e.set(LogT);
+					}catch (Exception e1) {
+						log.error(e1);
+					}
+					
 					// log.info("OK");
 					break;
 				}
@@ -133,6 +143,15 @@ public class ApiRestEsameComplessivo {
 					break;
 				}
 				case "LOG": {
+					NameF = NameFile.substring(0, 5);
+					if(NameF.equals("LOG_I")) {
+						JAXBContext jaxbContext = JAXBContext.newInstance(LogSigillo.class);
+						Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+						Utility.validateXmlLogSigillo(unmarshaller);
+
+						StringReader reader = new StringReader(LT);
+						LogSigillo logS = (LogSigillo)  unmarshaller.unmarshal(reader);
+					}else {
 					JAXBContext jaxbContext = JAXBContext.newInstance(LogTransazione.class);
 					Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 					Utility.validateXmlLogTransazione(unmarshaller);
@@ -140,6 +159,7 @@ public class ApiRestEsameComplessivo {
 					StringReader reader = new StringReader(LT);
 					LogTransazione LogT = (LogTransazione) unmarshaller.unmarshal(reader);
 					e.set(LogT);
+					}
 					// log.info("OK");
 
 					break;

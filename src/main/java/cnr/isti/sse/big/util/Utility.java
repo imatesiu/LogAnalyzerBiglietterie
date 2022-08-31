@@ -1050,6 +1050,11 @@ public class Utility {
 
 	}
 
+	public static void validateXmlLogSigillo(Unmarshaller unmarshaller) {
+		  validateXml(unmarshaller, "LogSigillo.xsd");
+		
+	}
+
 }
 class XmlValidationEventHandler implements ValidationEventHandler {
 
