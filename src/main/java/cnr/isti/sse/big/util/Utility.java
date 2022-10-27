@@ -72,8 +72,11 @@ import cnr.isti.sse.big.data.riepilogomensile.TitoliAccesso;
 import cnr.isti.sse.big.data.riepilogomensile.TitoliAccessoIVAPreassolta;
 import cnr.isti.sse.big.data.riepilogomensile.TitoliAnnullati;
 import cnr.isti.sse.big.data.riepilogomensile.TitoliIVAPreassoltaAnnullati;
+import cnr.isti.sse.big.data.transazioni.Abbonamento;
+import cnr.isti.sse.big.data.transazioni.BigliettoAbbonamento;
 import cnr.isti.sse.big.data.transazioni.LogTransazione;
 import cnr.isti.sse.big.data.transazioni.RiferimentoAnnullamento;
+import cnr.isti.sse.big.data.transazioni.TitoloAccesso;
 import cnr.isti.sse.big.data.transazioni.Transazione;
 
 
@@ -263,6 +266,27 @@ public class Utility {
 			int progparsed = Integer.parseInt(p.trim());
 			if(prog==0) {
 				prog = progparsed;
+			}
+			boolean annullo = false;
+			TitoloAccesso titolo = t.getTitoloAccesso();
+			Abbonamento abbo = t.getAbbonamento();
+			BigliettoAbbonamento babbo = t.getBigliettoAbbonamento();
+			if(titolo!=null)
+				if(titolo.getAnnullamento().equals("S" ))
+					annullo = true;
+			if(abbo!=null)
+				if(abbo.getAnnullamento().equals("S" ))
+					annullo = true;
+			if(babbo!=null)
+				if(babbo.getAnnullamento().equals("S" ))
+					annullo = true;
+					
+			if(annullo){
+				String causale = t.getCausaleAnnullamento();
+				if(causale.length()<1) {
+					log.error("Causale Mancante al prog: "+progparsed);
+					log.error("Carta: "+t.getCartaAttivazione());
+				}
 			}
 			if(prog!=progparsed) {
 				log.error("Progressivo Mancante "+prog);
