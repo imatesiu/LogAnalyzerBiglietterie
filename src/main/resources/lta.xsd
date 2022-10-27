@@ -111,6 +111,21 @@
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
-	
+<!--
+VT = Valido (titolo tradizionale)
+VD = Valido (titolo digitale)
+ZT = Accesso automatizz. tit. tradizionale
+ZD = Accesso automatizzato digitale
+MT = Accesso Manuale tit. tradizionale
+MD = Accesso Manuale tit. digitale
+DT = Daspato tit. tradizionale
+DD = Daspato tit. digitale
+FT = Denuncia furto per tit. tradizionale
+FD = Denuncia furto per tit. digitale
+AT = Annullato tit. tradizionale
+AD = Annullato tit. digitale
+BT = Black List a disposizione dell’organizzatore per tit. tradizionali
+BD = Black list a disposizione dell’organizzatore per tit. digitali-->
 	
 </xs:schema>
+
