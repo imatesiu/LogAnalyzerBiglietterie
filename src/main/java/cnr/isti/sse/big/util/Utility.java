@@ -21,11 +21,7 @@ import java.security.cert.X509Certificate;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
@@ -446,7 +442,25 @@ public class Utility {
 		
 	}
 
-	private boolean callVerP7s(InputStream fileFW,InputStream fileFirma ) {
+    public static boolean checkDocType(String transazione) {
+
+		List<String> list = Arrays.asList(
+				"Log_ist_v0001_20190627.dtd",
+		"Log_v0040_20190627.dtd",
+		"RiepilogoGiornaliero_v0039_20040209.dtd",
+		"RiepilogoMensile_v0039_20040209.dtd",
+		"ControlloAccessi_v0001_20080626.dtd",
+		"Lta_v0001_20081106.dtd");
+
+		for (String element: list) {
+			if(transazione.contains(element))
+				return true;
+		}
+		log.error("dtd non presente o errato");
+		return false;
+    }
+
+    private boolean callVerP7s(InputStream fileFW,InputStream fileFirma ) {
 		try {
 			byte[] bytes = IOUtils.toByteArray(fileFW);
 
@@ -462,18 +476,7 @@ public class Utility {
 		return false;
 	}
 
-	/**
-	 * Verify a PKCS7 signature.
-	 *
-	 * @param byteArray the byte sequence that has been signed
-	 * @param psi 
-	 * @param contents the /Contents field as a COSString
-	 * @param sig the PDF signature (the /V dictionary)
-	 * @throws CertificateException
-	 * @throws CMSException
-	 * @throws StoreException
-	 * @throws OperatorCreationException
-	 */
+
 	public static boolean verifyPKCS7(byte[] byteArray) {
 		// inspiration:
 		// http://stackoverflow.com/a/26702631/535646
