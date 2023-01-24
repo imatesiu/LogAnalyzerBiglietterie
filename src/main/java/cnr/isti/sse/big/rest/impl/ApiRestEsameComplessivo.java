@@ -84,7 +84,9 @@ public class ApiRestEsameComplessivo {
 				} else {
 					t = your_primitive_bytes;
 				}
+
 				String Transazione = new String(t);
+				Utility.checkDocType(Transazione);
 				String LT = Transazione.replaceAll("<!DOCTYPE[^<>]*(?:<![^<>]*>[^<>]*)*d\">", "")
 						.replaceAll("[^\\x20-\\x7e]", "");//
 				LT = LT.replaceAll("<!DOCTYPE[^<>]*(?:<![^<>]*>[^<>]*)*d'>", "").replaceAll("[^\\x20-\\x7e]", "");//
