@@ -287,9 +287,9 @@ public class Utility {
 			if(prog!=progparsed) {
 				log.error("Progressivo Mancante "+prog);
 				prog = progparsed;
-			}else {
-				numeroprogressivi++;
 			}
+				numeroprogressivi++;
+
 			prog++;
 			
 			//log.info(p);
@@ -812,6 +812,11 @@ public class Utility {
 			if(titolo.getQuantita()!=null)
 				quantita += Integer.parseInt(titolo.getQuantita());
 			titolo.getTipoTitolo();
+			if(titolo.getCodiceAbbonamento()==null)
+				log.error("CodiceAbbonamento null");
+			if(titolo.getCodiceAbbonamento()!=null)
+				if(titolo.getCodiceAbbonamento().isEmpty())
+					log.error("CodiceAbbonamento isEmpty");
 		}
 		return  ImmutableTriple.of(quantita, corrispettivo, prevendita);
 
@@ -871,6 +876,11 @@ public class Utility {
 			if(titolo.getQuantita()!=null)
 				quantita += Integer.parseInt(titolo.getQuantita());
 			titolo.getTipoTitolo().trim();
+			if(titolo.getCodiceAbbonamento()==null)
+				log.error("CodiceAbbonamento null");
+			if(titolo.getCodiceAbbonamento()!=null)
+				if(titolo.getCodiceAbbonamento().isEmpty())
+					log.error("CodiceAbbonamento isEmpty");
 		}
 		return  ImmutableTriple.of(quantita, corrispettivo, prevendita);
 
@@ -887,6 +897,11 @@ public class Utility {
 			if(titolo.getQuantita()!=null)
 				quantita += Integer.parseInt(titolo.getQuantita());
 			titolo.getTipoTitolo().trim();
+			if(titolo.getCodiceAbbonamento()==null)
+				log.error("CodiceAbbonamento null");
+			if(titolo.getCodiceAbbonamento()!=null)
+				if(titolo.getCodiceAbbonamento().isEmpty())
+					log.error("CodiceAbbonamento isEmpty");
 		}
 		return  ImmutableTriple.of(quantita, corrispettivo, prevendita);
 
@@ -909,13 +924,17 @@ public class Utility {
 
 
 			List<Abbonamenti> abb = organizzatore.getAbbonamenti();
-			
+			organizzatore.getEvento();
 
 			for(Abbonamenti a: abb) {
 
 				labb.add(Utility.getAbbonamentiEmessi(a.getAbbonamentiEmessi()));
 				alabb.add(Utility.getAbbonamentiAnnullati(a.getAbbonamentiAnnullati()));
-
+				if(a.getCodiceAbbonamento()==null)
+					log.error("CodiceAbbonamento null");
+				if(a.getCodiceAbbonamento()!=null)
+					if(a.getCodiceAbbonamento().isEmpty())
+						log.error("CodiceAbbonamento isEmpty");
 				Utility.getAbbonamentiIVAPreassolta(a.getAbbonamentiIVAPreassolta());
 				Utility.getAbbonamentiIVAPreassoltaAnnullati(a.getAbbonamentiIVAPreassoltaAnnullati());
 
@@ -929,13 +948,15 @@ public class Utility {
 				log.info(evento.getIntrattenimento());
 				String incidenzaI = evento.getIntrattenimento().getIncidenza();
 				String ImponibileIntrattenimenti = evento.getIntrattenimento().getImponibileIntrattenimenti();
-				int eIntrattenimenti,incidenza = 0;
+
+				int eIntrattenimenti,incidenza,ivaeccedenzaomaggi = 0;
 				try {
 					 eIntrattenimenti = Integer.parseInt(ImponibileIntrattenimenti);
 					 incidenza = Integer.parseInt(incidenzaI);
 					}catch (NumberFormatException e) {
 						eIntrattenimenti = 0;
 						incidenza = 0;
+						log.error("Non parso incidenza");
 					}
 				log.info(evento.getMultiGenere());
 				List<OrdineDiPosto> ordinip = evento.getOrdineDiPosto();
@@ -948,6 +969,13 @@ public class Utility {
 
 				
 				for(OrdineDiPosto ordinp: ordinip) {
+					try {
+						ivaeccedenzaomaggi = Integer.parseInt(ordinp.getIVAEccedenteOmaggi());
+					}catch (NumberFormatException e) {
+						ivaeccedenzaomaggi = 0;
+						log.error("ivaeccedenzaomaggi");
+					}
+					checkIVAEccedenteOmaggi(ivaeccedenzaomaggi);
 					List<TitoliAccesso> titoliaccesso = ordinp.getTitoliAccesso();
 					InfoTitoli infotitolo = Utility.getTitoliAccesso(titoliaccesso, incidenzaI);
 					limm.add(infotitolo);
@@ -1005,7 +1033,17 @@ public class Utility {
 
 	}
 
-
+	private static void checkIVAEccedenteOmaggi(float ivaeccedenzaomaggi) {
+		if(ivaeccedenzaomaggi<=0)
+			log.warn("IVAEccedenteOmaggi "+ivaeccedenzaomaggi );
+		else{
+			log.info("IVAEccedenteOmaggi: "+(ivaeccedenzaomaggi/100 ));
+			float imponibile = ((ivaeccedenzaomaggi*100)/22);
+			log.info("ImponibileIVAEccedenteOmaggi: "+imponibile/100 );
+			String lordo = String.valueOf((imponibile/100)+(ivaeccedenzaomaggi/100));
+			log.info("LordoIVAEccedenteOmaggi: "+lordo );
+		}
+	}
 
 
 	private static ImmutableTriple<Integer, Integer, Integer> DifferenzaVenditeAnnulli(ImmutableTriple<Integer, Integer, Integer> sum,
