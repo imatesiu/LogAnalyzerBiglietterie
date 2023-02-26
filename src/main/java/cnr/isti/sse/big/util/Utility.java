@@ -941,6 +941,10 @@ public class Utility {
 				try {
 					 eIntrattenimenti = Integer.parseInt(ImponibileIntrattenimenti);
 					 incidenza = Integer.parseInt(incidenzaI);
+					 if(eIntrattenimenti<incidenza)
+						 log.error("Non parso incidenza");
+					if(eIntrattenimenti==0 ||incidenza ==0 )
+						log.warn("Non parso incidenza");
 					}catch (NumberFormatException e) {
 						eIntrattenimenti = 0;
 						incidenza = 0;
