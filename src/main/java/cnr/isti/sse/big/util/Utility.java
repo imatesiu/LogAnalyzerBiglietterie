@@ -37,6 +37,10 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
+import cnr.isti.sse.big.data.riepilogomensile.*;
+import cnr.isti.sse.big.data.supporto.ReadTabEventiIntegrata;
+import cnr.isti.sse.big.data.supporto.TabEventiIntegrata;
+import cnr.isti.sse.big.data.supporto.TabEvento;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
@@ -52,22 +56,6 @@ import org.bouncycastle.util.StoreException;
 import org.w3c.dom.Document;
 
 import cnr.isti.sse.big.data.reply.rp.LogRP;
-import cnr.isti.sse.big.data.riepilogomensile.Abbonamenti;
-import cnr.isti.sse.big.data.riepilogomensile.AbbonamentiAnnullati;
-import cnr.isti.sse.big.data.riepilogomensile.AbbonamentiEmessi;
-import cnr.isti.sse.big.data.riepilogomensile.AbbonamentiFissi;
-import cnr.isti.sse.big.data.riepilogomensile.AbbonamentiIVAPreassolta;
-import cnr.isti.sse.big.data.riepilogomensile.AbbonamentiIVAPreassoltaAnnullati;
-import cnr.isti.sse.big.data.riepilogomensile.AltriProventiGenerici;
-import cnr.isti.sse.big.data.riepilogomensile.BigliettiAbbonamento;
-import cnr.isti.sse.big.data.riepilogomensile.BigliettiAbbonamentoAnnullati;
-import cnr.isti.sse.big.data.riepilogomensile.Evento;
-import cnr.isti.sse.big.data.riepilogomensile.OrdineDiPosto;
-import cnr.isti.sse.big.data.riepilogomensile.Organizzatore;
-import cnr.isti.sse.big.data.riepilogomensile.TitoliAccesso;
-import cnr.isti.sse.big.data.riepilogomensile.TitoliAccessoIVAPreassolta;
-import cnr.isti.sse.big.data.riepilogomensile.TitoliAnnullati;
-import cnr.isti.sse.big.data.riepilogomensile.TitoliIVAPreassoltaAnnullati;
 import cnr.isti.sse.big.data.transazioni.Abbonamento;
 import cnr.isti.sse.big.data.transazioni.BigliettoAbbonamento;
 import cnr.isti.sse.big.data.transazioni.LogTransazione;
@@ -975,7 +963,8 @@ public class Utility {
 						ivaeccedenzaomaggi = 0;
 						log.error("ivaeccedenzaomaggi");
 					}
-					checkIVAEccedenteOmaggi(ivaeccedenzaomaggi);
+					String tipogenere = gettipogenere(evento.getMultiGenere());
+					checkIVAEccedenteOmaggi(ivaeccedenzaomaggi, tipogenere);
 					List<TitoliAccesso> titoliaccesso = ordinp.getTitoliAccesso();
 					InfoTitoli infotitolo = Utility.getTitoliAccesso(titoliaccesso, incidenzaI);
 					limm.add(infotitolo);
@@ -1033,12 +1022,23 @@ public class Utility {
 
 	}
 
-	private static void checkIVAEccedenteOmaggi(float ivaeccedenzaomaggi) {
+	private static String gettipogenere(List<MultiGenere> multiGenere) {
+		for (MultiGenere multi:multiGenere) {
+			String tipo = multi.getTipoGenere();
+			return tipo;
+		}
+		return "";
+	}
+
+	private static void checkIVAEccedenteOmaggi(float ivaeccedenzaomaggi, String evento) {
 		if(ivaeccedenzaomaggi<=0)
 			log.warn("IVAEccedenteOmaggi "+ivaeccedenzaomaggi );
 		else{
+
+			TabEvento tabevento = ReadTabEventiIntegrata.getTabEvento(evento);
+
 			log.info("IVAEccedenteOmaggi: "+(ivaeccedenzaomaggi/100 ));
-			float imponibile = ((ivaeccedenzaomaggi*100)/22);
+			float imponibile = ((ivaeccedenzaomaggi*100)/tabevento.getIVA().intValue());
 			log.info("ImponibileIVAEccedenteOmaggi: "+imponibile/100 );
 			String lordo = String.valueOf((imponibile/100)+(ivaeccedenzaomaggi/100));
 			log.info("LordoIVAEccedenteOmaggi: "+lordo );
