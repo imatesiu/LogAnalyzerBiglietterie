@@ -7,6 +7,7 @@ import re
 import sys
 import uuid
 import shutil
+import html
 import tempfile
 import subprocess
 import pathlib
