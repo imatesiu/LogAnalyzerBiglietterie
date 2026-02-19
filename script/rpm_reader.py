@@ -190,51 +190,70 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
 
     # Abbonamenti block (se presente)
     abbo_html = ""
-    abbo = child(org, "Abbonamenti") if org is not None else None
-    if abbo is not None:
-        em = child(abbo, "AbbonamentiEmessi")
-        an = child(abbo, "AbbonamentiAnnullati")
-        # AbbonamentoIVAPreassolta / AbbonamentoIVAPreassoltaAnnullati
-        anip = child(abbo,"AbbonamentoIVAPreassolta")
-        anipa = child(abbo,"AbbonamentoIVAPreassoltaAnnullati")
+    abbo_html_i = ""
+    #abbo = child(org, "Abbonamenti") if org is not None else None
+    abbos = children(org, "Abbonamenti") if org is not None else []
+    idx = 1
+    for abbo in abbos:
 
-        def sec_row(label: str, el: Optional[ET.Element]) -> List[str]:
-            if el is None:
-                return [html.escape(label), "", "", "", ""]
-            return [
-                html.escape(label),
-                html.escape(text_path(el, "Quantita")),
-                html.escape(money_from_cents(text_path(el, "CorrispettivoLordo"), cents_mode)),
-                html.escape(money_from_cents(text_path(el, "Prevendita"), cents_mode)),
-                html.escape(money_from_cents(text_path(el, "IVACorrispettivo"), cents_mode)),
-            ]
+        if abbo is not None:
+            em = child(abbo, "AbbonamentiEmessi")
+            an = child(abbo, "AbbonamentiAnnullati")
+            # AbbonamentoIVAPreassolta / AbbonamentoIVAPreassoltaAnnullati
+            anip = child(abbo,"AbbonamentoIVAPreassolta")
+            anipa = child(abbo,"AbbonamentoIVAPreassoltaAnnullati")
 
-        rows = [sec_row("Emessi", em), sec_row("Annullati", an),
-                sec_row("IVAPreassolta", anip), sec_row("IVAPreassoltaAnnullati", anipa)]
-        abbo_table = (
-            "<table><thead><tr>"
-            "<th>Sezione</th><th>Quantità</th><th>Corrispettivo</th><th>Prevendita</th><th>IVA Corrisp.</th>"
-            "</tr></thead><tbody>"
-            + "".join("<tr>" + "".join(f"<td>{c}</td>" for c in r) + "</tr>" for r in rows)
-            + "</tbody></table>"
-        )
+            def sec_row(label: str, el: Optional[ET.Element]) -> List[str]:
+                if el is None:
+                    return [html.escape(label), "", "", "", ""]
+                return [
+                    html.escape(label),
+                    html.escape(text_path(el, "Quantita")),
+                    html.escape(money_from_cents(text_path(el, "CorrispettivoLordo"), cents_mode)),
+                    html.escape(money_from_cents(text_path(el, "Prevendita"), cents_mode)),
+                    html.escape(money_from_cents(text_path(el, "IVACorrispettivo"), cents_mode)),
+                ]
 
-        abbo_html = f"""
-        <div class="card">
-          <h2>Abbonamenti</h2>
-          <ul>
-            <li><b>Codice Abbonamento</b>: {html.escape(text_path(abbo,'CodiceAbbonamento'))}</li>
-            <li><b>Validità</b>: {html.escape(fmt_date(text_path(abbo,'Validita')))}</li>
-            <li><b>Tipo Tassazione</b>: {html.escape(attr_path(abbo,'TipoTassazione','valore'))}</li>
-            <li><b>Turno</b>: {html.escape(attr_path(abbo,'Turno','valore'))}</li>
-            <li><b>Codice Ordine</b>: {html.escape(text_path(abbo,'CodiceOrdine'))}</li>
-            <li><b>Tipo Titolo</b>: {html.escape(text_path(abbo,'TipoTitolo'))}</li>
-            <li><b>Q.tà eventi abilitati</b>: {html.escape(text_path(abbo,'QuantitaEventiAbilitati'))}</li>
-          </ul>
-          {abbo_table}
-        </div>
-        """
+            rows = [sec_row("Emessi", em), sec_row("Annullati", an),
+                    sec_row("IVAPreassolta", anip), sec_row("IVAPreassoltaAnnullati", anipa)]
+            abbo_table = (
+                "<table><thead><tr>"
+                "<th>Sezione</th><th>Quantità</th><th>Corrispettivo</th><th>Prevendita</th><th>IVA Corrisp.</th>"
+                "</tr></thead><tbody>"
+                + "".join("<tr>" + "".join(f"<td>{c}</td>" for c in r) + "</tr>" for r in rows)
+                + "</tbody></table>"
+            )
 
+            abbo_html_i += f"""
+            <details class="event"  data-idx="{idx}">
+            <summary>
+              Abbonamento {idx}: <b>{html.escape(text_path(abbo,'CodiceAbbonamento'))} </b> 
+              <span class="pill">Tassazione {html.escape(attr_path(abbo,'TipoTassazione','valore'))}</span>
+            </summary>
+            <div class="pad">
+              <h3>Abbonamento</h3>
+              <ul>
+                <li><b>Codice Abbonamento</b>: {html.escape(text_path(abbo,'CodiceAbbonamento'))}</li>
+                <li><b>Validità</b>: {html.escape(fmt_date(text_path(abbo,'Validita')))}</li>
+                <li><b>Tipo Tassazione</b>: {html.escape(attr_path(abbo,'TipoTassazione','valore'))}</li>
+                <li><b>Turno</b>: {html.escape(attr_path(abbo,'Turno','valore'))}</li>
+                <li><b>Codice Ordine</b>: {html.escape(text_path(abbo,'CodiceOrdine'))}</li>
+                <li><b>Tipo Titolo</b>: {html.escape(text_path(abbo,'TipoTitolo'))}</li>
+                <li><b>Q.tà eventi abilitati</b>: {html.escape(text_path(abbo,'QuantitaEventiAbilitati'))}</li>
+              </ul>
+              {abbo_table}
+            
+            </div></details>
+            """
+            idx += 1
+
+    abbo_html = f"""
+            <div class="card">
+                 <h2>Abbonamenti ({len(abbos)})</h2>
+              
+              {abbo_html_i}
+            </div>
+            """
     # Eventi
     events = children(org, "Evento") if org is not None else []
 
@@ -291,7 +310,7 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
                 tot_corr_accesso += int_or0(text_path(ta, "CorrispettivoLordo", "0"))
                 tot_prev_accesso += int_or0(text_path(ta, "Prevendita", "0"))
 
-            for tn in children(od, "TitoliAnullati"):
+            for tn in children(od, "TitoliAnnullati"):
                 tot_qty_ann += int_or0(text_path(tn, "Quantita", "0"))
                 tot_corr_ann += int_or0(text_path(ta, "CorrispettivoLordo", "0"))
                 tot_prev_ann += int_or0(text_path(ta, "Prevendita", "0"))
@@ -501,7 +520,7 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
         ev_details.append(f"""
           <details class="event" data-filter="{html.escape(filter_blob)}" data-idx="{idx}">
             <summary>
-              Evento {idx}: <b>{html.escape(fmt_date(date))} {html.escape(fmt_time(time))}</b> — {html.escape(loc_name)} ({html.escape(loc_code)})
+              Evento {idx}: <b> Codice Abbonamento {html.escape(fmt_date(date))} </b> — {html.escape(loc_name)} ({html.escape(loc_code)})
               <span class="pill">Tassazione {html.escape(tass if tass else "n/d")}</span>
             </summary>
             <div class="pad">
