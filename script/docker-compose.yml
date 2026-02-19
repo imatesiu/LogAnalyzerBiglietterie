@@ -1,0 +1,11 @@
+services:
+  viewer:
+    build: .
+    ports:
+      - "8443:5000"
+    volumes:
+      - ./tls:/app/tls:ro
+      - ./uploads:/app/uploads
+    environment:
+      - PYTHONUNBUFFERED=1
+
