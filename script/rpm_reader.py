@@ -194,6 +194,9 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
     if abbo is not None:
         em = child(abbo, "AbbonamentiEmessi")
         an = child(abbo, "AbbonamentiAnnullati")
+        # AbbonamentoIVAPreassolta / AbbonamentoIVAPreassoltaAnnullati
+        anip = child(abbo,"AbbonamentoIVAPreassolta")
+        anipa = child(abbo,"AbbonamentoIVAPreassoltaAnnullati")
 
         def sec_row(label: str, el: Optional[ET.Element]) -> List[str]:
             if el is None:
@@ -206,7 +209,8 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
                 html.escape(money_from_cents(text_path(el, "IVACorrispettivo"), cents_mode)),
             ]
 
-        rows = [sec_row("Emessi", em), sec_row("Annullati", an)]
+        rows = [sec_row("Emessi", em), sec_row("Annullati", an),
+                sec_row("IVAPreassolta", anip), sec_row("IVAPreassoltaAnnullati", anipa)]
         abbo_table = (
             "<table><thead><tr>"
             "<th>Sezione</th><th>Quantità</th><th>Corrispettivo</th><th>Prevendita</th><th>IVA Corrisp.</th>"
@@ -258,9 +262,22 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
         tot_qty_ann = 0
         tot_corr_accesso = 0
         tot_prev_accesso = 0
-
+        tot_corr_ann = 0
+        tot_prev_ann = 0
         tot_ecc_omaggi = 0
         tot_iva_ecc_omaggi = 0
+
+        tot_qty_biglabb = 0
+        tot_corr_biglabb = 0
+        tot_prev_biglabb = 0
+
+        tot_qty_ann_biglabb = 0
+        tot_corr_ann_biglabb = 0
+        tot_prev_ann_biglabb = 0
+
+        tot_qty_ann_abfissi  = 0
+        tot_corr_ann_abfissi  = 0
+        tot_prev_ann_abfissi  = 0
 
         for od in children(e, "OrdineDiPosto"):
             ecc = first_text(od, ["EccedenzaOmaggi", "ImportoEccedenzaOmaggi", "EccedenzaOmaggiImporto"], "")
@@ -274,8 +291,30 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
                 tot_corr_accesso += int_or0(text_path(ta, "CorrispettivoLordo", "0"))
                 tot_prev_accesso += int_or0(text_path(ta, "Prevendita", "0"))
 
-            for tn in children(od, "TitoliAnnullati"):
+            for tn in children(od, "TitoliAnullati"):
                 tot_qty_ann += int_or0(text_path(tn, "Quantita", "0"))
+                tot_corr_ann += int_or0(text_path(ta, "CorrispettivoLordo", "0"))
+                tot_prev_ann += int_or0(text_path(ta, "Prevendita", "0"))
+
+            #  BigliettiAbbonamento
+            for ba in children(od, "BigliettiAbbonamento"):
+                tot_qty_biglabb += int_or0(text_path(ba, "Quantita", "0"))
+                tot_corr_biglabb += int_or0(text_path(ta, "CorrispettivoLordo", "0"))
+                tot_prev_biglabb += int_or0(text_path(ta, "Prevendita", "0"))
+
+
+            #  BigliettiAbbonamentoAnnullati
+            for ba in children(od, "BigliettiAbbonamentoAnnullati"):
+                tot_qty_ann_biglabb += int_or0(text_path(ba, "Quantita", "0"))
+                tot_corr_ann_biglabb += int_or0(text_path(ta, "CorrispettivoLordo", "0"))
+                tot_prev_ann_biglabb += int_or0(text_path(ta, "Prevendita", "0"))
+
+            # (opzionale) AbbonamentiFissiAnnullati
+            for af in children(od, "AbbonamentiFissiAnnullati"):
+                tot_qty_ann_abfissi += int_or0(text_path(af, "Quantita", "0"))
+                tot_corr_ann_abfissi += int_or0(text_path(ta, "CorrispettivoLordo", "0"))
+                tot_prev_ann_abfissi += int_or0(text_path(ta, "Prevendita", "0"))
+
 
         # ---- TABELLINA EVENTI (con sorting)
         # filtro testuale (per ricerca)
@@ -411,13 +450,35 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
                     + "</tbody></table>"
                 )
 
-            extra = abbo_table("BigliettiAbbonamento") + abbo_table("AbbonamentiFissi")
+            extra = abbo_table("BigliettiAbbonamento") + abbo_table("AbbonamentiFissi") + abbo_table("BigliettiAbbonamentoAnnullati")
 
+            # TitoliAccessoIVAPreassolta / TitoliIVAPreassoltaAnnullati (se presenti)
+            def ivapre_table(tag: str) -> str:
+                rows = []
+                for ab in children(od, tag):
+                    rows.append([
+                        html.escape(text_path(ab, "TipoTitolo")),
+                        html.escape(text_path(ab, "Quantita")),
+                        html.escape(money_from_cents(text_path(ab, "ImportoFigurativo"), cents_mode)),
+                        html.escape(money_from_cents(text_path(ab, "IVAFigurativa"), cents_mode)),
+                    ])
+                if not rows:
+                    return ""
+                return (
+                        f"<h4>{html.escape(tag)}</h4>"
+                        "<table><thead><tr>"
+                        "<th>Tipo</th><th>Q.tà</th><th>Importo fig.</th><th>IVA fig.</th>"
+                        "</tr></thead><tbody>"
+                        + "".join("<tr>" + "".join(f"<td>{c}</td>" for c in r) + "</tr>" for r in rows)
+                        + "</tbody></table>"
+                )
+
+            extra += ivapre_table("TitoliAccessoIVAPreassolta") + ivapre_table("TitoliIVAPreassoltaAnnullati")
             ordine_blocks.append(f"""
               <details>
                 <summary>Ordine di posto {od_i}: <b>{html.escape(cod)}</b> — Capienza {html.escape(cap)}</summary>
                 <div class="pad">
-                  <div><b>Eccedenza omaggi</b>: {html.escape(ecc_fmt)} &nbsp; | &nbsp; <b>IVA eccedenza omaggi</b>: {html.escape(iva_ecc_fmt)}</div>
+                  <div><b>IVA eccedenza omaggi</b>: {html.escape(iva_ecc_fmt)}</div>
 
                   <h4>TitoliAccesso</h4>
                   {ta_table}
@@ -447,7 +508,7 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
               <div><b>Titolo</b>: {html.escape(title)}</div>
               <div><b>Incidenza intrattenimento</b>: {html.escape(inc_show)}</div>
               <div><b>Imponibile intrattenimenti</b>: {html.escape(imp_show)}</div>
-              <div><b>Eccedenza omaggi (tot.)</b>: {html.escape(ecc_ev_show)} &nbsp; | &nbsp; <b>IVA eccedenza (tot.)</b>: {html.escape(iva_ecc_ev_show)}</div>
+              <div><b>IVA eccedenza (tot.)</b>: {html.escape(iva_ecc_ev_show)}</div>
 
               <h3>Generi / Opere</h3>
               {mg_block}
