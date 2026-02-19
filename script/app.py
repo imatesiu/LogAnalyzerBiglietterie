@@ -25,6 +25,8 @@ UPLOAD_ROOT.mkdir(exist_ok=True)
 XSD_DIR = APP_DIR / "xsd"
 
 RPM_SCRIPT = APP_DIR / "rpm_reader.py"
+RCA_SCRIPT = APP_DIR / "accessi_reader.py"
+LTA_SCRIPT = APP_DIR / "lta_reader.py"
 LOG_SCRIPT = APP_DIR / "log_reader.py"
 
 MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB
@@ -179,6 +181,12 @@ def run_reader(kind: str, in_file: pathlib.Path, no_cents: bool) -> pathlib.Path
     elif kind == "log":
         script = LOG_SCRIPT
         out_suffix = ".log.html"
+    elif kind=="lta":
+        script = LTA_SCRIPT
+        out_suffix = ".lta.html"
+    elif kind=="rca":
+        script = RCA_SCRIPT
+        out_suffix = ".rca.html"
     else:
         raise RuntimeError("run_reader chiamato su tipo non RPM/LOG")
 
