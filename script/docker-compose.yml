@@ -5,7 +5,7 @@ services:
       - "8443:5000"
     volumes:
       - ./tls:/app/tls:ro
+      - ./xsd:/app/xsd:ro
       - ./uploads:/app/uploads
     environment:
       - PYTHONUNBUFFERED=1
-
