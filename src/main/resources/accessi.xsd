@@ -149,12 +149,12 @@
 					</xs:restriction>
 				</xs:simpleType>
 	</xs:element>
-	<xs:element name="IncidenzaIntrattenimento" type="xs:string" />
+	<xs:element name="IncidenzaIntrattenimento" type="xs:nonNegativeInteger" />
 	<xs:element name="DenominazioneLocale" type="xs:string" />
 	<xs:element name="CodiceLocale" type="xs:string" />
-	<xs:element name="DataEvento" type="xs:string" />
-	<xs:element name="OraEvento" type="xs:string" />
-	<xs:element name="TipoGenere" type="xs:string" />
+	<xs:element name="DataEvento" type="xs:date" />
+	<xs:element name="OraEvento" type="xs:time" />
+	<xs:element name="TipoGenere" type="xs:nonNegativeInteger" />
 	<xs:element name="TitoloEvento" type="xs:string" />
 	<xs:element name="Autore" type="xs:string" />
 	<xs:element name="Esecutore" type="xs:string" />
@@ -163,35 +163,35 @@
 	<xs:element name="CodiceOrdinePosto" type="xs:string" />
 	<xs:element name="Capienza" type="xs:string" />
 	<xs:element name="TipoTitolo" type="xs:string" />
-	<xs:element name="TotaleTitoliLTA" type="xs:string" />
-	<xs:element name="TotaleTitoliNoAccessoTradiz" type="xs:string" />
-	<xs:element name="TotaleTitoliNoAccessoDigitali" type="xs:string" />
-	<xs:element name="TotaleTitoliAutomatizzatiTradiz" type="xs:string" />
-	<xs:element name="TotaleTitoliAutomatizzatiDigitali" type="xs:string" />
-	<xs:element name="TotaleTitoliManualiTradiz" type="xs:string" />
-	<xs:element name="TotaleTitoliManualiDigitali" type="xs:string" />
-	<xs:element name="TotaleTitoliAnnullatiTradiz" type="xs:string" />
-	<xs:element name="TotaleTitoliAnnullatiDigitali" type="xs:string" />
-	<xs:element name="TotaleTitoliDaspatiTradiz" type="xs:string" />
-	<xs:element name="TotaleTitoliDaspatiDigitali" type="xs:string" />
-	<xs:element name="TotaleTitoliRubatiTradiz" type="xs:string" />
-	<xs:element name="TotaleTitoliRubatiDigitali" type="xs:string" />
-	<xs:element name="TotaleTitoliBLTradiz" type="xs:string" />
-	<xs:element name="TotaleTitoliBLDigitali" type="xs:string" />
+	<xs:element name="TotaleTitoliLTA" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliNoAccessoTradiz" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliNoAccessoDigitali" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliAutomatizzatiTradiz" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliAutomatizzatiDigitali" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliManualiTradiz" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliManualiDigitali" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliAnnullatiTradiz" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliAnnullatiDigitali" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliDaspatiTradiz" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliDaspatiDigitali" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliRubatiTradiz" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliRubatiDigitali" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliBLTradiz" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliBLDigitali" type="xs:nonNegativeInteger" />
 	<xs:element name="TipoTitoloAbbonamento" type="xs:string" />
-	<xs:element name="TotaleTitoliAbbLTA" type="xs:string" />
-	<xs:element name="TotaleTitoliAbbNoAccessoTradiz" type="xs:string" />
-	<xs:element name="TotaleTitoliAbbNoAccessoDigitali" type="xs:string" />
-	<xs:element name="TotaleTitoliAbbAutomatizzatiTradiz" type="xs:string" />
-	<xs:element name="TotaleTitoliAbbAutomatizzatiDigitali" type="xs:string" />
-	<xs:element name="TotaleTitoliAbbManualiTradiz" type="xs:string" />
-	<xs:element name="TotaleTitoliAbbManualiDigitali" type="xs:string" />
-	<xs:element name="TotaleTitoliAbbAnnullatiTradiz" type="xs:string" />
-	<xs:element name="TotaleTitoliAbbAnnullatiDigitali" type="xs:string" />
-	<xs:element name="TotaleTitoliAbbDaspatiTradiz" type="xs:string" />
-	<xs:element name="TotaleTitoliAbbDaspatiDigitali" type="xs:string" />
-	<xs:element name="TotaleTitoliAbbRubatiTradiz" type="xs:string" />
-	<xs:element name="TotaleTitoliAbbRubatiDigitali" type="xs:string" />
-	<xs:element name="TotaleTitoliAbbBLTradiz" type="xs:string" />
-	<xs:element name="TotaleTitoliAbbBLDigitali" type="xs:string" />
+	<xs:element name="TotaleTitoliAbbLTA" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliAbbNoAccessoTradiz" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliAbbNoAccessoDigitali" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliAbbAutomatizzatiTradiz" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliAbbAutomatizzatiDigitali" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliAbbManualiTradiz" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliAbbManualiDigitali" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliAbbAnnullatiTradiz" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliAbbAnnullatiDigitali" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliAbbDaspatiTradiz" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliAbbDaspatiDigitali" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliAbbRubatiTradiz" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliAbbRubatiDigitali" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliAbbBLTradiz" type="xs:nonNegativeInteger" />
+	<xs:element name="TotaleTitoliAbbBLDigitali" type="xs:nonNegativeInteger" />
 </xs:schema>

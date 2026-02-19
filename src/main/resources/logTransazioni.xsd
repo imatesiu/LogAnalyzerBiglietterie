@@ -265,20 +265,20 @@
 	<xs:element name="IndirizzoIPRegistrazione" type="ipType" />
 	<xs:element name="IndirizzoIPTransazione" type="ipType" />
 	<xs:element name="IndirizzoSpedizioneTitolo" type="xs:string" />
-	<xs:element name="IVACorrispettivo" type="xs:string" />
-	<xs:element name="IVAFigurativa" type="xs:string" />
-	<xs:element name="IVAPrevendita" type="xs:string" />
+	<xs:element name="IVACorrispettivo" type="xs:nonNegativeInteger" />
+	<xs:element name="IVAFigurativa" type="xs:nonNegativeInteger" />
+	<xs:element name="IVAPrevendita" type="xs:nonNegativeInteger" />
 	<xs:element name="MetodoSpedizioneTitolo" type="xs:string" />
 	<xs:element name="OraEvento" type="timeType" />
 	<xs:element name="OriginaleAnnullato" type="xs:string" />
 	<xs:element name="OriginaleRiferimentoAnnullamento" type="xs:string" />
-	<xs:element name="Prevendita" type="xs:string" />
+	<xs:element name="Prevendita" type="xs:nonNegativeInteger" />
 	<xs:element name="ProgressivoAbbonamento" type="xs:string" />
-	<xs:element name="Quantita" type="xs:string" />
+	<xs:element name="Quantita" type="xs:nonNegativeInteger" />
 	<xs:element name="QuantitaEventiAbilitati" type="xs:string" />
 	<xs:element name="Rateo" type="xs:string" />
 	<xs:element name="RateoIntrattenimenti" type="xs:string" />
-	<xs:element name="RateoIVA" type="xs:string" />
+	<xs:element name="RateoIVA" type="xs:nonNegativeInteger" />
 	<xs:element name="TipoGenere" type="xs:string" />
 	<xs:element name="TipoProvento" type="xs:string" />
 	<xs:element name="Titolo" type="xs:string" />

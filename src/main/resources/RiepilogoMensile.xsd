@@ -275,7 +275,7 @@
 		</xs:complexType>
 	</xs:element>
 	<xs:element name="Autore" type="xs:string" />
-	<xs:element name="Capienza" type="xs:string" />
+	<xs:element name="Capienza" type="xs:nonNegativeInteger" />
 	<xs:element name="CodiceAbbonamento" type="xs:string" />
 	<xs:element name="CodiceFiscale" type="xs:string" />
 	<xs:element name="CodiceLocale" type="xs:string" />

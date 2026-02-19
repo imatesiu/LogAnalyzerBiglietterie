@@ -244,28 +244,28 @@
 	<xs:element name="CodiceFiscale" type="xs:string" />
 	<xs:element name="CodiceLocale" type="xs:string" />
 	<xs:element name="CodiceOrdine" type="xs:string" />
-	<xs:element name="CorrispettivoLordo" type="xs:string" />
+	<xs:element name="CorrispettivoLordo" type="xs:nonNegativeInteger" />
 	<xs:element name="Data" type="xs:string" />
 	<xs:element name="Denominazione" type="xs:string" />
 	<xs:element name="Esecutore" type="xs:string" />
-	<xs:element name="ImportoFigurativo" type="xs:string" />
-	<xs:element name="ImportoPrestazione" type="xs:string" />
-	<xs:element name="Incidenza" type="xs:string" />
-	<xs:element name="IncidenzaGenere" type="xs:string" />
-	<xs:element name="IVACorrispettivo" type="xs:string" />
-	<xs:element name="IVAFigurativa" type="xs:string" />
-	<xs:element name="IVAPrevendita" type="xs:string" />
+	<xs:element name="ImportoFigurativo" type="xs:nonNegativeInteger" />
+	<xs:element name="ImportoPrestazione" type="xs:nonNegativeInteger" />
+	<xs:element name="Incidenza" type="xs:nonNegativeInteger" />
+	<xs:element name="IncidenzaGenere" type="xs:nonNegativeInteger" />
+	<xs:element name="IVACorrispettivo" type="xs:nonNegativeInteger" />
+	<xs:element name="IVAFigurativa" type="xs:nonNegativeInteger" />
+	<xs:element name="IVAPrevendita" type="xs:nonNegativeInteger" />
 	<xs:element name="Nazionalita" type="xs:string" />
 	<xs:element name="Distributore" type="xs:string" />
 	<xs:element name="Ora" type="xs:string" />
 	<xs:element name="DataEvento" type="xs:string" />
 	<xs:element name="OraEvento" type="xs:string" />
-	<xs:element name="Prevendita" type="xs:string" />
+	<xs:element name="Prevendita" type="xs:nonNegativeInteger" />
 	<xs:element name="ProduttoreCinema" type="xs:string" />
 	<xs:element name="Quantita" type="xs:string" />
 	<xs:element name="QuantitaEventiAbilitati" type="xs:string" />
 	<xs:element name="SistemaEmissione" type="xs:string" />
-	<xs:element name="TipoGenere" type="xs:string" />
+	<xs:element name="TipoGenere" type="xs:nonNegativeInteger" />
 	<xs:element name="TipoOrganizzatore">
 		<xs:complexType>
 			<xs:attribute default="G" name="valore">
