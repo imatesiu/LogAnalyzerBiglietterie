@@ -11,7 +11,7 @@ import sys
 import tempfile
 import xml.etree.ElementTree as ET
 from collections import Counter
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Tuple
 
 # -------------------------
 # XML helpers (namespace-safe)
@@ -45,6 +45,28 @@ def int_or0(s: str) -> int:
     if not re.fullmatch(r"-?\d+", s):
         return 0
     return int(s)
+
+def extract_kv(elem: Optional[ET.Element]) -> List[Tuple[str, str]]:
+    """
+    Estrae coppie (chiave,valore) da:
+    - attributi dell'elemento
+    - figli immediati (tag -> text)
+    """
+    if elem is None:
+        return []
+    pairs: List[Tuple[str, str]] = []
+    # attributi
+    for k, v in (elem.attrib or {}).items():
+        v = (v or "").strip()
+        if v != "":
+            pairs.append((f"@{k}", v))
+    # figli
+    for c in list(elem):
+        key = localname(c.tag)
+        val = (c.text or "").strip()
+        if val != "":
+            pairs.append((key, val))
+    return pairs
 
 # -------------------------
 # Formatting
@@ -139,23 +161,14 @@ def open_in_browser(path: str) -> None:
 # HTML helpers for sorting
 # -------------------------
 def td(text: str, sort_key: str = "") -> str:
-    """
-    Cella con data-sort per ordinamento JS.
-    """
     safe = text if text.startswith("<") else html.escape(text)
     if sort_key == "":
-        # default: usa il testo “visibile”
-        # (NB: se safe contiene tag, evitiamo di usare quello come sort)
         sk = re.sub(r"<[^>]+>", "", safe).strip().lower()
     else:
         sk = sort_key
     return f"<td data-sort='{html.escape(sk)}'>{safe}</td>"
 
 def th(label: str, dtype: str) -> str:
-    """
-    Intestazione cliccabile con tipo dati per sorting.
-    dtype: text|num|date|time|money
-    """
     return f"<th class='sortable' data-type='{html.escape(dtype)}'>{html.escape(label)}</th>"
 
 # -------------------------
@@ -168,19 +181,29 @@ def parse_log(root: ET.Element) -> List[Dict[str, str]]:
     for t in txs:
         ta = child(t, "TitoloAccesso")
 
-        # flag annullamento (in molti LOG è un attributo di TitoloAccesso)
         ann = ""
         if ta is not None:
             ann = (ta.attrib.get("Annullamento", "") or "").strip()
 
-        # importi (spesso in centesimi)
         corr = text_path(ta, "CorrispettivoLordo", "0")
         prev = text_path(ta, "Prevendita", "0")
         iva_c = text_path(ta, "IVACorrispettivo", "0")
         iva_p = text_path(ta, "IVAPrevendita", "0")
 
-        # attributi transazione
-        row = {
+        # nuove sezioni (opzionali) secondo XSD
+        acq_reg = child(t, "AcquirenteRegistrazione")
+        acq_tx = child(t, "AcquirenteTransazione")
+        rif_ann = child(t, "RiferimentoAnnullamento")
+
+        def flatten(prefix: str, pairs: List[Tuple[str, str]]) -> Dict[str, str]:
+            d: Dict[str, str] = {}
+            for k, v in pairs:
+                # es: @Autenticazione -> AcqReg_Autenticazione
+                kk = k[1:] if k.startswith("@") else k
+                d[f"{prefix}_{kk}"] = v
+            return d
+
+        row: Dict[str, str] = {
             "CFOrganizzatore": t.attrib.get("CFOrganizzatore", ""),
             "CFTitolare": t.attrib.get("CFTitolare", ""),
             "SistemaEmissione": t.attrib.get("SistemaEmissione", ""),
@@ -200,15 +223,12 @@ def parse_log(root: ET.Element) -> List[Dict[str, str]]:
             "TipoTassazione": t.attrib.get("TipoTassazione", ""),
             "Valuta": t.attrib.get("Valuta", ""),
 
-            # presente in alcuni tracciati LOG:
             "OriginaleAnnullato": t.attrib.get("OriginaleAnnullato", ""),
             "CartaOriginaleAnnullato": t.attrib.get("CartaOriginaleAnnullato", ""),
             "CausaleAnnullamento": t.attrib.get("CausaleAnnullamento", ""),
 
-            # imponibile intrattenimenti (come attributo transazione nel tuo tracciato)
             "ImponibileIntrattenimenti": t.attrib.get("ImponibileIntrattenimenti", "0"),
 
-            # campi da TitoloAccesso
             "Annullamento": ann or "N",
             "CodiceLocale": text_path(ta, "CodiceLocale", ""),
             "DataEvento": text_path(ta, "DataEvento", ""),
@@ -221,6 +241,11 @@ def parse_log(root: ET.Element) -> List[Dict[str, str]]:
             "IVACorrispettivo": iva_c,
             "IVAPrevendita": iva_p,
         }
+
+        # flatten buyer/cancellation blocks into row dict
+        row.update(flatten("AcqReg", extract_kv(acq_reg)))
+        row.update(flatten("AcqTx", extract_kv(acq_tx)))
+        row.update(flatten("RifAnn", extract_kv(rif_ann)))
 
         out.append(row)
 
@@ -251,32 +276,48 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
     tot_iva_p = sum(int_or0(r.get("IVAPrevendita", "0")) for r in rows_data)
     tot_imp_intr = sum(int_or0(r.get("ImponibileIntrattenimenti", "0")) for r in rows_data)
 
-    # Table headers (con Tipo genere prima di Titolo)
+    # Headers: Tipo genere prima di Titolo
     headers_html = (
-        "<tr>"
-        + th("#", "num")
-        + th("Emiss.", "date")
-        + th("Ora", "time")
-        + th("Prog", "num")
-        + th("Tipo", "text")
-        + th("Ord", "text")
-        + th("Locale", "text")
-        + th("Data ev.", "date")
-        + th("Ora ev.", "time")
-        + th("Tipo genere", "text")
-        + th("Titolo", "text")
-        + th("Corr.", "money")
-        + th("Prev.", "money")
-        + th("IVA Corr.", "money")
-        + th("IVA Prev.", "money")
-        + th("ImponibileIntr.", "money")
-        + th("Ann", "text")
-        + "</tr>"
+            "<tr>"
+            + th("#", "num")
+            + th("Emiss.", "date")
+            + th("Ora", "time")
+            + th("Prog", "num")
+            + th("Tipo", "text")
+            + th("Ord", "text")
+            + th("Locale", "text")
+            + th("Data ev.", "date")
+            + th("Ora ev.", "time")
+            + th("Tipo genere", "text")
+            + th("Titolo", "text")
+            + th("Corr.", "money")
+            + th("Prev.", "money")
+            + th("IVA Corr.", "money")
+            + th("IVA Prev.", "money")
+            + th("ImponibileIntr.", "money")
+            + th("Ann", "text")
+            + "</tr>"
     )
 
-    # Rows + details
     tbody_rows = []
     details_blocks = []
+
+    def render_kv_block(title: str, d: Dict[str, str], prefix: str, preferred_order: List[str]) -> str:
+        # estrai tutte le chiavi prefix_*
+        items = []
+        for k, v in d.items():
+            if k.startswith(prefix + "_") and (v or "").strip() != "":
+                items.append((k[len(prefix) + 1 :], v.strip()))
+
+        if not items:
+            return f"<div class='muted'>Nessun dato</div>"
+
+        # ordina: prima preferred_order, poi il resto alfabetico
+        order_index = {name: i for i, name in enumerate(preferred_order)}
+        items.sort(key=lambda kv: (order_index.get(kv[0], 10_000), kv[0].lower()))
+
+        lis = "".join(f"<li><b>{html.escape(k)}</b>: {html.escape(v)}</li>" for k, v in items)
+        return f"<h4>{html.escape(title)}</h4><ul>{lis}</ul>"
 
     for idx, r in enumerate(rows_data, start=1):
         de = r.get("DataEmissione", "")
@@ -299,7 +340,7 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
         ann = r.get("Annullamento", "N")
         ann_flag = is_ann(ann)
 
-        # chiavi sort
+        # sort keys
         sort_date = de if de.isdigit() and len(de) == 8 else de
         sort_time = oe if oe.isdigit() else oe
         sort_prog = str(int_or0(prog))
@@ -309,12 +350,34 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
         sort_ivap = str(int_or0(iva_p))
         sort_imp = str(int_or0(imp))
 
-        # chiave filtro (unisce campi utili)
+        # filtro include anche campi acquirente e riferimento annullamento
+        buyer_blob = " ".join([
+            r.get("AcqReg_Autenticazione",""),
+            r.get("AcqReg_CodiceUnivocoAcquirente",""),
+            r.get("AcqReg_IndirizzoIPRegistrazione",""),
+            r.get("AcqReg_DataOraRegistrazione",""),
+
+            r.get("AcqTx_CodiceUnivocoNumeroTransazione",""),
+            r.get("AcqTx_CellulareAcquirente",""),
+            r.get("AcqTx_EmailAcquirente",""),
+            r.get("AcqTx_IndirizzoIPTransazione",""),
+            r.get("AcqTx_DataOraInizioCheckout",""),
+            r.get("AcqTx_DataOraEsecuzionePagamento",""),
+            r.get("AcqTx_CRO",""),
+            r.get("AcqTx_MetodoSpedizioneTitolo",""),
+            r.get("AcqTx_IndirizzoSpedizioneTitolo",""),
+
+            r.get("RifAnn_OriginaleRiferimentoAnnullamento",""),
+            r.get("RifAnn_CartaRiferimentoAnnullamento",""),
+            r.get("RifAnn_CausaleRiferimentoAnnullamento",""),
+        ])
+
         filter_blob = " ".join([
             str(idx), de, oe, prog, tip, ordc, loc, dev, oev, tgen, titolo,
             r.get("SigilloFiscale",""), r.get("CartaAttivazione",""),
             r.get("CFOrganizzatore",""), r.get("CFTitolare",""),
             r.get("Causale",""), r.get("CausaleAnnullamento",""),
+            buyer_blob,
         ]).lower()
 
         tr_class = "txrow ann" if ann_flag else "txrow"
@@ -341,6 +404,27 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
         )
 
         pill = " <span class='pill pill-ann'>ANNULLATO</span>" if ann_flag else ""
+
+        acq_reg_block = render_kv_block(
+            "AcquirenteRegistrazione",
+            r,
+            "AcqReg",
+            ["Autenticazione", "CodiceUnivocoAcquirente", "IndirizzoIPRegistrazione", "DataOraRegistrazione"],
+        )
+        acq_tx_block = render_kv_block(
+            "AcquirenteTransazione",
+            r,
+            "AcqTx",
+            ["CodiceUnivocoNumeroTransazione", "EmailAcquirente", "CellulareAcquirente", "IndirizzoIPTransazione",
+             "DataOraInizioCheckout", "DataOraEsecuzionePagamento", "CRO", "MetodoSpedizioneTitolo", "IndirizzoSpedizioneTitolo"],
+        )
+        rif_ann_block = render_kv_block(
+            "RiferimentoAnnullamento",
+            r,
+            "RifAnn",
+            ["OriginaleRiferimentoAnnullamento", "CartaRiferimentoAnnullamento", "CausaleRiferimentoAnnullamento"],
+        )
+
         details_blocks.append(f"""
         <details class="tx" data-filter="{html.escape(filter_blob)}" data-idx="{idx}">
           <summary>
@@ -390,12 +474,17 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
                   </tbody>
                 </table>
               </div>
+
+              <div class="card2">
+                {acq_reg_block}
+                {acq_tx_block}
+                {rif_ann_block}
+              </div>
             </div>
           </div>
         </details>
         """)
 
-    # Summary blocks
     def most_common(counter: Counter) -> str:
         return counter.most_common(1)[0][0] if counter else ""
 
@@ -517,14 +606,12 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
           const nb = parseFloat(kb) || 0;
           return na - nb;
         }
-        // text
         return ka.localeCompare(kb, undefined, {numeric:true, sensitivity:'base'});
       };
 
       rows.sort((a,b)=> asc ? cmp(a,b) : -cmp(a,b));
       rows.forEach(r=>tbody.appendChild(r));
 
-      // aggiorna frecce
       clearSortStyles(table);
       const ths = table.querySelectorAll('th.sortable');
       const th = ths[colIndex];
@@ -546,8 +633,7 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      const q = document.getElementById('q');
-      q.addEventListener('input', applyFilter);
+      document.getElementById('q').addEventListener('input', applyFilter);
       initSorting();
     });
     """
@@ -555,7 +641,9 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
     table_html = f"""
     <div class="card" style="margin-top:12px;">
       <h2>Transazioni</h2>
-      <input id="q" class="search" placeholder="Filtra per sigillo, carta, titolo, tipo genere, locale, progressivo..." />
+      <input id="q" class="search"
+             placeholder="Filtra per email, cellulare, IP, sigillo, carta, titolo, tipo genere, locale, progressivo..."
+             oninput="applyFilter()" />
       <div class="tablewrap">
         <table id="txTable" class="wrap">
           <thead>{headers_html}</thead>
@@ -629,4 +717,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
