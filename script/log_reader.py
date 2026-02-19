@@ -13,6 +13,7 @@ import xml.etree.ElementTree as ET
 from collections import Counter
 from typing import Optional, List, Dict, Tuple
 
+
 # -------------------------
 # XML helpers (namespace-safe)
 # -------------------------
@@ -47,26 +48,20 @@ def int_or0(s: str) -> int:
     return int(s)
 
 def extract_kv(elem: Optional[ET.Element]) -> List[Tuple[str, str]]:
-    """
-    Estrae coppie (chiave,valore) da:
-    - attributi dell'elemento
-    - figli immediati (tag -> text)
-    """
     if elem is None:
         return []
     pairs: List[Tuple[str, str]] = []
-    # attributi
     for k, v in (elem.attrib or {}).items():
         v = (v or "").strip()
-        if v != "":
+        if v:
             pairs.append((f"@{k}", v))
-    # figli
     for c in list(elem):
         key = localname(c.tag)
         val = (c.text or "").strip()
-        if val != "":
+        if val:
             pairs.append((key, val))
     return pairs
+
 
 # -------------------------
 # Formatting
@@ -90,12 +85,20 @@ def money_from_cents(value: str, cents_mode: bool = True) -> str:
     if not s:
         return ""
     if not re.fullmatch(r"-?\d+", s):
-        return html.escape(s)
+        return html.escape(s, quote=True)
     n = int(s)
     amount = (n / 100.0) if cents_mode else float(n)
     us = f"{amount:,.2f}"
     it = us.replace(",", "X").replace(".", ",").replace("X", ".")
     return it + " EUR"
+
+
+# -------------------------
+# Safe HTML attribute escaping
+# -------------------------
+def hattr(s: str) -> str:
+    return html.escape(s or "", quote=True)
+
 
 # -------------------------
 # P7M extraction (optional)
@@ -112,22 +115,24 @@ def extract_p7m_to_temp_xml(p7m_path: str) -> str:
 
     inform = "PEM" if looks_pem(p7m_path) else "DER"
 
-    # 1) openssl cms
     try:
         subprocess.run(
             ["openssl", "cms", "-verify", "-noverify", "-inform", inform, "-in", p7m_path, "-out", tmp_path],
-            check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
         return tmp_path
     except Exception:
         pass
 
-    # 2) macOS security cms -D
     try:
         with open(tmp_path, "wb") as out:
             subprocess.run(
                 ["/usr/bin/security", "cms", "-D", "-i", p7m_path],
-                check=True, stdout=out, stderr=subprocess.DEVNULL
+                check=True,
+                stdout=out,
+                stderr=subprocess.DEVNULL,
             )
         return tmp_path
     except Exception:
@@ -136,6 +141,7 @@ def extract_p7m_to_temp_xml(p7m_path: str) -> str:
         except Exception:
             pass
         raise RuntimeError("Impossibile estrarre payload dal .p7m (openssl e security falliti).")
+
 
 # -------------------------
 # Output naming + open
@@ -157,19 +163,21 @@ def open_in_browser(path: str) -> None:
     elif os.name == "nt":
         os.startfile(path)  # type: ignore
 
+
 # -------------------------
 # HTML helpers for sorting
 # -------------------------
-def td(text: str, sort_key: str = "") -> str:
-    safe = text if text.startswith("<") else html.escape(text)
+def td(cell_html: str, sort_key: str = "") -> str:
+    safe = cell_html if cell_html.startswith("<") else html.escape(cell_html, quote=False)
     if sort_key == "":
         sk = re.sub(r"<[^>]+>", "", safe).strip().lower()
     else:
         sk = sort_key
-    return f"<td data-sort='{html.escape(sk)}'>{safe}</td>"
+    return f"<td data-sort=\"{hattr(sk)}\">{safe}</td>"
 
 def th(label: str, dtype: str) -> str:
-    return f"<th class='sortable' data-type='{html.escape(dtype)}'>{html.escape(label)}</th>"
+    return f"<th class=\"sortable\" data-type=\"{hattr(dtype)}\">{html.escape(label)}</th>"
+
 
 # -------------------------
 # Parse LOG into structured rows
@@ -190,7 +198,6 @@ def parse_log(root: ET.Element) -> List[Dict[str, str]]:
         iva_c = text_path(ta, "IVACorrispettivo", "0")
         iva_p = text_path(ta, "IVAPrevendita", "0")
 
-        # nuove sezioni (opzionali) secondo XSD
         acq_reg = child(t, "AcquirenteRegistrazione")
         acq_tx = child(t, "AcquirenteTransazione")
         rif_ann = child(t, "RiferimentoAnnullamento")
@@ -198,7 +205,6 @@ def parse_log(root: ET.Element) -> List[Dict[str, str]]:
         def flatten(prefix: str, pairs: List[Tuple[str, str]]) -> Dict[str, str]:
             d: Dict[str, str] = {}
             for k, v in pairs:
-                # es: @Autenticazione -> AcqReg_Autenticazione
                 kk = k[1:] if k.startswith("@") else k
                 d[f"{prefix}_{kk}"] = v
             return d
@@ -242,7 +248,6 @@ def parse_log(root: ET.Element) -> List[Dict[str, str]]:
             "IVAPrevendita": iva_p,
         }
 
-        # flatten buyer/cancellation blocks into row dict
         row.update(flatten("AcqReg", extract_kv(acq_reg)))
         row.update(flatten("AcqTx", extract_kv(acq_tx)))
         row.update(flatten("RifAnn", extract_kv(rif_ann)))
@@ -251,11 +256,11 @@ def parse_log(root: ET.Element) -> List[Dict[str, str]]:
 
     return out
 
+
 # -------------------------
 # Build HTML
 # -------------------------
 def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode: bool = True) -> str:
-    # Summary
     cforg = Counter([r.get("CFOrganizzatore", "") for r in rows_data])
     cftit = Counter([r.get("CFTitolare", "") for r in rows_data])
     sysEm = Counter([r.get("SistemaEmissione", "") for r in rows_data])
@@ -276,7 +281,6 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
     tot_iva_p = sum(int_or0(r.get("IVAPrevendita", "0")) for r in rows_data)
     tot_imp_intr = sum(int_or0(r.get("ImponibileIntrattenimenti", "0")) for r in rows_data)
 
-    # Headers: Tipo genere prima di Titolo
     headers_html = (
             "<tr>"
             + th("#", "num")
@@ -299,25 +303,21 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
             + "</tr>"
     )
 
-    tbody_rows = []
-    details_blocks = []
-
     def render_kv_block(title: str, d: Dict[str, str], prefix: str, preferred_order: List[str]) -> str:
-        # estrai tutte le chiavi prefix_*
         items = []
         for k, v in d.items():
-            if k.startswith(prefix + "_") and (v or "").strip() != "":
+            if k.startswith(prefix + "_") and (v or "").strip():
                 items.append((k[len(prefix) + 1 :], v.strip()))
-
         if not items:
             return f"<div class='muted'>Nessun dato</div>"
 
-        # ordina: prima preferred_order, poi il resto alfabetico
         order_index = {name: i for i, name in enumerate(preferred_order)}
         items.sort(key=lambda kv: (order_index.get(kv[0], 10_000), kv[0].lower()))
-
         lis = "".join(f"<li><b>{html.escape(k)}</b>: {html.escape(v)}</li>" for k, v in items)
         return f"<h4>{html.escape(title)}</h4><ul>{lis}</ul>"
+
+    tbody_rows: List[str] = []
+    details_blocks: List[str] = []
 
     for idx, r in enumerate(rows_data, start=1):
         de = r.get("DataEmissione", "")
@@ -340,7 +340,6 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
         ann = r.get("Annullamento", "N")
         ann_flag = is_ann(ann)
 
-        # sort keys
         sort_date = de if de.isdigit() and len(de) == 8 else de
         sort_time = oe if oe.isdigit() else oe
         sort_prog = str(int_or0(prog))
@@ -350,13 +349,23 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
         sort_ivap = str(int_or0(iva_p))
         sort_imp = str(int_or0(imp))
 
-        # filtro include anche campi acquirente e riferimento annullamento
+        # >>> FIX: includo anche versioni formattate (quelle che vedi in tabella)
+        de_fmt = fmt_date(de)
+        oe_fmt = fmt_time(oe)
+        dev_fmt = fmt_date(dev)
+        oev_fmt = fmt_time(oev)
+
+        corr_fmt = money_from_cents(corr, cents_mode)
+        prev_fmt = money_from_cents(prev, cents_mode)
+        iva_c_fmt = money_from_cents(iva_c, cents_mode)
+        iva_p_fmt = money_from_cents(iva_p, cents_mode)
+        imp_fmt = money_from_cents(imp, cents_mode)
+
         buyer_blob = " ".join([
             r.get("AcqReg_Autenticazione",""),
             r.get("AcqReg_CodiceUnivocoAcquirente",""),
             r.get("AcqReg_IndirizzoIPRegistrazione",""),
             r.get("AcqReg_DataOraRegistrazione",""),
-
             r.get("AcqTx_CodiceUnivocoNumeroTransazione",""),
             r.get("AcqTx_CellulareAcquirente",""),
             r.get("AcqTx_EmailAcquirente",""),
@@ -366,39 +375,66 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
             r.get("AcqTx_CRO",""),
             r.get("AcqTx_MetodoSpedizioneTitolo",""),
             r.get("AcqTx_IndirizzoSpedizioneTitolo",""),
-
             r.get("RifAnn_OriginaleRiferimentoAnnullamento",""),
             r.get("RifAnn_CartaRiferimentoAnnullamento",""),
             r.get("RifAnn_CausaleRiferimentoAnnullamento",""),
         ])
 
         filter_blob = " ".join([
-            str(idx), de, oe, prog, tip, ordc, loc, dev, oev, tgen, titolo,
-            r.get("SigilloFiscale",""), r.get("CartaAttivazione",""),
-            r.get("CFOrganizzatore",""), r.get("CFTitolare",""),
-            r.get("Causale",""), r.get("CausaleAnnullamento",""),
+            # indice
+            str(idx),
+
+            # emissione: raw + formatted
+            #de, de_fmt,
+            #oe, oe_fmt,
+
+            # progressivo + tipo/ordine
+            prog, tip, ordc,
+
+            # evento: raw + formatted
+            #dev, dev_fmt,
+            #oev, oev_fmt,
+
+            # locale + genere + titolo
+            loc, tgen, titolo,
+
+            # importi: raw + formatted
+            corr, corr_fmt,
+            prev, prev_fmt,
+            iva_c, iva_c_fmt,
+            iva_p, iva_p_fmt,
+            imp, imp_fmt,
+
+            # altri identificativi
+            r.get("SigilloFiscale",""),
+            r.get("CartaAttivazione",""),
+            #r.get("CFOrganizzatore",""),
+            #r.get("CFTitolare",""),
+            r.get("Causale",""),
+            r.get("CausaleAnnullamento",""),
+
             buyer_blob,
         ]).lower()
 
         tr_class = "txrow ann" if ann_flag else "txrow"
         tbody_rows.append(
-            f"<tr class='{tr_class}' data-filter='{html.escape(filter_blob)}' data-idx='{idx}'>"
+            f"<tr class=\"{tr_class}\" data-filter=\"{hattr(filter_blob)}\" data-idx=\"{idx}\">"
             + td(str(idx), str(idx))
-            + td(fmt_date(de), sort_date)
-            + td(fmt_time(oe), sort_time)
+            + td(de_fmt, sort_date)
+            + td(oe_fmt, sort_time)
             + td(prog, sort_prog)
             + td(tip, tip.lower())
             + td(ordc, ordc.lower())
             + td(loc, loc.lower())
-            + td(fmt_date(dev), dev if dev.isdigit() and len(dev)==8 else dev)
-            + td(fmt_time(oev), oev if oev.isdigit() else oev)
+            + td(dev_fmt, dev if dev.isdigit() and len(dev) == 8 else dev)
+            + td(oev_fmt, oev if oev.isdigit() else oev)
             + td(tgen, tgen.lower())
             + td(titolo, titolo.lower())
-            + td(money_from_cents(corr, cents_mode), sort_corr)
-            + td(money_from_cents(prev, cents_mode), sort_prev)
-            + td(money_from_cents(iva_c, cents_mode), sort_ivac)
-            + td(money_from_cents(iva_p, cents_mode), sort_ivap)
-            + td(money_from_cents(imp, cents_mode), sort_imp)
+            + td(corr_fmt, sort_corr)
+            + td(prev_fmt, sort_prev)
+            + td(iva_c_fmt, sort_ivac)
+            + td(iva_p_fmt, sort_ivap)
+            + td(imp_fmt, sort_imp)
             + td(ann, ann.lower())
             + "</tr>"
         )
@@ -426,9 +462,9 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
         )
 
         details_blocks.append(f"""
-        <details class="tx" data-filter="{html.escape(filter_blob)}" data-idx="{idx}">
+        <details class="tx" data-filter="{hattr(filter_blob)}" data-idx="{idx}">
           <summary>
-            {html.escape(fmt_date(de))} {html.escape(fmt_time(oe))} — Prog {html.escape(prog)} — {html.escape(tip)} — {html.escape(titolo)}{pill}
+            {html.escape(de_fmt)} {html.escape(oe_fmt)} — Prog {html.escape(prog)} — {html.escape(tip)} — {html.escape(titolo)}{pill}
           </summary>
           <div class="pad">
             <div class="grid2">
@@ -446,10 +482,7 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
                   <li><b>Sigillo fiscale</b>: <code>{html.escape(r.get('SigilloFiscale',''))}</code></li>
                   <li><b>Tipo tassazione</b>: {html.escape(r.get('TipoTassazione',''))}</li>
                   <li><b>Valuta</b>: {html.escape(r.get('Valuta',''))}</li>
-                  <li><b>Imponibile intrattenimenti</b>: {html.escape(money_from_cents(imp, cents_mode))}</li>
-                  {f"<li><b>Originale annullato</b>: {html.escape(r.get('OriginaleAnnullato',''))}</li>" if r.get("OriginaleAnnullato") else ""}
-                  {f"<li><b>Carta originale annullato</b>: {html.escape(r.get('CartaOriginaleAnnullato',''))}</li>" if r.get("CartaOriginaleAnnullato") else ""}
-                  {f"<li><b>Causale annullamento</b>: {html.escape(r.get('CausaleAnnullamento',''))}</li>" if r.get("CausaleAnnullamento") else ""}
+                  <li><b>Imponibile intrattenimenti</b>: {html.escape(imp_fmt)}</li>
                 </ul>
               </div>
 
@@ -458,7 +491,7 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
                 <ul>
                   <li><b>Annullamento</b>: {html.escape(ann)}</li>
                   <li><b>Codice locale</b>: {html.escape(loc)}</li>
-                  <li><b>Data/Ora evento</b>: {html.escape(fmt_date(dev))} {html.escape(fmt_time(oev))}</li>
+                  <li><b>Data/Ora evento</b>: {html.escape(dev_fmt)} {html.escape(oev_fmt)}</li>
                   <li><b>Tipo genere</b>: {html.escape(tgen)}</li>
                   <li><b>Titolo</b>: {html.escape(titolo)}</li>
                 </ul>
@@ -467,10 +500,10 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
                 <table>
                   <thead><tr><th>Voce</th><th>Valore</th></tr></thead>
                   <tbody>
-                    <tr><td>Corrispettivo lordo</td><td>{html.escape(money_from_cents(corr, cents_mode))}</td></tr>
-                    <tr><td>Prevendita</td><td>{html.escape(money_from_cents(prev, cents_mode))}</td></tr>
-                    <tr><td>IVA Corrispettivo</td><td>{html.escape(money_from_cents(iva_c, cents_mode))}</td></tr>
-                    <tr><td>IVA Prevendita</td><td>{html.escape(money_from_cents(iva_p, cents_mode))}</td></tr>
+                    <tr><td>Corrispettivo lordo</td><td>{html.escape(corr_fmt)}</td></tr>
+                    <tr><td>Prevendita</td><td>{html.escape(prev_fmt)}</td></tr>
+                    <tr><td>IVA Corrispettivo</td><td>{html.escape(iva_c_fmt)}</td></tr>
+                    <tr><td>IVA Prevendita</td><td>{html.escape(iva_p_fmt)}</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -547,6 +580,7 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
     .pill{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;background:#f0f0f0;font-weight:700;font-size:12px;color:#333;}
     .pill-ann{background:#ffe8e8;color:#8a1f1f;}
     .search{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:10px;margin:10px 0;}
+    .status{color:#666;font-size:12px;margin-top:-4px;margin-bottom:8px;}
     code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;word-break:break-all;}
     .sortable{cursor:pointer;user-select:none;}
     .sortable:after{content:" ↕";color:#bbb;font-weight:600;}
@@ -560,31 +594,43 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
     function norm(s){ return (s||"").toString().toLowerCase(); }
 
     function applyFilter(){
-      const q = norm(document.getElementById('q').value).trim();
+      const input = document.getElementById('q');
+      const qraw = input ? norm(input.value).trim() : "";
+      const tokens = qraw.split(/\\s+/).filter(Boolean);
+
       const rows = document.querySelectorAll('#txBody tr.txrow');
       const dets = document.querySelectorAll('details.tx');
 
-      if(!q){
-        rows.forEach(r=>r.style.display="");
-        dets.forEach(d=>d.style.display="");
-        return;
+      let shown = 0;
+      const matchRow = (el) => {
+        const hay = norm(el.getAttribute('data-filter'));
+        if(tokens.length === 0) return true;
+        for(const tok of tokens){
+          if(!hay.includes(tok)) return false;
+        }
+        return true;
+      };
+
+      for(const r of rows){
+        const ok = matchRow(r);
+        r.style.display = ok ? "" : "none";
+        if(ok) shown++;
+      }
+      for(const d of dets){
+        const ok = matchRow(d);
+        d.style.display = ok ? "" : "none";
       }
 
-      rows.forEach(r=>{
-        const hay = norm(r.getAttribute('data-filter'));
-        r.style.display = hay.includes(q) ? "" : "none";
-      });
-
-      dets.forEach(d=>{
-        const hay = norm(d.getAttribute('data-filter'));
-        d.style.display = hay.includes(q) ? "" : "none";
-      });
+      const st = document.getElementById('filterStatus');
+      if(st){
+        st.textContent = tokens.length ? `Mostrate: ${shown} / ${rows.length}` : `Totale: ${rows.length}`;
+      }
     }
 
     function clearSortStyles(table){
-      table.querySelectorAll('th.sortable').forEach(th=>{
+      for(const th of table.querySelectorAll('th.sortable')){
         th.classList.remove('sorted-asc','sorted-desc');
-      });
+      }
     }
 
     function sortTableByCol(tableId, colIndex, type, asc){
@@ -610,7 +656,7 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
       };
 
       rows.sort((a,b)=> asc ? cmp(a,b) : -cmp(a,b));
-      rows.forEach(r=>tbody.appendChild(r));
+      for(const r of rows) tbody.appendChild(r);
 
       clearSortStyles(table);
       const ths = table.querySelectorAll('th.sortable');
@@ -632,18 +678,26 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
       });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('q').addEventListener('input', applyFilter);
+    function initAll(){
       initSorting();
-    });
+      applyFilter();
+    }
+
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', initAll);
+    } else {
+      initAll();
+    }
     """
 
     table_html = f"""
     <div class="card" style="margin-top:12px;">
       <h2>Transazioni</h2>
       <input id="q" class="search"
-             placeholder="Filtra per email, cellulare, IP, sigillo, carta, titolo, tipo genere, locale, progressivo..."
-             oninput="applyFilter()" />
+             placeholder="Filtra (es: 20/01/2026 ballo 240, oppure 1128, oppure 11:28)..."
+             oninput="applyFilter()" onkeyup="applyFilter()" onchange="applyFilter()" />
+      <div id="filterStatus" class="status"></div>
+
       <div class="tablewrap">
         <table id="txTable" class="wrap">
           <thead>{headers_html}</thead>
@@ -660,6 +714,7 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
 
     body = header + table_html
     return f"<!doctype html><html><head><meta charset='utf-8'><title>LOG Reader</title><style>{css}</style></head><body>{body}<script>{js}</script></body></html>"
+
 
 # -------------------------
 # Main
