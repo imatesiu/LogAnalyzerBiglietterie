@@ -84,13 +84,13 @@
 			<xs:attribute name="CodiceRichiedenteEmissioneSigillo" use="required" >
 			<xs:simpleType>
 					<xs:restriction base="xs:string">
-						<xs:pattern value="(SW|PV|CL|CW|AP)[0-9]*"></xs:pattern>
+						<xs:pattern value="(SW|PV|CL|CW|AP)[A-Za-z0-9]*"></xs:pattern>
 						
 					</xs:restriction>
 				</xs:simpleType>
 			</xs:attribute>
 			<xs:attribute name="Prestampa" type="xs:string" />
-			<xs:attribute name="ImponibileIntrattenimenti" type="xs:string" />
+			<xs:attribute name="ImponibileIntrattenimenti" type="xs:nonNegativeInteger" />
 			<xs:attribute name="OriginaleAnnullato" type="xs:string" />
 			<xs:attribute name="CartaOriginaleAnnullato" type="xs:string" />
 			<xs:attribute name="CausaleAnnullamento" >
@@ -252,7 +252,7 @@
 	<xs:element name="CodiceLocale" type="xs:string" />
 	<xs:element name="CodiceUnivocoAcquirente" type="xs:string" />
 	<xs:element name="CodiceUnivocoNumeroTransazione" type="xs:string" />
-	<xs:element name="CorrispettivoLordo" type="xs:string" />
+	<xs:element name="CorrispettivoLordo" type="xs:nonNegativeInteger" />
 	<xs:element name="CRO" type="xs:string" />
 	<xs:element name="DataEvento" type="DatetType" />
 			

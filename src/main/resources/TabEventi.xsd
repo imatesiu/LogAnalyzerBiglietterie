@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Created with Liquid Technologies Online Tools 1.0 (https://www.liquid-technologies.com) -->
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="TabEventiIntegrata">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" name="Evento">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Codice" type="xs:string" />
+              <xs:element name="Descrizione" type="xs:string" />
+              <xs:element name="CAPOII" type="xs:boolean" />
+              <xs:element name="CAPOIII" type="xs:boolean" />
+              <xs:element name="IVA" type="xs:integer" />
+              <xs:element name="ISI" type="xs:integer" />
+              <xs:element name="isSPORT" type="xs:boolean" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

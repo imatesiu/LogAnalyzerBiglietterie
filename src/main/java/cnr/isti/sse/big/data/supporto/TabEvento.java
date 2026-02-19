@@ -175,5 +175,17 @@ public class TabEvento {
         this.isSPORT = value;
     }
 
+    @Override
+    public String toString() {
+        return "TabEvento{" +
+                "codice='" + codice + '\'' +
+                ", descrizione='" + descrizione + '\'' +
+                ", capoii=" + capoii +
+                ", capoiii=" + capoiii +
+                ", iva=" + iva +
+                ", isi=" + isi +
+                ", isSPORT=" + isSPORT +
+                '}';
+    }
 }
 

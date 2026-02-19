@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
@@ -933,7 +934,7 @@ public class Utility {
 
 			List<Evento> leventi = organizzatore.getEvento();
 			for(Evento evento :leventi ) {
-				log.info(evento.getIntrattenimento());
+
 				String incidenzaI = evento.getIntrattenimento().getIncidenza();
 				String ImponibileIntrattenimenti = evento.getIntrattenimento().getImponibileIntrattenimenti();
 
@@ -951,6 +952,7 @@ public class Utility {
 						log.error("Non parso incidenza");
 					}
 				log.info(evento.getMultiGenere());
+				log.info(evento.getIntrattenimento());
 				List<OrdineDiPosto> ordinip = evento.getOrdineDiPosto();
 				int numerotitoli = 0;
 				List<InfoTitoli> limm = new ArrayList<>();
@@ -968,7 +970,7 @@ public class Utility {
 						log.error("ivaeccedenzaomaggi");
 					}
 					String tipogenere = gettipogenere(evento.getMultiGenere());
-					checkIVAEccedenteOmaggi(ivaeccedenzaomaggi, tipogenere);
+					checkIVAEccedenteOmaggi(new BigDecimal(ivaeccedenzaomaggi), tipogenere);
 					List<TitoliAccesso> titoliaccesso = ordinp.getTitoliAccesso();
 					InfoTitoli infotitolo = Utility.getTitoliAccesso(titoliaccesso, incidenzaI);
 					limm.add(infotitolo);
@@ -1034,18 +1036,23 @@ public class Utility {
 		return "";
 	}
 
-	private static void checkIVAEccedenteOmaggi(float ivaeccedenzaomaggi, String evento) {
-		if(ivaeccedenzaomaggi<=0)
+	private static void checkIVAEccedenteOmaggi(BigDecimal ivaeccedenzaomaggi, String evento) {
+		if(ivaeccedenzaomaggi.intValue()<=0)
 			log.warn("IVAEccedenteOmaggi "+ivaeccedenzaomaggi );
 		else{
+			Integer intevento = Integer.parseInt(evento);
+			TabEvento tabevento = ReadTabEventiIntegrata.getTabEvento(intevento.toString());
 
-			TabEvento tabevento = ReadTabEventiIntegrata.getTabEvento(evento);
-
-			log.info("IVAEccedenteOmaggi: "+(ivaeccedenzaomaggi/100 ));
-			float imponibile = ((ivaeccedenzaomaggi*100)/tabevento.getIVA().intValue());
-			log.info("ImponibileIVAEccedenteOmaggi: "+imponibile/100 );
-			String lordo = String.valueOf((imponibile/100)+(ivaeccedenzaomaggi/100));
-			log.info("LordoIVAEccedenteOmaggi: "+lordo );
+			log.info("IVAEccedenteOmaggi: "+(ivaeccedenzaomaggi.divide(new BigDecimal(100))  ));
+			if(tabevento.getIVA()!=null) {
+				BigDecimal imponibile = ((ivaeccedenzaomaggi.multiply(new BigDecimal(100)) ).divide( new BigDecimal(tabevento.getIVA().intValue()),2));
+				log.info("ImponibileIVAEccedenteOmaggi: " + imponibile .divide(new BigDecimal(100)) );
+				String lordo = String.valueOf((imponibile .divide(new BigDecimal(100)) ).add (ivaeccedenzaomaggi.divide(new BigDecimal(100)) ));
+				log.info("LordoIVAEccedenteOmaggi: " + lordo);
+			}else{
+				log.info(tabevento);
+				log.error("");
+			}
 		}
 	}
 
