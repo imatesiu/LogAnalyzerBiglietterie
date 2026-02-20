@@ -138,6 +138,10 @@ def detect_kind_from_root(root_tag: str) -> str:
         return "rpm"
     if root_tag == "LogTransazione":
         return "log"
+    if root_tag == "LTA_Giornaliera":
+        return "lta"
+    if root_tag == "RiepilogoControlloAccessi":
+        return "rca"
     return "xml"  # generic
 
 def detect_kind(upload_path: pathlib.Path) -> Tuple[str, str]:
@@ -505,7 +509,7 @@ def upload():
         # Genera output.html:
         # - RPM/LOG: reader
         # - XML generico: pretty XML (estratto se p7m)
-        if kind in ("rpm", "log"):
+        if kind in ("rpm", "log", "lta", "rca"):
             out_html = run_reader(kind, in_path, no_cents=no_cents)
             shutil.copyfile(out_html, run_dir / "output.html")
         else:
