@@ -11,3 +11,9 @@ buildNumber.properties
 .mvn/wrapper/maven-wrapper.jar
 .DS_Store
 /script/uploads
+/.idea
+/.settings
+.settings/org.eclipse.jdt.core.prefs
+.settings/org.eclipse.jdt.core.prefs
+.settings/org.eclipse.jdt.core.prefs
+/script/dati
