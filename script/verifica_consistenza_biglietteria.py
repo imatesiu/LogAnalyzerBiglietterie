@@ -40,6 +40,10 @@ import re
 import sys
 import traceback
 import xml.etree.ElementTree as ET
+import csv
+import math
+from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
+
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Tuple, DefaultDict
 from collections import defaultdict, Counter
@@ -63,6 +67,87 @@ def _to_int(value: Any) -> Optional[int]:
         # alcuni campi potrebbero avere leading zeros o formati non numerici:
         # in tal caso restituisco None
         return None
+
+# --- Helpers per controlli fiscali (ISI / IVA / omaggi) ---------------------------------------------
+
+def _dec(value: Any) -> Decimal:
+    """Converte un valore in Decimal in modo robusto (utile per evitare errori di floating point)."""
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, ValueError, TypeError):
+        return Decimal(0)
+
+
+def round_half_up(value: Decimal) -> int:
+    """Arrotondamento commerciale (0.5 -> 1) anche per valori negativi."""
+    if value >= 0:
+        return int(value.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+    return -int((-value).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
+
+def calc_quota_intr(amount_cents: int, perc_intr: int) -> int:
+    """Quota intrattenimento (in cent) dato importo lordo e % intrattenimento."""
+    return round_half_up(_dec(amount_cents) * _dec(perc_intr) / _dec(100))
+
+
+def calc_base_intr_for_log(gross_intr_cents: int, iva: Decimal, isi: Decimal) -> int:
+    """Imponibile intrattenimento da quota intrattenimento (approccio coerente con LOG: scorporo sul lordo e arrotondamento)."""
+    denom = _dec(1) + iva + isi
+    if denom == 0:
+        return 0
+    return round_half_up(_dec(gross_intr_cents) / denom)
+
+
+def calc_base_sp(gross_sp_cents: int, iva: Decimal) -> int:
+    """Imponibile spettacolo (solo IVA) da quota spettacolo."""
+    denom = _dec(1) + iva
+    if denom == 0:
+        return 0
+    return round_half_up(_dec(gross_sp_cents) / denom)
+
+
+def calc_expected_iva_total_from_gross(gross_total_cents: int, perc_intr: int, iva: Decimal, isi: Decimal) -> int:
+    """IVA totale attesa su un importo lordo (corrispettivo+prevendita) applicando scorpori/arrotondamenti."""
+    quota_intr = calc_quota_intr(gross_total_cents, perc_intr)
+    quota_sp = gross_total_cents - quota_intr
+
+    base_intr = calc_base_intr_for_log(quota_intr, iva, isi)
+    isi_amount = round_half_up(_dec(base_intr) * isi)
+    iva_intr = quota_intr - base_intr - isi_amount
+
+    base_sp = calc_base_sp(quota_sp, iva)
+    iva_sp = quota_sp - base_sp
+
+    return iva_intr + iva_sp
+
+
+def calc_imponibile_intr_notional_from_corr(corr_cents: int, perc_intr: int, iva: Decimal, isi: Decimal) -> int:
+    """Imponibile intrattenimento per omaggi eccedenti (su corrispettivo figurativo): residuale dopo IVA+ISI arrotondati."""
+    gross_intr = calc_quota_intr(corr_cents, perc_intr)
+    denom = _dec(1) + iva + isi
+    if denom == 0:
+        return gross_intr
+    iva_intr = round_half_up(_dec(gross_intr) * iva / denom)
+    isi_intr = round_half_up(_dec(gross_intr) * isi / denom)
+    return gross_intr - iva_intr - isi_intr
+
+
+def calc_imponibile_intr_round_for_threshold(corr_cents: int, perc_intr: int, iva: Decimal, isi: Decimal) -> int:
+    """Imponibile (arrotondato) usato per verificare la soglia IVA omaggi (L. 50.000 ≈ €25,82)."""
+    gross_intr = calc_quota_intr(corr_cents, perc_intr)
+    return calc_base_intr_for_log(gross_intr, iva, isi)
+
+
+OMAGGIO_TIPO_EXTRA = {"WX", "YX", "ZX"}  # da TAB. 3 (omaggio generico)
+
+
+def is_omaggio_tipo_titolo(tipo: Optional[str]) -> bool:
+    if not tipo:
+        return False
+    t = tipo.strip().upper()
+    return t.startswith("O") or (t in OMAGGIO_TIPO_EXTRA)
+
+
 
 
 def _text(el: Optional[ET.Element]) -> Optional[str]:
@@ -224,6 +309,68 @@ def parse_lta(paths: Iterable[str]) -> List[Dict[str, Any]]:
     return records
 
 
+# --- Aliquote TAB. 1 (CSV) ------------------------------------------------------------------------
+
+def _parse_rate_list(raw: Optional[str]) -> List[Decimal]:
+    if not raw:
+        return []
+    s = str(raw).strip()
+    if not s or s in {"-", "—", "–"}:
+        return []
+    parts = [p.strip() for p in re.split(r"[|/]", s) if p.strip()]
+    rates: List[Decimal] = []
+    for p in parts:
+        p = p.replace("%", "").strip()
+        try:
+            rates.append(_dec(p) / _dec(100))
+        except Exception:
+            continue
+    # de-dup mantenendo ordine
+    seen = set()
+    out: List[Decimal] = []
+    for r in rates:
+        if r in seen:
+            continue
+        seen.add(r)
+        out.append(r)
+    return out
+
+
+def load_aliquote_tab1(csv_path: str) -> Dict[str, Dict[str, Any]]:
+    """Carica la TAB.1 (aliquote IVA/ISI per TipoGenere) da CSV.
+
+    Output:
+      { "61": {"descr": "...", "iva_rates": [Decimal('0.22')], "isi_rates":[Decimal('0.16')], ... }, ... }
+    """
+    out: Dict[str, Dict[str, Any]] = {}
+    if not csv_path or not os.path.exists(csv_path):
+        return out
+    with open(csv_path, newline="", encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            code = (row.get("Codice") or "").strip()
+            if not code:
+                continue
+            esente_iva = str(row.get("Esente_IVA") or "").strip() == "1"
+
+            iva_rates = _parse_rate_list(row.get("IVA_rates_%"))
+            isi_rates = _parse_rate_list(row.get("ISI_rates_%"))
+
+            if esente_iva:
+                iva_rates = [Decimal(0)]
+
+            out[code] = {
+                "descr": (row.get("Descrizione") or "").strip(),
+                "iva_rates": iva_rates,
+                "isi_rates": isi_rates,
+                "iva_variable": str(row.get("IVA_variable") or "").strip() == "1",
+                "isi_raw": (row.get("ISI_raw") or "").strip(),
+                "esente_iva": esente_iva,
+            }
+    return out
+
+
+
 def parse_rca(paths: Iterable[str]) -> List[Dict[str, Any]]:
     records: List[Dict[str, Any]] = []
     for path in paths:
@@ -313,10 +460,10 @@ def parse_rpm(paths: Iterable[str]) -> List[Dict[str, Any]]:
                         event_info["TipoTassazione"] = tt.attrib.get("valore") or _text(tt)
                     inc = intr.find("Incidenza")
                     if inc is not None:
-                        event_info["Incidenza"] = _text(inc)
+                        event_info["Incidenza"] = _to_int(_text(inc)) or 0
                     imp = intr.find("ImponibileIntrattenimenti")
                     if imp is not None:
-                        event_info["ImponibileIntrattenimenti"] = _text(imp)
+                        event_info["ImponibileIntrattenimenti"] = _to_int(_text(imp)) or 0
 
                 loc = evento.find("Locale")
                 if loc is not None:
@@ -336,7 +483,8 @@ def parse_rpm(paths: Iterable[str]) -> List[Dict[str, Any]]:
 
                 for od in evento.findall("OrdineDiPosto"):
                     cod_ordine = _text(od.find("CodiceOrdine"))
-                    capienza = _text(od.find("Capienza"))
+                    capienza = _to_int(_text(od.find("Capienza"))) or 0
+                    iva_ecc_omaggi = _to_int(_text(od.find("IVAEccedenteOmaggi"))) or 0
 
                     def _parse_nodes(nodes: List[ET.Element], kind: str) -> None:
                         for node in nodes:
@@ -350,6 +498,7 @@ def parse_rpm(paths: Iterable[str]) -> List[Dict[str, Any]]:
                             rec.update(event_info)
                             rec["CodiceOrdine"] = cod_ordine
                             rec["Capienza"] = capienza
+                            rec["IVAEccedenteOmaggi"] = iva_ecc_omaggi
                             rec["kind"] = kind
                             rec["TipoTitolo"] = _text(node.find("TipoTitolo"))
                             for tag in ["Quantita", "CorrispettivoLordo", "Prevendita", "IVACorrispettivo", "IVAPrevendita", "ImportoPrestazione"]:
@@ -434,9 +583,15 @@ def _log_group_key(rec: Dict[str, Any], kind: str) -> Tuple[str, str, str, str, 
 def run_checks(log_recs: List[Dict[str, Any]],
                lta_recs: List[Dict[str, Any]],
                rca_recs: List[Dict[str, Any]],
-               rpm_recs: List[Dict[str, Any]]) -> Tuple[Dict[str, Any], List[Issue], Dict[str, Any]]:
+               rpm_recs: List[Dict[str, Any]],
+               tolleranza_importi: int = 0,
+               aliquote_tab1: Optional[Dict[str, Dict[str, Any]]] = None,
+               omaggi_pct_capienza: float = 5.0,
+               omaggi_soglia_iva_cent: int = 2582
+               ) -> Tuple[Dict[str, Any], List[Issue], Dict[str, Any], List[Dict[str, Any]], Dict[str, Any]]:
     issues: List[Issue] = []
     metrics: Dict[str, Any] = {}
+    aliquote_tab1 = aliquote_tab1 or {}
 
     # Indexes
     log_emissions = [r for r in log_recs if r.get("Annullamento") == "N"]
@@ -939,19 +1094,450 @@ def run_checks(log_recs: List[Dict[str, Any]],
                              "LTA_annullati": q_ann}
                 ))
 
-    # Scoreboard summary per-check
-    per_check = defaultdict(lambda: {"ERROR": 0, "WARN": 0, "INFO": 0})
+
+    # --- Controlli fiscali (ISI / eccedenza omaggi) ------------------------------------------------
+    fiscal_details: Dict[str, Any] = {
+        "config": {
+            "omaggi_pct_capienza": omaggi_pct_capienza,
+            "omaggi_soglia_iva_cent": omaggi_soglia_iva_cent,
+        },
+        "events": [],
+        "orders": [],
+    }
+
+    skipped_checks: set = set()
+
+    if not aliquote_tab1:
+        # Senza TAB.1 non possiamo ricalcolare correttamente ISI/IVA
+        issues.append(Issue(check="Aliquote_TAB1", severity="WARN", message="TAB.1 aliquote (aliquote_tab1.csv) non caricata: controlli fiscali ISI/IVA limitati."))
+        skipped_checks.update({"ISI_LOG", "ISI_RPM", "IVA_Omaggi_Ecc"})
+    else:
+        # Copertura TipoGenere -> aliquote
+        genre_in_log = {str(r.get("TipoGenere") or "").strip() for r in log_recs if str(r.get("TipoGenere") or "").strip()}
+        missing_genres = sorted([g for g in genre_in_log if g not in aliquote_tab1])
+        if missing_genres:
+            issues.append(Issue(check="Aliquote_TAB1", severity="WARN", message=f"TipoGenere presenti nei LOG ma non trovati in TAB.1: {', '.join(missing_genres)}", context={"TipoGenere": missing_genres}))
+
+        # Indici RPM per evento/ordine
+        # (Limitiamo i controlli fiscali agli eventi presenti nei LOG caricati)
+        scope_events = {(str(lr.get("CodiceLocale") or ""), str(lr.get("DataEvento") or ""), str(lr.get("OraEvento") or "")) for lr in log_recs}
+
+        rpm_event_info: Dict[Tuple[str, str, str], Dict[str, Any]] = {}
+        rpm_order_info: Dict[Tuple[str, str, str, str], Dict[str, Any]] = {}
+        rpm_titles_by_order: Dict[Tuple[str, str, str, str], List[Dict[str, Any]]] = defaultdict(list)
+
+        for r in rpm_recs:
+            ek = (str(r.get("CodiceLocale") or ""), str(r.get("DataEvento") or ""), str(r.get("OraEvento") or ""))
+            if ek not in scope_events:
+                continue
+            ok = (ek[0], ek[1], ek[2], str(r.get("CodiceOrdine") or ""))
+            if ek not in rpm_event_info:
+                rpm_event_info[ek] = {
+                    "TipoTassazione": str(r.get("TipoTassazione") or ""),
+                    "Incidenza": int(r.get("Incidenza") or 0),
+                    "ImponibileIntrattenimenti": int(r.get("ImponibileIntrattenimenti") or 0),
+                }
+            if ok not in rpm_order_info:
+                rpm_order_info[ok] = {
+                    "Capienza": int(r.get("Capienza") or 0),
+                    "IVAEccedenteOmaggi": int(r.get("IVAEccedenteOmaggi") or 0),
+                }
+            rpm_titles_by_order[ok].append(r)
+
+        # LOG: base netta intrattenimenti e omaggi netti per ordine
+        base_net_by_event: Dict[Tuple[str, str, str], int] = defaultdict(int)
+        omaggi_net_by_order: Dict[Tuple[str, str, str, str], int] = defaultdict(int)
+        log_by_event: Dict[Tuple[str, str, str], List[Dict[str, Any]]] = defaultdict(list)
+        genre_counts_by_event: Dict[Tuple[str, str, str], Counter] = defaultdict(Counter)
+
+        for lr in log_recs:
+            ek = (str(lr.get("CodiceLocale") or ""), str(lr.get("DataEvento") or ""), str(lr.get("OraEvento") or ""))
+            ok = (ek[0], ek[1], ek[2], str(lr.get("CodiceOrdine") or ""))
+            sign = -1 if str(lr.get("Annullamento") or "").upper() == "S" else 1
+
+            base_net_by_event[ek] += sign * int(lr.get("ImponibileIntrattenimenti") or 0)
+            if is_omaggio_tipo_titolo(lr.get("TipoTitolo")):
+                omaggi_net_by_order[ok] += sign
+
+            gross = int(lr.get("CorrispettivoLordo") or 0) + int(lr.get("Prevendita") or 0)
+            if gross > 0:
+                tg = str(lr.get("TipoGenere") or "").strip()
+                if tg:
+                    genre_counts_by_event[ek][tg] += 1
+            log_by_event[ek].append(lr)
+
+        # Selezione aliquote per evento (gestisce eventuali IVA/ISI variabili)
+        def _pick_perc_intr(ek: Tuple[str, str, str]) -> int:
+            info = rpm_event_info.get(ek)
+            if info and info.get("Incidenza") is not None:
+                return int(info.get("Incidenza") or 0)
+            # fallback: se l'evento è "I" nei LOG, assumo 100
+            for lr in log_by_event.get(ek, []):
+                if str(lr.get("TipoTassazione") or "").upper() == "I":
+                    return 100
+            return 0
+
+        def _select_rates_for_event(ek: Tuple[str, str, str]) -> Tuple[Optional[str], Optional[Decimal], Optional[Decimal], str]:
+            perc_intr = _pick_perc_intr(ek)
+            # preferisco il TipoGenere più frequente a pagamento nel LOG
+            tg = genre_counts_by_event.get(ek, Counter()).most_common(1)[0][0] if genre_counts_by_event.get(ek) else ""
+            if not tg:
+                # fallback: primo TipoGenere trovato nei LOG
+                for lr in log_by_event.get(ek, []):
+                    tg = str(lr.get("TipoGenere") or "").strip()
+                    if tg:
+                        break
+            if not tg:
+                return None, None, None, "TipoGenere non determinabile dai LOG"
+
+            info = aliquote_tab1.get(tg)
+            if not info:
+                return tg, None, None, f"TipoGenere {tg} non presente in TAB.1"
+
+            iva_candidates: List[Decimal] = list(info.get("iva_rates") or [Decimal(0)])
+            isi_candidates: List[Decimal] = list(info.get("isi_rates") or [Decimal(0)])
+
+            if len(iva_candidates) == 1 and len(isi_candidates) == 1:
+                return tg, iva_candidates[0], isi_candidates[0], ""
+
+            # Fit su un piccolo campione di transazioni LOG con importo > 0
+            samples = [r for r in log_by_event.get(ek, []) if (int(r.get("CorrispettivoLordo") or 0) + int(r.get("Prevendita") or 0)) > 0][:5]
+            best: Optional[Tuple[int, Decimal, Decimal]] = None
+            for iva in iva_candidates:
+                for isi in isi_candidates:
+                    err = 0
+                    for lr in samples:
+                        gross = int(lr.get("CorrispettivoLordo") or 0) + int(lr.get("Prevendita") or 0)
+                        quota_intr = calc_quota_intr(gross, perc_intr)
+                        exp_base = calc_base_intr_for_log(quota_intr, iva, isi)
+                        exp_iva = calc_expected_iva_total_from_gross(gross, perc_intr, iva, isi)
+
+                        obs_base = int(lr.get("ImponibileIntrattenimenti") or 0)
+                        obs_iva = int(lr.get("IVACorrispettivo") or 0) + int(lr.get("IVAPrevendita") or 0)
+                        err += abs(exp_base - obs_base) + abs(exp_iva - obs_iva)
+
+                    if best is None or err < best[0]:
+                        best = (err, iva, isi)
+
+            if best is None:
+                return tg, iva_candidates[0], isi_candidates[0], "Selezione aliquote: fallback"
+
+            err, iva, isi = best
+            note = f"Aliquote variabili: selezione per fit su LOG (err={err})"
+            return tg, iva, isi, note
+
+        rates_by_event: Dict[Tuple[str, str, str], Tuple[Optional[str], Optional[Decimal], Optional[Decimal], str]] = {}
+        for ek in set(list(rpm_event_info.keys()) + list(log_by_event.keys())):
+            rates_by_event[ek] = _select_rates_for_event(ek)
+
+        # 1) Ricalcolo ISI/IVA su LOG (calcolo-ISI.txt)
+        for lr in log_recs:
+            ek = (str(lr.get("CodiceLocale") or ""), str(lr.get("DataEvento") or ""), str(lr.get("OraEvento") or ""))
+            tg, iva, isi, note = rates_by_event.get(ek, (None, None, None, ""))
+            if iva is None or isi is None:
+                continue
+
+            perc_intr = _pick_perc_intr(ek)
+            gross_total = int(lr.get("CorrispettivoLordo") or 0) + int(lr.get("Prevendita") or 0)
+            if gross_total <= 0:
+                continue
+
+            quota_intr = calc_quota_intr(gross_total, perc_intr)
+            exp_base_intr = calc_base_intr_for_log(quota_intr, iva, isi)
+            exp_iva_total = calc_expected_iva_total_from_gross(gross_total, perc_intr, iva, isi)
+
+            obs_base_intr = int(lr.get("ImponibileIntrattenimenti") or 0)
+            obs_iva_total = int(lr.get("IVACorrispettivo") or 0) + int(lr.get("IVAPrevendita") or 0)
+
+            if abs(exp_base_intr - obs_base_intr) > 1:
+                issues.append(Issue(check="ISI_LOG", severity="ERROR",
+                                    message=f"ImponibileIntrattenimenti LOG non coerente con ricalcolo: atteso {exp_base_intr}, trovato {obs_base_intr}. {note}".strip(),
+                                    context={"log_key": str(_log_key(lr))}))
+            if abs(exp_iva_total - obs_iva_total) > 1:
+                issues.append(Issue(check="ISI_LOG", severity="ERROR",
+                                    message=f"IVA totale LOG non coerente con ricalcolo: atteso {exp_iva_total}, trovato {obs_iva_total}. {note}".strip(),
+                                    context={"log_key": str(_log_key(lr))}))
+
+        # 2) Omaggi eccedenti (5% capienza) e ImponibileIntrattenimenti evento in RPM
+        #    e 3) IVA eccedenza omaggi (con soglia valore unitario intrattenimento: €25,82 -> omaggi_soglia_iva_cent)
+        order_rows: List[Dict[str, Any]] = []
+
+        for ok, info in rpm_order_info.items():
+            ek = (ok[0], ok[1], ok[2])
+            event = rpm_event_info.get(ek, {})
+            tipo_tass = str(event.get("TipoTassazione") or "")
+            perc_intr = int(event.get("Incidenza") or 0)
+
+            tg, iva, isi, note_rates = rates_by_event.get(ek, (None, None, None, ""))
+            if iva is None or isi is None:
+                # senza aliquote non posso calcolare imponibile notionale né soglia
+                continue
+
+            capienza = int(info.get("Capienza") or 0)
+            iva_ecc_rpm = int(info.get("IVAEccedenteOmaggi") or 0)
+
+            omaggi_net = int(omaggi_net_by_order.get(ok, 0))
+            limite = int(math.floor((capienza * omaggi_pct_capienza) / 100.0 + 1e-9)) if capienza > 0 else 0
+            eccedenza = max(0, omaggi_net - limite)
+
+            # Titolo di riferimento (a pagamento) da RPM per determinare IVA corrispettivo unitario
+            ref_tipo = None
+            ref_corr_unit = None
+            ref_iva_corr_unit = None
+
+            candidates = [r for r in rpm_titles_by_order.get(ok, []) if str(r.get("kind") or "") == "TitoliAccesso" and int(r.get("Quantita") or 0) > 0 and int(r.get("CorrispettivoLordo") or 0) > 0]
+            if candidates:
+                # preferisco "I*" (intero), altrimenti quello col corrispettivo unitario maggiore
+                def unit_corr(rr: Dict[str, Any]) -> float:
+                    q = int(rr.get("Quantita") or 1)
+                    return (int(rr.get("CorrispettivoLordo") or 0) / q) if q else 0.0
+
+                interi = [r for r in candidates if str(r.get("TipoTitolo") or "").upper().startswith("I")]
+                chosen = max(interi or candidates, key=unit_corr)
+
+                q = int(chosen.get("Quantita") or 1)
+                ref_tipo = str(chosen.get("TipoTitolo") or "")
+                ref_corr_unit = int(round(int(chosen.get("CorrispettivoLordo") or 0) / q)) if q else None
+                ref_iva_corr_unit = int(round(int(chosen.get("IVACorrispettivo") or 0) / q)) if q else None
+
+            imponibile_ref = None
+            if ref_corr_unit is not None:
+                imponibile_ref = calc_imponibile_intr_round_for_threshold(ref_corr_unit, perc_intr, iva, isi)
+
+            iva_ecc_attesa: Optional[int]
+            note = note_rates
+
+            if eccedenza <= 0:
+                iva_ecc_attesa = 0
+            else:
+                if tipo_tass.upper() == "I" and imponibile_ref is not None and imponibile_ref <= omaggi_soglia_iva_cent:
+                    # Regola IVA intrattenimenti: non dovuta se valore unitario <= soglia
+                    iva_ecc_attesa = 0
+                elif ref_iva_corr_unit is not None:
+                    iva_ecc_attesa = eccedenza * ref_iva_corr_unit
+                else:
+                    iva_ecc_attesa = None
+                    note = (note + " | " if note else "") + "Manca titolo di riferimento a pagamento: IVA eccedenza non calcolabile"
+
+            # Base notionale ISI per omaggi eccedenti (solo quota intrattenimento del corrispettivo)
+            base_omaggi_ecc = None
+            if eccedenza > 0 and ref_corr_unit is not None:
+                base_unit = calc_imponibile_intr_notional_from_corr(ref_corr_unit, perc_intr, iva, isi)
+                base_omaggi_ecc = eccedenza * base_unit
+
+            order_rows.append({
+                "CodiceLocale": ok[0],
+                "DataEvento": ok[1],
+                "OraEvento": ok[2],
+                "CodiceOrdine": ok[3],
+                "TipoTassazione": tipo_tass,
+                "Incidenza": perc_intr,
+                "TipoGenere": tg or "",
+                "IVA_rate": float(iva) if iva is not None else None,
+                "ISI_rate": float(isi) if isi is not None else None,
+                "Capienza": capienza,
+                "Omaggi_net": omaggi_net,
+                "Limite_omaggi": limite,
+                "Eccedenza_omaggi": eccedenza,
+                "Titolo_rif": ref_tipo,
+                "Corrispettivo_rif_unit": ref_corr_unit,
+                "Imponibile_rif_unit": imponibile_ref,
+                "IVACorrispettivo_rif_unit": ref_iva_corr_unit,
+                "IVAEccedenteOmaggi_attesa": iva_ecc_attesa,
+                "IVAEccedenteOmaggi_rpm": iva_ecc_rpm,
+                "BaseOmaggiEcc_ISI": base_omaggi_ecc,
+                "Note": note,
+            })
+
+        # Evento: confronto ImponibileIntrattenimenti RPM vs LOG + BaseOmaggiEcc
+        event_rows: List[Dict[str, Any]] = []
+        orders_by_event: Dict[Tuple[str, str, str], List[Dict[str, Any]]] = defaultdict(list)
+        for row in order_rows:
+            orders_by_event[(row["CodiceLocale"], row["DataEvento"], row["OraEvento"])].append(row)
+
+        for ek, e_info in rpm_event_info.items():
+            rpm_base_evento = int(e_info.get("ImponibileIntrattenimenti") or 0)
+            tipo_tass = str(e_info.get("TipoTassazione") or "")
+            perc_intr = int(e_info.get("Incidenza") or 0)
+
+            base_log = int(base_net_by_event.get(ek, 0))
+            base_omaggi = 0
+            missing_orders = 0
+            missing_eccedenza = 0
+
+            for row in orders_by_event.get(ek, []):
+                ecc = int(row.get("Eccedenza_omaggi") or 0)
+                if ecc <= 0:
+                    continue
+                if row.get("BaseOmaggiEcc_ISI") is None:
+                    missing_orders += 1
+                    missing_eccedenza += ecc
+                else:
+                    base_omaggi += int(row.get("BaseOmaggiEcc_ISI") or 0)
+
+            base_atteso_parziale = base_log + base_omaggi
+            delta = rpm_base_evento - base_atteso_parziale
+
+            note = ""
+            if missing_eccedenza > 0:
+                # Non ho il prezzo di riferimento per calcolare la base omaggi: non verificabile al 100%
+                base_unit_inferita = int(round(delta / missing_eccedenza)) if missing_eccedenza else None
+                note = f"Verifica parziale: manca riferimento prezzo per {missing_eccedenza} omaggi eccedenti. Base unit inferita ~{base_unit_inferita} cent" if base_unit_inferita is not None else "Verifica parziale: manca riferimento prezzo per omaggi eccedenti"
+                issues.append(Issue(check="ISI_RPM", severity="WARN",
+                                    message=f"{note}. ImponibileIntrattenimenti RPM={rpm_base_evento}, LOG={base_log}, BaseOmaggiEcc calcolata={base_omaggi}, delta residuo={delta}.",
+                                    context={"evento": f"{ek[0]}|{ek[1]}|{ek[2]}"}))
+            else:
+                if delta != 0:
+                    issues.append(Issue(check="ISI_RPM", severity="ERROR",
+                                        message=f"ImponibileIntrattenimenti RPM non coerente: atteso {base_atteso_parziale} (=LOG {base_log} + BaseOmaggiEcc {base_omaggi}), trovato {rpm_base_evento} (delta {delta}).",
+                                        context={"evento": f"{ek[0]}|{ek[1]}|{ek[2]}"}))
+
+            # Check IVA ecc omaggi
+            for row in orders_by_event.get(ek, []):
+                att = row.get("IVAEccedenteOmaggi_attesa")
+                if att is None:
+                    # se RPM valorizza comunque, segnalo
+                    if int(row.get("IVAEccedenteOmaggi_rpm") or 0) != 0:
+                        issues.append(Issue(check="IVA_Omaggi_Ecc", severity="WARN",
+                                            message="IVAEccedenteOmaggi presente in RPM ma non calcolabile per mancanza dati di riferimento.",
+                                            context={"ordine": f"{row['CodiceLocale']}|{row['DataEvento']}|{row['OraEvento']}|{row['CodiceOrdine']}"}))
+                    continue
+                if int(row.get("IVAEccedenteOmaggi_rpm") or 0) != int(att):
+                    issues.append(Issue(check="IVA_Omaggi_Ecc", severity="ERROR",
+                                        message=f"IVAEccedenteOmaggi non coerente: atteso {att}, trovato {int(row.get('IVAEccedenteOmaggi_rpm') or 0)}. "
+                                                f"(Eccedenza={int(row.get('Eccedenza_omaggi') or 0)}, soglia={omaggi_soglia_iva_cent})",
+                                        context={"ordine": f"{row['CodiceLocale']}|{row['DataEvento']}|{row['OraEvento']}|{row['CodiceOrdine']}"}))
+
+            # Row evento per report
+            tg, iva, isi, note_rates = rates_by_event.get(ek, (None, None, None, ""))
+            event_rows.append({
+                "CodiceLocale": ek[0],
+                "DataEvento": ek[1],
+                "OraEvento": ek[2],
+                "TipoTassazione": tipo_tass,
+                "Incidenza": perc_intr,
+                "TipoGenere": tg or "",
+                "IVA_rate": float(iva) if iva is not None else None,
+                "ISI_rate": float(isi) if isi is not None else None,
+                "Imponibile_LOG_net": base_log,
+                "BaseOmaggiEcc_ISI": base_omaggi,
+                "Imponibile_atteso_parziale": base_atteso_parziale,
+                "Imponibile_RPM": rpm_base_evento,
+                "Delta": delta,
+                "Note": note,
+            })
+
+        fiscal_details["events"] = event_rows
+        fiscal_details["orders"] = order_rows
+
+    # --- fine controlli fiscali --------------------------------------------------------------------
+
+
+    # Scoreboard + elenco controlli eseguiti (inclusi quelli con 0 issue)
+    per_check: Dict[str, Counter] = defaultdict(Counter)
     for iss in issues:
         per_check[iss.check][iss.severity] += 1
 
+    check_catalog: List[Dict[str, str]] = [
+        {
+            "id": "Duplicati",
+            "title": "Duplicati SigilloFiscale",
+            "description": "Unicità del SigilloFiscale su LOG e LTA.",
+        },
+        {
+            "id": "LOG_vs_LTA",
+            "title": "LOG vs LTA (quantità/attivi)",
+            "description": "Confronto quantità emesse/annullate e titoli attivi per evento/ordine/titolo.",
+        },
+        {
+            "id": "Importi_LOG_vs_LTA",
+            "title": "LOG vs LTA (importi)",
+            "description": "Confronto corrispettivo, prevendita e IVA tra LOG e LTA per evento/ordine/titolo.",
+        },
+        {
+            "id": "Annullamenti",
+            "title": "Annullamenti LOG vs RPM",
+            "description": "Confronto quantità annullate tra LOG e RPM per evento/ordine/titolo.",
+        },
+        {
+            "id": "LTA_vs_RCA",
+            "title": "LTA vs RCA (quantità)",
+            "description": "Confronto quantità tra LTA e RCA per evento/ordine/titolo (attivi).",
+        },
+        {
+            "id": "RCA_interno",
+            "title": "RCA (coerenza interna)",
+            "description": "Verifica che RCA sia internamente coerente (somma dettaglio = totale).",
+        },
+        {
+            "id": "LOG_vs_RPM",
+            "title": "LOG vs RPM (importi/quantità)",
+            "description": "Confronto importi tra LOG e RPM per evento/ordine/titolo.",
+        },
+        {
+            "id": "LTA_vs_RPM",
+            "title": "LTA vs RPM (quantità)",
+            "description": "Confronto quantità tra LTA e RPM per evento/ordine/titolo.",
+        },
+        {
+            "id": "Aliquote_TAB1",
+            "title": "Copertura aliquote (TAB.1)",
+            "description": "Verifica presenza in TAB.1 dei TipoGenere incontrati (IVA/ISI).",
+        },
+        {
+            "id": "ISI_LOG",
+            "title": "Ricalcolo ISI/IVA su LOG",
+            "description": "Ricalcolo imponibile intrattenimenti e IVA totale per transazione (calcolo-ISI).",
+        },
+        {
+            "id": "ISI_RPM",
+            "title": "ImponibileIntrattenimenti RPM (evento)",
+            "description": "ImponibileIntrattenimenti RPM = imponibile netto LOG + imponibile omaggi eccedenti (5% capienza).",
+        },
+        {
+            "id": "IVA_Omaggi_Ecc",
+            "title": "IVAEccedenteOmaggi RPM",
+            "description": "IVA su omaggi eccedenti: regola 5% capienza + soglia valore unitario (intrattenimenti, €25,82).",
+        },
+    ]
+
+    check_results: List[Dict[str, Any]] = []
+    all_checks_counts: Dict[str, Dict[str, int]] = {}
+
+    for c in check_catalog:
+        cnt = per_check.get(c["id"], Counter())
+        errors = int(cnt.get("ERROR", 0))
+        warns = int(cnt.get("WARN", 0))
+        infos = int(cnt.get("INFO", 0))
+
+        if c["id"] in skipped_checks:
+            status = "SKIP"
+        else:
+            status = "ERROR" if errors else ("WARN" if warns else "OK")
+
+        check_results.append({
+            "id": c["id"],
+            "title": c["title"],
+            "description": c["description"],
+            "status": status,
+            "errors": errors,
+            "warnings": warns,
+            "infos": infos,
+        })
+
+        all_checks_counts[c["id"]] = {"ERROR": errors, "WARN": warns, "INFO": infos}
+
     summary = {
-        "checks": {k: dict(v) for k, v in per_check.items()},
         "total_issues": len(issues),
         "errors": sum(1 for i in issues if i.severity == "ERROR"),
         "warnings": sum(1 for i in issues if i.severity == "WARN"),
         "infos": sum(1 for i in issues if i.severity == "INFO"),
+        "checks": all_checks_counts,  # include anche i check con 0 issue
+        "check_results": check_results,
     }
-    return summary, issues, metrics
+
+    return summary, issues, metrics, check_results, fiscal_details
+
 
 
 # ---------------------------
@@ -965,6 +1551,7 @@ def _badge(sev: str) -> str:
         "WARN": "badge badge-yellow",
         "INFO": "badge badge-blue",
         "OK": "badge badge-green",
+        "SKIP": "badge badge-gray",
     }.get(sev, "badge")
     return f'<span class="{cls}">{html.escape(sev)}</span>'
 
@@ -990,42 +1577,168 @@ def _render_issues_table(issues: List[Issue]) -> str:
             "</tr>"
         )
     return (
-        "<table class='tbl'>"
-        "<thead><tr>"
-        "<th>#</th><th>Severità</th><th>Controllo</th><th>Messaggio</th><th>Dettagli</th>"
-        "</tr></thead>"
-        "<tbody>"
-        + "".join(rows) +
-        "</tbody></table>"
+            "<table class='tbl'>"
+            "<thead><tr>"
+            "<th>#</th><th>Severità</th><th>Controllo</th><th>Messaggio</th><th>Dettagli</th>"
+            "</tr></thead>"
+            "<tbody>"
+            + "".join(rows) +
+            "</tbody></table>"
     )
 
 
-def build_html_report(out_path: str, summary: Dict[str, Any], metrics: Dict[str, Any], issues: List[Issue]) -> None:
-    errors = summary.get("errors", 0)
-    warnings = summary.get("warnings", 0)
-
-    status = "OK" if errors == 0 else "ERROR"
-
-    checks_rows = []
-    for chk, counts in sorted(summary.get("checks", {}).items(), key=lambda x: x[0].lower()):
-        e = counts.get("ERROR", 0)
-        w = counts.get("WARN", 0)
-        i = counts.get("INFO", 0)
-        sev = "OK" if e == 0 else "ERROR"
-        checks_rows.append(
+def _render_check_results_table(check_results: List[Dict[str, Any]]) -> str:
+    if not check_results:
+        return "<p class='muted'>Nessun controllo registrato.</p>"
+    rows_html: List[str] = []
+    for cr in check_results:
+        cid = html.escape(str(cr.get("id", "")))
+        title = html.escape(str(cr.get("title", "")))
+        desc = html.escape(str(cr.get("description", "")))
+        status = str(cr.get("status", "OK"))
+        rows_html.append(
             "<tr>"
-            f"<td>{html.escape(chk)}</td>"
-            f"<td>{_badge(sev)}</td>"
-            f"<td class='num'>{e}</td>"
-            f"<td class='num'>{w}</td>"
-            f"<td class='num'>{i}</td>"
+            f"<td><code>{cid}</code></td>"
+            f"<td><b>{title}</b><br><span class='muted'>{desc}</span></td>"
+            f"<td>{_badge(status)}</td>"
+            f"<td class='num'>{int(cr.get('errors', 0))}</td>"
+            f"<td class='num'>{int(cr.get('warnings', 0))}</td>"
+            f"<td class='num'>{int(cr.get('infos', 0))}</td>"
             "</tr>"
         )
-    checks_table = (
-        "<table class='tbl'>"
-        "<thead><tr><th>Controllo</th><th>Esito</th><th>Errori</th><th>Warning</th><th>Info</th></tr></thead>"
-        "<tbody>" + "".join(checks_rows) + "</tbody></table>"
-    )
+    header = "<tr><th>Check</th><th>Descrizione</th><th>Esito</th><th>ERROR</th><th>WARN</th><th>INFO</th></tr>"
+    return "<table class='issues'>" + header + "".join(rows_html) + "</table>"
+
+
+def _render_rows_table(rows: List[Dict[str, Any]], cols: List[Tuple[str, str, str]]) -> str:
+    """Render tabella HTML.
+
+    cols: lista di (chiave, etichetta, tipo) dove tipo è:
+      - 'text' (default)
+      - 'int'
+      - 'money' (cent)
+      - 'pct' (0.22 -> 22%)
+    """
+    if not rows:
+        return "<p class='muted'>Nessun dato.</p>"
+
+    def fmt(val: Any, kind: str) -> str:
+        if val is None:
+            return ""
+        if kind == "money":
+            return _fmt_money_cents(int(val))
+        if kind == "pct":
+            try:
+                return f"{float(val) * 100:.2f}%"
+            except Exception:
+                return str(val)
+        if kind == "int":
+            try:
+                return str(int(val))
+            except Exception:
+                return str(val)
+        return html.escape(str(val))
+
+    header = "<tr>" + "".join(f"<th>{html.escape(label)}</th>" for _, label, _ in cols) + "</tr>"
+    rows_html: List[str] = []
+    for r in rows:
+        tds = []
+        for key, _, kind in cols:
+            tds.append(f"<td>{fmt(r.get(key), kind)}</td>")
+        rows_html.append("<tr>" + "".join(tds) + "</tr>")
+    return "<table class='issues'>" + header + "".join(rows_html) + "</table>"
+
+
+
+def build_html_report(out_path: str, summary: Dict[str, Any], metrics: Dict[str, Any], issues: List[Issue],
+                      check_results: Optional[List[Dict[str, Any]]] = None,
+                      fiscal_details: Optional[Dict[str, Any]] = None) -> None:
+
+    errors = summary.get("errors", 0)
+    warnings = summary.get("warnings", 0)
+    infos = summary.get("infos", 0)
+    total_issues = summary.get("total_issues", 0)
+
+    status = "ERROR" if errors else ("WARN" if warnings else "OK")
+
+    # Tabella "controlli eseguiti" (anche con 0 issue)
+    cr = list(check_results or summary.get("check_results") or [])
+    if not cr:
+        # fallback: costruisco da summary["checks"] (senza descrizioni)
+        checks = summary.get("checks", {}) or {}
+        for check_name in sorted(checks.keys()):
+            cnt = checks.get(check_name, {}) or {}
+            e = int(cnt.get("ERROR", 0))
+            w = int(cnt.get("WARN", 0))
+            i = int(cnt.get("INFO", 0))
+            c_status = "ERROR" if e else ("WARN" if w else "OK")
+            cr.append({
+                "id": check_name,
+                "title": check_name,
+                "description": "",
+                "status": c_status,
+                "errors": e,
+                "warnings": w,
+                "infos": i,
+            })
+
+    checks_table = _render_check_results_table(cr)
+
+    # Sezione dettaglio controlli fiscali (se disponibile)
+    fiscal_section = ""
+    fd = fiscal_details or {}
+    ev_rows = fd.get("events") or []
+    ord_rows = fd.get("orders") or []
+    if ev_rows or ord_rows:
+        ev_cols = [
+            ("CodiceLocale", "Locale", "text"),
+            ("DataEvento", "Data", "text"),
+            ("OraEvento", "Ora", "text"),
+            ("TipoTassazione", "Tass.", "text"),
+            ("Incidenza", "Incidenza", "int"),
+            ("TipoGenere", "Genere", "text"),
+            ("IVA_rate", "IVA", "pct"),
+            ("ISI_rate", "ISI", "pct"),
+            ("Imponibile_LOG_net", "Imp.LOG net", "money"),
+            ("BaseOmaggiEcc_ISI", "Imp. omaggi ecc", "money"),
+            ("Imponibile_atteso_parziale", "Imp.atteso", "money"),
+            ("Imponibile_RPM", "Imp.RPM", "money"),
+            ("Delta", "Delta", "money"),
+            ("Note", "Note", "text"),
+        ]
+        ord_cols = [
+            ("CodiceLocale", "Locale", "text"),
+            ("DataEvento", "Data", "text"),
+            ("OraEvento", "Ora", "text"),
+            ("CodiceOrdine", "Ordine", "text"),
+            ("Capienza", "Cap.", "int"),
+            ("Omaggi_net", "Omaggi net", "int"),
+            ("Limite_omaggi", "Limite", "int"),
+            ("Eccedenza_omaggi", "Ecc.", "int"),
+            ("Titolo_rif", "Titolo rif", "text"),
+            ("Corrispettivo_rif_unit", "Corr. rif (unit)", "money"),
+            ("Imponibile_rif_unit", "Imp. rif (unit)", "money"),
+            ("IVACorrispettivo_rif_unit", "IVA corr (unit)", "money"),
+            ("IVAEccedenteOmaggi_attesa", "IVA ecc attesa", "money"),
+            ("IVAEccedenteOmaggi_rpm", "IVA ecc RPM", "money"),
+            ("Note", "Note", "text"),
+        ]
+        ev_table = _render_rows_table(ev_rows, ev_cols)
+        ord_table = _render_rows_table(ord_rows, ord_cols)
+
+        fiscal_section = f"""
+        <div class="section">
+          <h2>Dettaglio controlli fiscali</h2>
+          <details>
+            <summary>Mostra/Nascondi</summary>
+            <h3>ImponibileIntrattenimenti (RPM) per evento</h3>
+            {ev_table}
+            <h3>Omaggi eccedenti e IVAEccedenteOmaggi (RPM) per ordine</h3>
+            {ord_table}
+          </details>
+        </div>
+        """
+
 
     html_doc = f"""<!doctype html>
 <html lang="it">
@@ -1159,6 +1872,11 @@ def build_html_report(out_path: str, summary: Dict[str, Any], metrics: Dict[str,
         color: #1e40af;
         border-color: #bfdbfe;
     }}
+    .badge-gray {{
+        background: #f3f4f6;
+        color: #374151;
+        border-color: #e5e7eb;
+    }}
     .kv {{
         width: 100%;
         border-collapse: collapse;
@@ -1206,6 +1924,8 @@ def build_html_report(out_path: str, summary: Dict[str, Any], metrics: Dict[str,
     <h2>Esito controlli (per categoria)</h2>
     {checks_table}
   </div>
+
+{fiscal_section}
 
   <div class="section">
     <h2>Dettaglio anomalie</h2>
@@ -1309,6 +2029,16 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--out", default="report_verifica.html", help="Percorso report HTML in output")
     ap.add_argument("--keep-all-rpm", action="store_true", help="Se presente, non seleziona l'RPM più recente ma usa tutti quelli trovati.")
 
+    ap.add_argument("--tolleranza-importi", type=int, default=0,
+                    help="Tolleranza (in cent) nei confronti importi tra fonti (default: 0).")
+    ap.add_argument("--aliquote-tab1", default=None,
+                    help="Percorso CSV TAB.1 aliquote (default: cerca 'aliquote_tab1.csv' nella cartella --dir).")
+    ap.add_argument("--omaggi-pct-capienza", type=float, default=5.0,
+                    help="Percentuale capienza entro cui gli omaggi NON sono eccedenti (default: 5.0).")
+    ap.add_argument("--omaggi-soglia-iva-eur", type=float, default=25.82,
+                    help="Soglia valore unitario (EUR) sotto la quale l'IVA su omaggi intrattenimenti non è dovuta (default: 25.82).")
+
+
     args = ap.parse_args(argv)
 
     discovered = discover_files(args.dir)
@@ -1327,7 +2057,34 @@ def main(argv: Optional[List[str]] = None) -> int:
     rpm_recs = parse_rpm(rpm_paths)
 
     # run checks
-    summary, issues, metrics = run_checks(log_recs, lta_recs, rca_recs, rpm_recs)
+    # TAB.1 aliquote (se disponibile)
+    aliquote_path = args.aliquote_tab1
+    if not aliquote_path:
+        # prova a cercare automaticamente
+        candidates = [
+            os.path.join(args.dir, "aliquote_tab1.csv"),
+            os.path.join(os.path.dirname(__file__), "aliquote_tab1.csv"),
+            "aliquote_tab1.csv",
+        ]
+        for c in candidates:
+            if os.path.exists(c):
+                aliquote_path = c
+                break
+
+    aliquote_tab1 = load_aliquote_tab1(aliquote_path) if aliquote_path else {}
+
+    # run checks
+    soglia_cent = int(round(float(args.omaggi_soglia_iva_eur) * 100))
+    summary, issues, metrics, check_results, fiscal_details = run_checks(
+        log_recs, lta_recs, rca_recs, rpm_recs,
+        tolleranza_importi=int(args.tolleranza_importi),
+        aliquote_tab1=aliquote_tab1,
+        omaggi_pct_capienza=float(args.omaggi_pct_capienza),
+        omaggi_soglia_iva_cent=soglia_cent,
+    )
+
+    metrics["TAB1_aliquote_path"] = aliquote_path or ""
+    metrics["TAB1_aliquote_rows"] = len(aliquote_tab1)
 
     # add a few file lists in a nicer format
     metrics["LOG_files"] = ", ".join(metrics.get("log_files", []))
@@ -1339,7 +2096,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     for k in ["log_files", "lta_files", "rca_files", "rpm_files"]:
         metrics.pop(k, None)
 
-    build_html_report(args.out, summary, metrics, issues)
+    build_html_report(args.out, summary, metrics, issues, check_results=check_results, fiscal_details=fiscal_details)
 
     # exit code: 0 ok, 2 errors
     if summary.get("errors", 0) > 0:
