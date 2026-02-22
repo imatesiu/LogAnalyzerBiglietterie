@@ -2361,7 +2361,7 @@ def build_html_report(summary: Dict[str, Any], issues: List[Issue], metrics: Dic
         vertical-align: top;
     }}
     th {{
-        text-align: left;
+        text-align: center;
         position: sticky;
         top: 0;
         background: #f9fafb;
@@ -2370,7 +2370,7 @@ def build_html_report(summary: Dict[str, Any], issues: List[Issue], metrics: Dic
         color: #374151;
     }}
     td.num {{
-        text-align: right;
+        text-align: center;
         white-space: nowrap;
         font-variant-numeric: tabular-nums;
     }}
