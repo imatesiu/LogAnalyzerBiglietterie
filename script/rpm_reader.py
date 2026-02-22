@@ -520,7 +520,7 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
         ev_details.append(f"""
           <details class="event" data-filter="{html.escape(filter_blob)}" data-idx="{idx}">
             <summary>
-              Evento {idx}: <b> Codice Abbonamento {html.escape(fmt_date(date))} </b> — {html.escape(loc_name)} ({html.escape(loc_code)})
+              Evento {idx}: <b> Data Evento {html.escape(fmt_date(date))} </b> — {html.escape(loc_name)} ({html.escape(loc_code)})
               <span class="pill">Tassazione {html.escape(tass if tass else "n/d")}</span>
             </summary>
             <div class="pad">
