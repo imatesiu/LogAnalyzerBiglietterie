@@ -204,6 +204,7 @@ def parse_aliquote_tab1_csv(path: str) -> Dict[int, Dict[str, Any]]:
                 "iva_candidates": iva_candidates,
                 "isi": float(isi_rate),
             }
+    return out
 
 
 
