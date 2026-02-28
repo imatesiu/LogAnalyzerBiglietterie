@@ -19,3 +19,6 @@ buildNumber.properties
 /script/dati
 *.html
 /script/.idea
+/script/tls
+/script/zuc
+/script/dat
