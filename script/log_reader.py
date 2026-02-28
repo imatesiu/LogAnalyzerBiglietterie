@@ -115,6 +115,7 @@ def extract_p7m_to_temp_xml(p7m_path: str) -> str:
 
     inform = "PEM" if looks_pem(p7m_path) else "DER"
 
+    # 1) openssl cms
     try:
         subprocess.run(
             ["openssl", "cms", "-verify", "-noverify", "-inform", inform, "-in", p7m_path, "-out", tmp_path],
@@ -126,6 +127,7 @@ def extract_p7m_to_temp_xml(p7m_path: str) -> str:
     except Exception:
         pass
 
+    # 2) macOS security cms -D
     try:
         with open(tmp_path, "wb") as out:
             subprocess.run(
@@ -187,17 +189,117 @@ def parse_log(root: ET.Element) -> List[Dict[str, str]]:
     out: List[Dict[str, str]] = []
 
     for t in txs:
+        # oggetti possibili dentro la transazione
         ta = child(t, "TitoloAccesso")
+        ab = child(t, "Abbonamento")
+        bb = child(t, "BigliettoAbbonamento")
 
-        ann = ""
+        # scelta oggetto principale (priorità: TitoloAccesso, poi BigliettoAbbonamento, poi Abbonamento)
+        obj_type = "Sconosciuto"
+        obj = None
         if ta is not None:
-            ann = (ta.attrib.get("Annullamento", "") or "").strip()
+            obj_type = "TitoloAccesso"
+            obj = ta
+        elif bb is not None:
+            obj_type = "BigliettoAbbonamento"
+            obj = bb
+        elif ab is not None:
+            obj_type = "Abbonamento"
+            obj = ab
 
-        corr = text_path(ta, "CorrispettivoLordo", "0")
-        prev = text_path(ta, "Prevendita", "0")
-        iva_c = text_path(ta, "IVACorrispettivo", "0")
-        iva_p = text_path(ta, "IVAPrevendita", "0")
+        # Annullamento: dipende dall'oggetto
+        ann = ""
+        if obj is not None:
+            ann = (obj.attrib.get("Annullamento", "") or "").strip()
+        ann = ann or "N"
 
+        # Importi standard (per TitoloAccesso / Abbonamento)
+        corr = "0"
+        prev = "0"
+        iva_c = "0"
+        iva_p = "0"
+
+        # Campi evento standard (TitoloAccesso / BigliettoAbbonamento)
+        codice_locale = ""
+        data_evento = ""
+        ora_evento = ""
+        tipo_genere = ""
+        titolo = ""
+
+        # Campi abbonamento
+        codice_abbonamento = ""
+        progressivo_abbonamento = ""
+        cf_abbonato = ""  # nel biglietto abbonamento
+        validita = ""
+        turno_val = ""
+        qta_eventi = ""
+
+        # Campi figurativi per BigliettoAbbonamento
+        importo_fig = "0"
+        iva_fig = "0"
+
+        # Campi rateo per Abbonamento
+        rateo = "0"
+        rateo_intr = "0"
+        rateo_iva = "0"
+
+        if obj_type == "TitoloAccesso":
+            codice_locale = text_path(ta, "CodiceLocale", "")
+            data_evento = text_path(ta, "DataEvento", "")
+            ora_evento = text_path(ta, "OraEvento", "")
+            tipo_genere = text_path(ta, "TipoGenere", "")
+            titolo = text_path(ta, "Titolo", "")
+
+            corr = text_path(ta, "CorrispettivoLordo", "0")
+            prev = text_path(ta, "Prevendita", "0")
+            iva_c = text_path(ta, "IVACorrispettivo", "0")
+            iva_p = text_path(ta, "IVAPrevendita", "0")
+
+        elif obj_type == "Abbonamento":
+            # campi abbonamento
+            codice_abbonamento = text_path(ab, "CodiceAbbonamento", "")
+            progressivo_abbonamento = text_path(ab, "ProgressivoAbbonamento", "")
+            validita = text_path(ab, "Validita", "")
+            qta_eventi = text_path(ab, "QuantitaEventiAbilitati", "")
+            # Turno ha attribute valore
+            turno = child(ab, "Turno")
+            turno_val = (turno.attrib.get("valore", "") if turno is not None else "")
+
+            # ratei
+            rateo = text_path(ab, "Rateo", "0")
+            rateo_intr = text_path(ab, "RateoIntrattenimenti", "0")
+            rateo_iva = text_path(ab, "RateoIVA", "0")
+
+            # importi standard
+            corr = text_path(ab, "CorrispettivoLordo", "0")
+            prev = text_path(ab, "Prevendita", "0")
+            iva_c = text_path(ab, "IVACorrispettivo", "0")
+            iva_p = text_path(ab, "IVAPrevendita", "0")
+
+            # label utile in tabella
+            titolo = f"ABB {codice_abbonamento}/{progressivo_abbonamento}".strip()
+
+        elif obj_type == "BigliettoAbbonamento":
+            codice_locale = text_path(bb, "CodiceLocale", "")
+            data_evento = text_path(bb, "DataEvento", "")
+            ora_evento = text_path(bb, "OraEvento", "")
+            tipo_genere = text_path(bb, "TipoGenere", "")
+            titolo = text_path(bb, "Titolo", "")
+
+            codice_abbonamento = text_path(bb, "CodiceAbbonamento", "")
+            progressivo_abbonamento = text_path(bb, "ProgressivoAbbonamento", "")
+            cf_abbonato = text_path(bb, "CodiceFiscale", "")
+
+            importo_fig = text_path(bb, "ImportoFigurativo", "0")
+            iva_fig = text_path(bb, "IVAFigurativa", "0")
+
+            # per mantenere colonne importi coerenti: mettiamo l'importo figurativo come "corrispettivo"
+            corr = importo_fig
+            iva_c = iva_fig
+            prev = "0"
+            iva_p = "0"
+
+        # buyer blocks + riferimento annullamento (opzionali)
         acq_reg = child(t, "AcquirenteRegistrazione")
         acq_tx = child(t, "AcquirenteTransazione")
         rif_ann = child(t, "RiferimentoAnnullamento")
@@ -210,6 +312,8 @@ def parse_log(root: ET.Element) -> List[Dict[str, str]]:
             return d
 
         row: Dict[str, str] = {
+            "Oggetto": obj_type,
+
             "CFOrganizzatore": t.attrib.get("CFOrganizzatore", ""),
             "CFTitolare": t.attrib.get("CFTitolare", ""),
             "SistemaEmissione": t.attrib.get("SistemaEmissione", ""),
@@ -229,23 +333,37 @@ def parse_log(root: ET.Element) -> List[Dict[str, str]]:
             "TipoTassazione": t.attrib.get("TipoTassazione", ""),
             "Valuta": t.attrib.get("Valuta", ""),
 
-            "OriginaleAnnullato": t.attrib.get("OriginaleAnnullato", ""),
-            "CartaOriginaleAnnullato": t.attrib.get("CartaOriginaleAnnullato", ""),
-            "CausaleAnnullamento": t.attrib.get("CausaleAnnullamento", ""),
-
             "ImponibileIntrattenimenti": t.attrib.get("ImponibileIntrattenimenti", "0"),
 
-            "Annullamento": ann or "N",
-            "CodiceLocale": text_path(ta, "CodiceLocale", ""),
-            "DataEvento": text_path(ta, "DataEvento", ""),
-            "OraEvento": text_path(ta, "OraEvento", ""),
-            "TipoGenere": text_path(ta, "TipoGenere", ""),
-            "Titolo": text_path(ta, "Titolo", ""),
+            "Annullamento": ann,
 
+            # evento
+            "CodiceLocale": codice_locale,
+            "DataEvento": data_evento,
+            "OraEvento": ora_evento,
+            "TipoGenere": tipo_genere,
+            "Titolo": titolo,
+
+            # importi standard
             "CorrispettivoLordo": corr,
             "Prevendita": prev,
             "IVACorrispettivo": iva_c,
             "IVAPrevendita": iva_p,
+
+            # campi abbonamento / biglietto abbonamento
+            "CodiceAbbonamento": codice_abbonamento,
+            "ProgressivoAbbonamento": progressivo_abbonamento,
+            "CodiceFiscaleAbbonato": cf_abbonato,
+            "Validita": validita,
+            "Turno": turno_val,
+            "QuantitaEventiAbilitati": qta_eventi,
+
+            "Rateo": rateo,
+            "RateoIntrattenimenti": rateo_intr,
+            "RateoIVA": rateo_iva,
+
+            "ImportoFigurativo": importo_fig,
+            "IVAFigurativa": iva_fig,
         }
 
         row.update(flatten("AcqReg", extract_kv(acq_reg)))
@@ -281,12 +399,14 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
     tot_iva_p = sum(int_or0(r.get("IVAPrevendita", "0")) for r in rows_data)
     tot_imp_intr = sum(int_or0(r.get("ImponibileIntrattenimenti", "0")) for r in rows_data)
 
+    # >>> aggiungo colonna Oggetto
     headers_html = (
             "<tr>"
             + th("#", "num")
             + th("Emiss.", "date")
             + th("Ora", "time")
             + th("Prog", "num")
+            + th("Oggetto", "text")
             + th("Tipo", "text")
             + th("Ord", "text")
             + th("Locale", "text")
@@ -310,7 +430,6 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
                 items.append((k[len(prefix) + 1 :], v.strip()))
         if not items:
             return f"<div class='muted'>Nessun dato</div>"
-
         order_index = {name: i for i, name in enumerate(preferred_order)}
         items.sort(key=lambda kv: (order_index.get(kv[0], 10_000), kv[0].lower()))
         lis = "".join(f"<li><b>{html.escape(k)}</b>: {html.escape(v)}</li>" for k, v in items)
@@ -323,6 +442,8 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
         de = r.get("DataEmissione", "")
         oe = r.get("OraEmissione", "")
         prog = r.get("NumeroProgressivo", "")
+        oggetto = r.get("Oggetto", "")
+
         tip = r.get("TipoTitolo", "")
         ordc = r.get("CodiceOrdine", "")
         loc = r.get("CodiceLocale", "")
@@ -349,7 +470,6 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
         sort_ivap = str(int_or0(iva_p))
         sort_imp = str(int_or0(imp))
 
-        # >>> FIX: includo anche versioni formattate (quelle che vedi in tabella)
         de_fmt = fmt_date(de)
         oe_fmt = fmt_time(oe)
         dev_fmt = fmt_date(dev)
@@ -360,6 +480,22 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
         iva_c_fmt = money_from_cents(iva_c, cents_mode)
         iva_p_fmt = money_from_cents(iva_p, cents_mode)
         imp_fmt = money_from_cents(imp, cents_mode)
+
+        # includi anche campi abbonamento/biglietto abbonamento nel filtro
+        ab_blob = " ".join([
+            r.get("CodiceAbbonamento",""),
+            r.get("ProgressivoAbbonamento",""),
+            r.get("Validita",""),
+            fmt_date(r.get("Validita","")),
+            r.get("Turno",""),
+            r.get("QuantitaEventiAbilitati",""),
+            r.get("CodiceFiscaleAbbonato",""),
+            r.get("Rateo",""),
+            r.get("RateoIntrattenimenti",""),
+            r.get("RateoIVA",""),
+            r.get("ImportoFigurativo",""),
+            r.get("IVAFigurativa",""),
+        ])
 
         buyer_blob = " ".join([
             r.get("AcqReg_Autenticazione",""),
@@ -381,38 +517,19 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
         ])
 
         filter_blob = " ".join([
-            # indice
             str(idx),
-
-            # emissione: raw + formatted
-            #de, de_fmt,
-            #oe, oe_fmt,
-
-            # progressivo + tipo/ordine
+            oggetto,
+            de, de_fmt, oe, oe_fmt,
             prog, tip, ordc,
-
-            # evento: raw + formatted
-            #dev, dev_fmt,
-            #oev, oev_fmt,
-
-            # locale + genere + titolo
-            loc, tgen, titolo,
-
-            # importi: raw + formatted
-            corr, corr_fmt,
-            prev, prev_fmt,
-            iva_c, iva_c_fmt,
-            iva_p, iva_p_fmt,
-            imp, imp_fmt,
-
-            # altri identificativi
+            loc, dev, dev_fmt, oev, oev_fmt,
+            tgen, titolo,
+            corr, corr_fmt, prev, prev_fmt, iva_c, iva_c_fmt, iva_p, iva_p_fmt, imp, imp_fmt,
             r.get("SigilloFiscale",""),
             r.get("CartaAttivazione",""),
-            #r.get("CFOrganizzatore",""),
-            #r.get("CFTitolare",""),
+            r.get("CFOrganizzatore",""),
+            r.get("CFTitolare",""),
             r.get("Causale",""),
-            r.get("CausaleAnnullamento",""),
-
+            ab_blob,
             buyer_blob,
         ]).lower()
 
@@ -423,6 +540,7 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
             + td(de_fmt, sort_date)
             + td(oe_fmt, sort_time)
             + td(prog, sort_prog)
+            + td(oggetto, oggetto.lower())
             + td(tip, tip.lower())
             + td(ordc, ordc.lower())
             + td(loc, loc.lower())
@@ -441,6 +559,7 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
 
         pill = " <span class='pill pill-ann'>ANNULLATO</span>" if ann_flag else ""
 
+        # blocchi acquirente + riferimento annullamento
         acq_reg_block = render_kv_block(
             "AcquirenteRegistrazione",
             r,
@@ -461,10 +580,61 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
             ["OriginaleRiferimentoAnnullamento", "CartaRiferimentoAnnullamento", "CausaleRiferimentoAnnullamento"],
         )
 
+        # sezione oggetto (variabile)
+        if oggetto == "TitoloAccesso":
+            oggetto_html = f"""
+              <h4>TitoloAccesso</h4>
+              <ul>
+                <li><b>Codice locale</b>: {html.escape(loc)}</li>
+                <li><b>Data/Ora evento</b>: {html.escape(dev_fmt)} {html.escape(oev_fmt)}</li>
+                <li><b>Tipo genere</b>: {html.escape(tgen)}</li>
+                <li><b>Titolo</b>: {html.escape(titolo)}</li>
+              </ul>
+            """
+        elif oggetto == "Abbonamento":
+            oggetto_html = f"""
+              <h4>Abbonamento</h4>
+              <ul>
+                <li><b>Codice abbonamento</b>: {html.escape(r.get("CodiceAbbonamento",""))}</li>
+                <li><b>Progressivo abbonamento</b>: {html.escape(r.get("ProgressivoAbbonamento",""))}</li>
+                <li><b>Turno</b>: {html.escape(r.get("Turno",""))}</li>
+                <li><b>Validità</b>: {html.escape(fmt_date(r.get("Validita","")))}</li>
+                <li><b>Q.tà eventi abilitati</b>: {html.escape(r.get("QuantitaEventiAbilitati",""))}</li>
+              </ul>
+
+              <h4>Ratei</h4>
+              <ul>
+                <li><b>Rateo</b>: {html.escape(money_from_cents(r.get("Rateo","0"), cents_mode))}</li>
+                <li><b>Rateo intrattenimenti</b>: {html.escape(money_from_cents(r.get("RateoIntrattenimenti","0"), cents_mode))}</li>
+                <li><b>Rateo IVA</b>: {html.escape(money_from_cents(r.get("RateoIVA","0"), cents_mode))}</li>
+              </ul>
+            """
+        elif oggetto == "BigliettoAbbonamento":
+            oggetto_html = f"""
+              <h4>BigliettoAbbonamento</h4>
+              <ul>
+                <li><b>Codice locale</b>: {html.escape(loc)}</li>
+                <li><b>Data/Ora evento</b>: {html.escape(dev_fmt)} {html.escape(oev_fmt)}</li>
+                <li><b>Tipo genere</b>: {html.escape(tgen)}</li>
+                <li><b>Titolo</b>: {html.escape(titolo)}</li>
+                <li><b>Codice abbonamento</b>: {html.escape(r.get("CodiceAbbonamento",""))}</li>
+                <li><b>Progressivo abbonamento</b>: {html.escape(r.get("ProgressivoAbbonamento",""))}</li>
+                <li><b>Codice fiscale</b>: {html.escape(r.get("CodiceFiscaleAbbonato",""))}</li>
+              </ul>
+
+              <h4>Figurativi</h4>
+              <ul>
+                <li><b>Importo figurativo</b>: {html.escape(money_from_cents(r.get("ImportoFigurativo","0"), cents_mode))}</li>
+                <li><b>IVA figurativa</b>: {html.escape(money_from_cents(r.get("IVAFigurativa","0"), cents_mode))}</li>
+              </ul>
+            """
+        else:
+            oggetto_html = "<div class='muted'>Oggetto non riconosciuto</div>"
+
         details_blocks.append(f"""
         <details class="tx" data-filter="{hattr(filter_blob)}" data-idx="{idx}">
           <summary>
-            {html.escape(de_fmt)} {html.escape(oe_fmt)} — Prog {html.escape(prog)} — {html.escape(tip)} — {html.escape(titolo)}{pill}
+            {html.escape(de_fmt)} {html.escape(oe_fmt)} — Prog {html.escape(prog)} — {html.escape(oggetto)} — {html.escape(titolo)}{pill}
           </summary>
           <div class="pad">
             <div class="grid2">
@@ -483,20 +653,10 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
                   <li><b>Tipo tassazione</b>: {html.escape(r.get('TipoTassazione',''))}</li>
                   <li><b>Valuta</b>: {html.escape(r.get('Valuta',''))}</li>
                   <li><b>Imponibile intrattenimenti</b>: {html.escape(imp_fmt)}</li>
-                </ul>
-              </div>
-
-              <div class="card2">
-                <h4>Titolo di accesso</h4>
-                <ul>
                   <li><b>Annullamento</b>: {html.escape(ann)}</li>
-                  <li><b>Codice locale</b>: {html.escape(loc)}</li>
-                  <li><b>Data/Ora evento</b>: {html.escape(dev_fmt)} {html.escape(oev_fmt)}</li>
-                  <li><b>Tipo genere</b>: {html.escape(tgen)}</li>
-                  <li><b>Titolo</b>: {html.escape(titolo)}</li>
                 </ul>
 
-                <h4>Importi</h4>
+                <h4>Importi (standard)</h4>
                 <table>
                   <thead><tr><th>Voce</th><th>Valore</th></tr></thead>
                   <tbody>
@@ -506,6 +666,10 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
                     <tr><td>IVA Prevendita</td><td>{html.escape(iva_p_fmt)}</td></tr>
                   </tbody>
                 </table>
+              </div>
+
+              <div class="card2">
+                {oggetto_html}
               </div>
 
               <div class="card2">
@@ -573,7 +737,6 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
     table{border-collapse:collapse;width:100%;margin-top:10px;font-size:13px;}
     th,td{border-bottom:1px solid #eee;padding:6px 8px;text-align:left;vertical-align:top;white-space:nowrap;}
     th{background:#fafafa;font-weight:700;position:sticky;top:0;z-index:2;}
-    .wrap td{white-space:normal;}
     details{border:1px solid #eee;border-radius:10px;padding:8px 10px;margin-top:10px;background:#fcfcfc;}
     summary{cursor:pointer;font-weight:600;}
     .pad{padding:8px 2px 2px 2px;}
@@ -602,7 +765,7 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
       const dets = document.querySelectorAll('details.tx');
 
       let shown = 0;
-      const matchRow = (el) => {
+      const matchEl = (el) => {
         const hay = norm(el.getAttribute('data-filter'));
         if(tokens.length === 0) return true;
         for(const tok of tokens){
@@ -612,12 +775,12 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
       };
 
       for(const r of rows){
-        const ok = matchRow(r);
+        const ok = matchEl(r);
         r.style.display = ok ? "" : "none";
         if(ok) shown++;
       }
       for(const d of dets){
-        const ok = matchRow(d);
+        const ok = matchEl(d);
         d.style.display = ok ? "" : "none";
       }
 
@@ -694,12 +857,12 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
     <div class="card" style="margin-top:12px;">
       <h2>Transazioni</h2>
       <input id="q" class="search"
-             placeholder="Filtra (es: 20/01/2026 ballo 240, oppure 1128, oppure 11:28)..."
+             placeholder="Filtra (es: abbonamento 00000003, bigliettoabbonamento pinocchio, 20/02/2026, ...)"
              oninput="applyFilter()" onkeyup="applyFilter()" onchange="applyFilter()" />
       <div id="filterStatus" class="status"></div>
 
       <div class="tablewrap">
-        <table id="txTable" class="wrap">
+        <table id="txTable">
           <thead>{headers_html}</thead>
           <tbody id="txBody">
             {''.join(tbody_rows)}
