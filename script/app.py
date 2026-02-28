@@ -30,6 +30,9 @@ RCA_SCRIPT = APP_DIR / "accessi_reader.py"
 LTA_SCRIPT = APP_DIR / "lta_reader.py"
 LOG_SCRIPT = APP_DIR / "log_reader.py"
 
+RCA_SCRIPT_TXT = APP_DIR / "rca_reader_txt.py"
+LTA_SCRIPT_TXT = APP_DIR / "lta_reader_txt.py"
+
 MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB
 
 # TLS per avvio dev con python app.py (in docker si usa gunicorn)
@@ -149,6 +152,13 @@ def detect_kind(upload_path: pathlib.Path) -> Tuple[str, str]:
     returns (kind, root_tag)
     kind in: rpm|log|xml
     """
+    if upload_path.name.lower().endswith(".txt"):
+        if ("rca" in upload_path.name.lower() ):
+            return "rca_txt", "RiepilogoControlloAccessi"
+        else:
+            if("lta" in upload_path.name.lower() ):
+                return "lta_txt", "LTA_Giornaliera"
+
     if upload_path.name.lower().endswith(".p7m"):
         tmp = extract_p7m_noverify(upload_path)
         try:
@@ -192,6 +202,12 @@ def run_reader(kind: str, in_file: pathlib.Path, no_cents: bool) -> pathlib.Path
     elif kind=="rca":
         script = RCA_SCRIPT
         out_suffix = ".rca.html"
+    elif kind=="rca_txt":
+        script = RCA_SCRIPT_TXT
+        out_suffix = ".rca.html"
+    elif kind=="lta_txt":
+        script = LTA_SCRIPT_TXT
+        out_suffix = ".lta.html"
     else:
         raise RuntimeError("run_reader chiamato su tipo non RPM/LOG")
 
@@ -509,7 +525,7 @@ def upload():
         # Genera output.html:
         # - RPM/LOG: reader
         # - XML generico: pretty XML (estratto se p7m)
-        if kind in ("rpm", "log", "lta", "rca"):
+        if kind in ("rpm", "log", "lta", "rca", "lta_txt", "rca_txt"):
             out_html = run_reader(kind, in_path, no_cents=no_cents)
             shutil.copyfile(out_html, run_dir / "output.html")
         else:
@@ -709,7 +725,7 @@ if __name__ == "__main__":
     ssl_ctx = resolve_ssl_context()
     if ssl_ctx:
         print("Avvio HTTPS su https://127.0.0.1:5000")
-        app.run(host="0.0.0.0", port=5000, debug=True, ssl_context=ssl_ctx)
+        app.run(host="0.0.0.0", port=5000, debug=True, ssl_context=ssl_ctx, use_reloader=False)
     else:
         print("Avvio HTTP su http://127.0.0.1:5000 (TLS non trovato o disabilitato)")
-        app.run(host="0.0.0.0", port=5000, debug=True)
+        app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
