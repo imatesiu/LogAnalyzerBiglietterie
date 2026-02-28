@@ -22,3 +22,5 @@ buildNumber.properties
 /script/tls
 /script/zuc
 /script/dat
+*.xml
+__pycache__
