@@ -19,6 +19,8 @@ from flask import Flask, request, redirect, url_for, send_file, render_template_
 # lxml per XSD
 from lxml import etree
 
+APP_VERSION = "1.46"
+
 APP_DIR = pathlib.Path(__file__).resolve().parent
 UPLOAD_ROOT = APP_DIR / "uploads"
 UPLOAD_ROOT.mkdir(exist_ok=True)
@@ -40,7 +42,12 @@ TLS_CERT_PATH = os.environ.get("TLS_CERT_PATH", str(APP_DIR / "tls" / "fullchain
 TLS_KEY_PATH = os.environ.get("TLS_KEY_PATH", str(APP_DIR / "tls" / "key.pem"))
 USE_HTTPS = os.environ.get("USE_HTTPS", "1")  # "1"=https se cert/key esistono
 
-app = Flask(__name__)
+# ✅ static folder per logo: URL /img/... -> cartella ./img
+app = Flask(
+    __name__,
+    static_url_path="/img",
+    static_folder=str(APP_DIR / "img"),
+)
 app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
 
 
@@ -243,6 +250,7 @@ def make_pretty_xml_html(xml_path: pathlib.Path, title: str) -> str:
     except Exception as e:
         pretty = f"Impossibile fare pretty print: {e}\n\nContenuto grezzo non mostrato."
     safe = html.escape(pretty)
+    # pagina standalone (senza header/footer: verrà incapsulata dall'iframe wrapper)
     return f"""<!doctype html>
 <html><head><meta charset="utf-8"><title>{html.escape(title)}</title>
 <style>
@@ -306,6 +314,43 @@ def read_meta(run_dir: pathlib.Path) -> Dict:
 
 
 # -------------------------
+# Shared header/footer snippets
+# -------------------------
+HEADER_HTML = """
+<div class="cnr-header">
+  <img class="cnr-logo" src="/img/logo_CNR_esteso.png" alt="CNR logo">
+</div>
+"""
+
+FOOTER_HTML = """
+<div class="cnr-footer">
+  <div></div>
+  <div class="cnr-footer-center">
+    <div class="cnr-footer-line"><b>System and Software Evaluation Lab Fiscal Group</b></div>
+    <div class="cnr-footer-line">Institute of Information Science and Technologies &quot;Alessandro Faedo&quot;</div>
+    <div class="cnr-footer-line cnr-footer-note"><i>*For any bugs, please write to Giorgio O. Spagnolo (spagnolo at isti.cnr.it)</i></div>
+    <div style="margin-top:8px;">
+      <img class="cnr-logo-small" src="/img/logo_CNR_esteso.png" alt="CNR logo small">
+    </div>
+  </div>
+  <div class="cnr-footer-right">v{{ version }}</div>
+</div>
+"""
+
+BASE_CSS = """
+:root{ --hdrH:72px; --ftrH:148px; }
+body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;line-height:1.35;color:#111;}
+.cnr-header{height:var(--hdrH);display:flex;align-items:center;justify-content:left;padding:10px 14px;border-bottom:1px solid #e5e5e5;background:#fff;}
+.cnr-logo{max-height:78px;max-width:min(1100px, 92vw);width:auto;height:auto;}
+.cnr-footer{position:fixed;left:0;right:0;bottom:0;height:var(--ftrH);border-top:1px solid #e5e5e5;background:#fff;display:grid;grid-template-columns:1fr 2fr 1fr;align-items:center;padding:10px 14px;box-sizing:border-box;}
+.cnr-footer-center{text-align:center;font-size:13px;color:#111;}
+.cnr-footer-line{margin:2px 0;}
+.cnr-footer-note{color:#444;}
+.cnr-footer-right{text-align:right;font-size:12px;color:#444;align-self:end;padding-bottom:4px;}
+.cnr-logo-small{max-height:73px;max-width:620px;width:auto;height:auto;opacity:0.95;}
+"""
+
+# -------------------------
 # UI templates
 # -------------------------
 INDEX_HTML = """
@@ -315,37 +360,44 @@ INDEX_HTML = """
   <meta charset="utf-8">
   <title>RPM/LOG/XML Viewer</title>
   <style>
-    body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px;line-height:1.35;color:#111;}
+    """ + BASE_CSS + """
+    .wrap{padding:24px; padding-bottom: calc(var(--ftrH) + 24px);}
+    h1{margin:0 0 12px 0;}
     .card{border:1px solid #e5e5e5;border-radius:12px;padding:14px;background:#fff;max-width:900px;}
     input[type=file]{margin-top:8px;}
     button{margin-top:12px;padding:10px 14px;border-radius:10px;border:1px solid #ddd;background:#fafafa;cursor:pointer;}
+    button:hover{background:#f2f2f2;}
     .muted{color:#666;font-size:13px;margin-top:8px;}
     label{display:flex;gap:10px;align-items:center;margin-top:10px;}
     code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;}
   </style>
 </head>
 <body>
-  <h1>RPM / LOG / XML Viewer</h1>
-  <div class="card">
-    <form action="/upload" method="post" enctype="multipart/form-data">
-      <div><b>Carica un file</b> RPM/LOG o un XML coperto dagli XSD (anche <code>.p7m</code>)</div>
-      <input type="file" name="file" required />
+  """ + HEADER_HTML + """
+  <div class="wrap">
+    <h1>RPM / LOG / XML Viewer</h1>
+    <div class="card">
+      <form action="/upload" method="post" enctype="multipart/form-data">
+        <div><b>Carica un file</b> RPM/LOG o un XML coperto dagli XSD (anche <code>.p7m</code>)</div>
+        <input type="file" name="file" required />
 
-      <label>
-        <input type="checkbox" name="no_cents" />
-        Non dividere per 100 gli importi (<code>--no-cents</code>) per i report RPM/LOG
-      </label>
+        <label>
+          <input type="checkbox" name="no_cents" />
+          Non dividere per 100 gli importi (<code>--no-cents</code>) per i report RPM/LOG
+        </label>
 
-      <button type="submit">Carica</button>
+        <button type="submit">Carica</button>
 
-      <div class="muted">
-        Autodetect:
-        <code>RiepilogoMensile</code> → RPM,
-        <code>LogTransazione</code> → LOG,
-        altro → XML (solo visualizzazione + validazione).
-      </div>
-    </form>
+        <div class="muted">
+          Autodetect:
+          <code>RiepilogoMensile</code> → RPM,
+          <code>LogTransazione</code> → LOG,
+          altro → XML (visualizzazione + validazione).
+        </div>
+      </form>
+    </div>
   </div>
+  """ + FOOTER_HTML + """
 </body>
 </html>
 """
@@ -357,17 +409,18 @@ VIEW_WRAPPER_HTML = """
   <meta charset="utf-8">
   <title>Viewer</title>
   <style>
-    body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;color:#111;}
-    .bar{display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid #e5e5e5;position:sticky;top:0;background:#fff;z-index:10;}
+    """ + BASE_CSS + """
+    .bar{display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid #e5e5e5;position:sticky;top:var(--hdrH);background:#fff;z-index:10;}
     .btn{padding:8px 12px;border-radius:10px;border:1px solid #ddd;background:#fafafa;cursor:pointer;text-decoration:none;color:#111;}
     .btn:hover{background:#f2f2f2;}
     .sp{flex:1;}
     .meta{color:#666;font-size:13px;}
-    iframe{width:100%;height:calc(100vh - 56px);border:0;}
+    iframe{width:100%;height:calc(100vh - var(--hdrH) - var(--ftrH) - 56px);border:0;}
     code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;}
   </style>
 </head>
 <body>
+  """ + HEADER_HTML + """
   <div class="bar">
     <a class="btn" href="/">Nuovo upload</a>
     <a class="btn" href="{{ validate_url }}">Validazione (XSD / Firma)</a>
@@ -379,6 +432,7 @@ VIEW_WRAPPER_HTML = """
     </div>
   </div>
   <iframe src="{{ content_url }}"></iframe>
+  """ + FOOTER_HTML + """
 </body>
 </html>
 """
@@ -390,7 +444,8 @@ VALIDATION_HTML = """
   <meta charset="utf-8">
   <title>Validazione</title>
   <style>
-    body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px;line-height:1.35;color:#111;}
+    """ + BASE_CSS + """
+    .wrap{padding:24px; padding-bottom: calc(var(--ftrH) + 24px);}
     .row{display:flex;gap:12px;flex-wrap:wrap;}
     .card{border:1px solid #e5e5e5;border-radius:12px;padding:14px;background:#fff;min-width:320px;flex:1;}
     .ok{color:#0b6b2f;font-weight:700;}
@@ -404,88 +459,93 @@ VALIDATION_HTML = """
     code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;}
     select{padding:8px 10px;border:1px solid #ddd;border-radius:10px;}
     button{padding:8px 12px;border-radius:10px;border:1px solid #ddd;background:#fafafa;cursor:pointer;}
+    pre{white-space:pre-wrap; background:#f7f7f7; border:1px solid #eee; border-radius:10px; padding:10px;}
   </style>
 </head>
 <body>
-  <div style="margin-bottom:12px;">
-    <a class="btn" href="{{ view_url }}">← Torna al report</a>
-    <a class="btn" href="/">Nuovo upload</a>
-  </div>
-
-  <h1>Validazione (XSD / Firma)</h1>
-  <div class="muted">
-    File: <b>{{ filename }}</b> — root: <code>{{ root_tag }}</code> {% if is_p7m %} — <code>p7m</code>{% endif %}
-  </div>
-
-  <div class="row" style="margin-top:14px;">
-    <div class="card">
-      <h2>Verifica firma</h2>
-      {% if not is_p7m %}
-        <div class="muted">N/A (file non firmato .p7m)</div>
-      {% else %}
-        {% if sig_ok %}
-          <div class="ok">OK</div>
-        {% else %}
-          <div class="bad">INSUCCESSO</div>
-        {% endif %}
-        <div class="muted" style="margin-top:8px;">
-          Nota: la verifica usa <code>openssl cms -verify -noverify</code> (firma valida, catena certificati non verificata).
-        </div>
-        <pre style="white-space:pre-wrap;margin-top:10px;background:#f7f7f7;border:1px solid #eee;border-radius:10px;padding:10px;">{{ sig_msg }}</pre>
-      {% endif %}
+  """ + HEADER_HTML + """
+  <div class="wrap">
+    <div style="margin-bottom:12px;">
+      <a class="btn" href="{{ view_url }}">← Torna al report</a>
+      <a class="btn" href="/">Nuovo upload</a>
     </div>
 
-    <div class="card">
-      <h2>Validazione XSD</h2>
+    <h1>Validazione (XSD / Firma)</h1>
+    <div class="muted">
+      File: <b>{{ filename }}</b> — root: <code>{{ root_tag }}</code> {% if is_p7m %} — <code>p7m</code>{% endif %}
+    </div>
 
-      <form method="get" action="{{ validate_url }}">
-        <label class="muted">Schema:</label>
-        <select name="schema">
-          <option value="auto" {% if schema_sel == "auto" %}selected{% endif %}>auto (da root tag)</option>
-          {% for x in xsds %}
-            <option value="{{ x }}" {% if schema_sel == x %}selected{% endif %}>{{ x }}</option>
-          {% endfor %}
-        </select>
-        <button type="submit">Valida</button>
-      </form>
-
-      <div class="muted" style="margin-top:8px;">
-        Usato: <code>{{ schema_used }}</code>
+    <div class="row" style="margin-top:14px;">
+      <div class="card">
+        <h2>Verifica firma</h2>
+        {% if not is_p7m %}
+          <div class="muted">N/A (file non firmato .p7m)</div>
+        {% else %}
+          {% if sig_ok %}
+            <div class="ok">OK</div>
+          {% else %}
+            <div class="bad">INSUCCESSO</div>
+          {% endif %}
+          <div class="muted" style="margin-top:8px;">
+            Nota: verifica con <code>openssl cms -verify -noverify</code> (firma valida, chain CA non verificata).
+          </div>
+          <pre style="margin-top:10px;">{{ sig_msg }}</pre>
+        {% endif %}
       </div>
 
-      {% if xsd_ok %}
-        <div class="ok" style="margin-top:10px;">OK (conforme allo schema)</div>
-      {% else %}
-        <div class="bad" style="margin-top:10px;">NON CONFORME</div>
-        {% if xsd_errors %}
-          <table>
-            <thead>
-              <tr>
-                <th>Linea</th><th>Col</th><th>Livello</th><th>Tipo</th><th>Messaggio</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for e in xsd_errors %}
-              <tr>
-                <td>{{ e.line }}</td>
-                <td>{{ e.column }}</td>
-                <td>{{ e.level }}</td>
-                <td>{{ e.type }}</td>
-                <td>{{ e.message }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        {% else %}
-          <div class="muted" style="margin-top:10px;">Nessun dettaglio errori disponibile.</div>
-        {% endif %}
-      {% endif %}
+      <div class="card">
+        <h2>Validazione XSD</h2>
 
-      {% if xsd_note %}
-        <div class="muted" style="margin-top:10px;">{{ xsd_note }}</div>
-      {% endif %}
+        <form method="get" action="{{ validate_url }}">
+          <label class="muted">Schema:</label>
+          <select name="schema">
+            <option value="auto" {% if schema_sel == "auto" %}selected{% endif %}>auto (da root tag)</option>
+            {% for x in xsds %}
+              <option value="{{ x }}" {% if schema_sel == x %}selected{% endif %}>{{ x }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit">Valida</button>
+        </form>
+
+        <div class="muted" style="margin-top:8px;">
+          Usato: <code>{{ schema_used }}</code>
+        </div>
+
+        {% if xsd_ok %}
+          <div class="ok" style="margin-top:10px;">OK (conforme allo schema)</div>
+        {% else %}
+          <div class="bad" style="margin-top:10px;">NON CONFORME</div>
+          {% if xsd_errors %}
+            <table>
+              <thead>
+                <tr>
+                  <th>Linea</th><th>Col</th><th>Livello</th><th>Tipo</th><th>Messaggio</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for e in xsd_errors %}
+                <tr>
+                  <td>{{ e.line }}</td>
+                  <td>{{ e.column }}</td>
+                  <td>{{ e.level }}</td>
+                  <td>{{ e.type }}</td>
+                  <td>{{ e.message }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <div class="muted" style="margin-top:10px;">Nessun dettaglio errori disponibile.</div>
+          {% endif %}
+        {% endif %}
+
+        {% if xsd_note %}
+          <div class="muted" style="margin-top:10px;">{{ xsd_note }}</div>
+        {% endif %}
+      </div>
     </div>
   </div>
+  """ + FOOTER_HTML + """
 </body>
 </html>
 """
@@ -496,7 +556,7 @@ VALIDATION_HTML = """
 # -------------------------
 @app.get("/")
 def index():
-    return render_template_string(INDEX_HTML)
+    return render_template_string(INDEX_HTML, version=APP_VERSION)
 
 
 @app.post("/upload")
@@ -582,6 +642,7 @@ def view(run_id: str):
         content_url=url_for("content", run_id=run_id),
         validate_url=url_for("validate", run_id=run_id),
         download_url=url_for("download", run_id=run_id),
+        version=APP_VERSION,
     )
 
 
@@ -644,6 +705,7 @@ def validate(run_id: str):
                 xsd_ok=False,
                 xsd_errors=[],
                 xsd_note="Validazione XSD non eseguita perché la verifica firma non è andata a buon fine.",
+                version=APP_VERSION,
             )
         # aggiorna root_tag dal payload verificato (in caso di mismatch)
         try:
@@ -708,6 +770,7 @@ def validate(run_id: str):
         xsd_ok=xsd_ok if schema_path else False,
         xsd_errors=xsd_errors,
         xsd_note=xsd_note,
+        version=APP_VERSION,
     )
 
 
