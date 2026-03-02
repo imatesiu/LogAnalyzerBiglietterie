@@ -358,7 +358,7 @@ INDEX_HTML = """
 <html>
 <head>
   <meta charset="utf-8">
-  <title>RPM/LOG/XML Viewer</title>
+  <title>RPM/LOG/RCA/LTA/XML Viewer</title>
   <style>
     """ + BASE_CSS + """
     .wrap{padding:24px; padding-bottom: calc(var(--ftrH) + 24px);}
@@ -375,23 +375,23 @@ INDEX_HTML = """
 <body>
   """ + HEADER_HTML + """
   <div class="wrap">
-    <h1>RPM / LOG / XML Viewer</h1>
+    <h1>RPM / LTA / RCA / LOG / XML Viewer</h1>
     <div class="card">
       <form action="/upload" method="post" enctype="multipart/form-data">
-        <div><b>Carica un file</b> RPM/LOG o un XML coperto dagli XSD (anche <code>.p7m</code>)</div>
+        <div><b>Carica un file</b> RPM/LTA/RCA/LOG o un XML coperto dagli XSD (anche <code>.p7m</code>)</div>
         <input type="file" name="file" required />
 
         <label>
           <input type="checkbox" name="no_cents" />
-          Non dividere per 100 gli importi (<code>--no-cents</code>) per i report RPM/LOG
+          Non dividere per 100 gli importi (<code>--no-cents</code>) per i report RPM/LOG/LTA/RCA
         </label>
 
         <button type="submit">Carica</button>
 
         <div class="muted">
           Autodetect:
-          <code>RiepilogoMensile</code> → RPM,
-          <code>LogTransazione</code> → LOG,
+          <code>RiepilogoMensile</code> → RPM, <code>LTA_Giornaliera</code> → LTA <br>
+          <code>LogTransazione</code> → LOG, <code>RiepilogoControlloAccessi</code> → RCA <br>
           altro → XML (visualizzazione + validazione).
         </div>
       </form>
