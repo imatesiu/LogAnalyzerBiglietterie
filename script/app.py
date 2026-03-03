@@ -39,7 +39,7 @@ MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB
 
 # TLS per avvio dev con python app.py (in docker si usa gunicorn)
 TLS_CERT_PATH = os.environ.get("TLS_CERT_PATH", str(APP_DIR / "tls" / "fullchain.pem"))
-TLS_KEY_PATH = os.environ.get("TLS_KEY_PATH", str(APP_DIR / "tls" / "key.pem"))
+TLS_KEY_PATH = os.environ.get("TLS_KEY_PATH", str(APP_DIR / "tls" / "privkey.pem"))
 USE_HTTPS = os.environ.get("USE_HTTPS", "1")  # "1"=https se cert/key esistono
 
 # ✅ static folder per logo: URL /img/... -> cartella ./img
