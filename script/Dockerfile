@@ -18,5 +18,5 @@ RUN mkdir -p /app/uploads
 
 EXPOSE 5000
 
-# HTTPS diretto con gunicorn (cert/key montati in /app/tls)
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "--workers", "2", "--threads", "4", "--timeout", "120", "app:app", "--certfile", "/app/tls/fullchain.pem", "--keyfile", "/app/tls/privkey.pem"]
+# HTTP interno (TLS terminato dal reverse proxy)
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "--workers", "2", "--threads", "4", "--timeout", "120", "--forwarded-allow-ips", "*", "app:app"]
