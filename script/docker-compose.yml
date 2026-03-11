@@ -4,8 +4,8 @@ services:
     expose:
       - "5000"
     volumes:
-      - ./xsd:/app/xsd:ro
-      - ./uploads:/app/uploads
+      - ./app/xsd:/app/xsd:ro
+      - ./app/uploads:/app/uploads
     environment:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
@@ -17,7 +17,7 @@ services:
     ports:
       - "8443:443"
     volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./tls/fullchain.pem:/etc/nginx/certs/fullchain.pem:ro
-      - ./tls/privkey.pem:/etc/nginx/certs/privkey.pem:ro
+      - ./app/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./app/tls/fullchain.pem:/etc/nginx/certs/fullchain.pem:ro
+      - ./app/tls/privkey.pem:/etc/nginx/certs/privkey.pem:ro
     restart: unless-stopped
