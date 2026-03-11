@@ -1,11 +1,23 @@
 services:
   viewer:
     build: .
-    ports:
-      - "8443:5000"
+    expose:
+      - "5000"
     volumes:
-      - ./tls:/app/tls:ro
       - ./xsd:/app/xsd:ro
       - ./uploads:/app/uploads
     environment:
       - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+  reverse-proxy:
+    image: nginx:1.27-alpine
+    depends_on:
+      - viewer
+    ports:
+      - "8443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./tls/fullchain.pem:/etc/nginx/certs/fullchain.pem:ro
+      - ./tls/privkey.pem:/etc/nginx/certs/privkey.pem:ro
+    restart: unless-stopped
