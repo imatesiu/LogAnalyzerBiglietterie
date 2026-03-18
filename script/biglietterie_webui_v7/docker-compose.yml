@@ -1,0 +1,13 @@
+services:
+  biglietterie-webui:
+    container_name: biglietterie-webui-v7
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+      - ./templates:/app/templates
+      - ./reference:/app/reference
+    restart: unless-stopped

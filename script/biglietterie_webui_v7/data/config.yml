@@ -1,0 +1,279 @@
+version: 7
+anagrafica:
+  cf_organizzatore: 02011381205
+  cf_titolare: 02011381205
+  sistema_emissione: P0003208
+  codice_richiedente_emissione_sigillo: CLtmas01
+  denominazione_titolare: ''
+  denominazione_organizzatore: ''
+  tipo_organizzatore: G
+defaults:
+  valuta: E
+  ivapreassolta_biglietto: N
+  ivapreassolta_abbonamenti: B
+  imponibile_intrattenimenti: '0'
+carte:
+- carta_attivazione: A0128623
+  progressivo_next: 259
+- carta_attivazione: A0128622
+  progressivo_next: 160
+eventi:
+- id: 0120520215922_20260120_1730_Ballo_multigenere
+  codice_locale: 0120520215922
+  titolo_evento: Ballo multigenere
+  tipo_genere: '61'
+  data_evento: '20260120'
+  ora_evento: '1730'
+  data_apertura: '20260120'
+  ora_apertura: '1730'
+  tipo_tassazione: I
+  iva_percent: 0
+  settori:
+  - codice_ordine: PR
+    capienza: 100
+    prezzi: {}
+- id: 0120520215922_20260120_1830_Ballo_mutigenere_2
+  codice_locale: 0120520215922
+  titolo_evento: Ballo mutigenere 2
+  tipo_genere: '61'
+  data_evento: '20260120'
+  ora_evento: '1830'
+  data_apertura: '20260120'
+  ora_apertura: '1830'
+  tipo_tassazione: I
+  iva_percent: 0
+  settori:
+  - codice_ordine: PR
+    capienza: 100
+    prezzi: {}
+- id: 0120520215922_20260120_1800_Ballo
+  codice_locale: 0120520215922
+  titolo_evento: Ballo
+  tipo_genere: '61'
+  data_evento: '20260120'
+  ora_evento: '1800'
+  data_apertura: '20260120'
+  ora_apertura: '1800'
+  tipo_tassazione: I
+  iva_percent: 0
+  settori:
+  - codice_ordine: PR
+    capienza: 100
+    prezzi: {}
+- id: 0120050588276_20260119_1400
+  codice_locale: 0120050588276
+  titolo_evento: ''
+  tipo_genere: ''
+  data_evento: '20260119'
+  ora_evento: '1400'
+  data_apertura: '20260119'
+  ora_apertura: '1400'
+  tipo_tassazione: S
+  iva_percent: 0
+  isi_percent: 0
+  settori:
+  - codice_ordine: UN
+    capienza: 200
+    prezzi: {}
+- id: 0120520215922_20260119_1500
+  codice_locale: 0120520215922
+  titolo_evento: ''
+  tipo_genere: ''
+  data_evento: '20260119'
+  ora_evento: '1500'
+  data_apertura: '20260119'
+  ora_apertura: '1500'
+  tipo_tassazione: S
+  iva_percent: 0
+  isi_percent: 0
+  settori:
+  - codice_ordine: PR
+    capienza: 7000
+    prezzi: {}
+  - codice_ordine: TA
+    capienza: 3000
+    prezzi: {}
+- id: 0120520215922_20260119_1800
+  codice_locale: 0120520215922
+  titolo_evento: ''
+  tipo_genere: ''
+  data_evento: '20260119'
+  ora_evento: '1800'
+  data_apertura: '20260119'
+  ora_apertura: '1800'
+  tipo_tassazione: S
+  iva_percent: 0
+  isi_percent: 0
+  settori:
+  - codice_ordine: PR
+    capienza: 100
+    prezzi: {}
+- id: 0120300002883_20260119_2000
+  codice_locale: 0120300002883
+  titolo_evento: ''
+  tipo_genere: ''
+  data_evento: '20260119'
+  ora_evento: '2000'
+  data_apertura: '20260119'
+  ora_apertura: '2000'
+  tipo_tassazione: S
+  iva_percent: 0
+  isi_percent: 0
+  settori:
+  - codice_ordine: TA
+    capienza: 25
+    prezzi: {}
+  - codice_ordine: TB
+    capienza: 100
+    prezzi: {}
+- id: 0120050588276_20260120_1400
+  codice_locale: 0120050588276
+  titolo_evento: ''
+  tipo_genere: ''
+  data_evento: '20260120'
+  ora_evento: '1400'
+  data_apertura: '20260120'
+  ora_apertura: '1400'
+  tipo_tassazione: S
+  iva_percent: 0
+  isi_percent: 0
+  settori:
+  - codice_ordine: UN
+    capienza: 200
+    prezzi: {}
+- id: 0120520215922_20260120_1500
+  codice_locale: 0120520215922
+  titolo_evento: ''
+  tipo_genere: ''
+  data_evento: '20260120'
+  ora_evento: '1500'
+  data_apertura: '20260120'
+  ora_apertura: '1500'
+  tipo_tassazione: S
+  iva_percent: 0
+  isi_percent: 0
+  settori:
+  - codice_ordine: PR
+    capienza: 7000
+    prezzi: {}
+  - codice_ordine: TA
+    capienza: 3000
+    prezzi: {}
+- id: 0120300002883_20260120_2000
+  codice_locale: 0120300002883
+  titolo_evento: ''
+  tipo_genere: ''
+  data_evento: '20260120'
+  ora_evento: '2000'
+  data_apertura: '20260120'
+  ora_apertura: '2000'
+  tipo_tassazione: S
+  iva_percent: 0
+  isi_percent: 0
+  settori:
+  - codice_ordine: TA
+    capienza: 25
+    prezzi: {}
+  - codice_ordine: TB
+    capienza: 100
+    prezzi: {}
+- id: 0120300002883_20260128_2000
+  codice_locale: 0120300002883
+  titolo_evento: ''
+  tipo_genere: ''
+  data_evento: '20260128'
+  ora_evento: '2000'
+  data_apertura: '20260128'
+  ora_apertura: '2000'
+  tipo_tassazione: S
+  iva_percent: 0
+  isi_percent: 0
+  settori:
+  - codice_ordine: TA
+    capienza: 25
+    prezzi: {}
+  - codice_ordine: TB
+    capienza: 100
+    prezzi: {}
+- id: 0120050588276_20260129_1400
+  codice_locale: 0120050588276
+  titolo_evento: ''
+  tipo_genere: ''
+  data_evento: '20260129'
+  ora_evento: '1400'
+  data_apertura: '20260129'
+  ora_apertura: '1400'
+  tipo_tassazione: S
+  iva_percent: 0
+  isi_percent: 0
+  settori:
+  - codice_ordine: UN
+    capienza: 200
+    prezzi: {}
+- id: 0120050588276_20260130_1400
+  codice_locale: 0120050588276
+  titolo_evento: ''
+  tipo_genere: ''
+  data_evento: '20260130'
+  ora_evento: '1400'
+  data_apertura: '20260130'
+  ora_apertura: '1400'
+  tipo_tassazione: S
+  iva_percent: 0
+  isi_percent: 0
+  settori:
+  - codice_ordine: UN
+    capienza: 200
+    prezzi: {}
+- id: 0120050588276_20260131_1400
+  codice_locale: 0120050588276
+  titolo_evento: ''
+  tipo_genere: ''
+  data_evento: '20260131'
+  ora_evento: '1400'
+  data_apertura: '20260131'
+  ora_apertura: '1400'
+  tipo_tassazione: S
+  iva_percent: 0
+  isi_percent: 0
+  settori:
+  - codice_ordine: UN
+    capienza: 200
+    prezzi: {}
+- id: 0120300002883_20260119_1800
+  codice_locale: 0120300002883
+  titolo_evento: ''
+  tipo_genere: ''
+  data_evento: '20260119'
+  ora_evento: '1800'
+  data_apertura: '20260119'
+  ora_apertura: '1800'
+  tipo_tassazione: S
+  iva_percent: 0
+  isi_percent: 0
+  settori:
+  - codice_ordine: TA
+    capienza: 25
+    prezzi: {}
+  - codice_ordine: TB
+    capienza: 100
+    prezzi: {}
+- id: 0120300002883_20260120_1800
+  codice_locale: 0120300002883
+  titolo_evento: ''
+  tipo_genere: ''
+  data_evento: '20260120'
+  ora_evento: '1800'
+  data_apertura: '20260120'
+  ora_apertura: '1800'
+  tipo_tassazione: S
+  iva_percent: 0
+  isi_percent: 0
+  settori:
+  - codice_ordine: TA
+    capienza: 25
+    prezzi: {}
+  - codice_ordine: TB
+    capienza: 100
+    prezzi: {}
+abbonamenti_prodotti: []
