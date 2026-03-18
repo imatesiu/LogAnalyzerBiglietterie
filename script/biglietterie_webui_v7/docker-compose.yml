@@ -16,6 +16,9 @@ services:
       - ./data:/app/data
       - ./templates:/app/templates
       - ./reference:/app/reference
+      - ../dati:/app_ext/dati:ro
+      - ../xsd:/app_ext/xsd:ro
+      - ../../src/main/resources:/app_ext/resources:ro
     restart: unless-stopped
 
   localai:

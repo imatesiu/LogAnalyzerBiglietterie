@@ -47,6 +47,7 @@ def _allowed_actions_for_page(page_name: str) -> Optional[set]:
         },
         # Pagine non operative: nessuna azione applicabile.
         "Assistente AI (voce)": set(),
+        "Sorgenti + Import": set(),
         "Template + Import": set(),
         "Dati di riferimento": set(),
         "Export": set(),

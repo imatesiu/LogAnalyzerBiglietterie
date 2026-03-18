@@ -248,7 +248,7 @@ def render_global_assistant(page_name: str):
 
 st.title("Biglietterie – Web UI v7")
 
-pages = ['Template + Import', 'Dati di riferimento', 'Anagrafica', 'Carte', 'Eventi (wizard)', 'Abbonamenti (wizard)', 'Giornata (wizard)', 'Assistente AI (voce)', 'Export']
+pages = ['Sorgenti + Import', 'Dati di riferimento', 'Anagrafica', 'Carte', 'Eventi (wizard)', 'Abbonamenti (wizard)', 'Giornata (wizard)', 'Assistente AI (voce)', 'Export']
 page = st.radio("Navigazione", pages, horizontal=True, label_visibility="collapsed")
 
 with st.expander("⚙️ Impostazioni", expanded=False):
@@ -266,30 +266,31 @@ render_global_assistant(page)
 # Template + Import
 
 # ----------------------------
-if page == "Template + Import":
-    st.markdown("### Template XML + Import dataset")
-    st.info("Carica qui LOG/LTA/RCA/RPM. Verranno salvati in templates/.")
+if page == "Sorgenti + Import":
+    st.markdown("### Sorgenti XML + Import dataset")
+    st.info(
+        "Nessun upload template richiesto: il sistema usa automaticamente i file in ../dati "
+        "(con fallback in templates/)."
+    )
 
-    c1,c2,c3,c4 = st.columns(4)
-    with c1: up_log = st.file_uploader("LOG_template.xml", type=["xml","xsi"])
-    with c2: up_lta = st.file_uploader("LTA_template.xml", type=["xml","xsi"])
-    with c3: up_rca = st.file_uploader("RCA_template.xml", type=["xml","xsi"])
-    with c4: up_rpm = st.file_uploader("RPM_template.xml", type=["xml","xsi"])
-
-    if st.button("Salva template caricati"):
-        paths.templates_dir.mkdir(parents=True, exist_ok=True)
-        if up_log: paths.templ_log.write_bytes(up_log.getvalue())
-        if up_lta: paths.templ_lta.write_bytes(up_lta.getvalue())
-        if up_rca: paths.templ_rca.write_bytes(up_rca.getvalue())
-        if up_rpm: paths.templ_rpm.write_bytes(up_rpm.getvalue())
-        st.success("Template salvati.")
-        st.rerun()
+    src_log = engine.resolve_source_path(paths, "LOG")
+    src_lta = engine.resolve_source_path(paths, "LTA")
+    src_rca = engine.resolve_source_path(paths, "RCA")
+    src_rpm = engine.resolve_source_path(paths, "RPM")
+    xsd_log = engine.resolve_xsd_path(paths, "LOG")
+    xsd_lta = engine.resolve_xsd_path(paths, "LTA")
+    xsd_rca = engine.resolve_xsd_path(paths, "RCA")
+    xsd_rpm = engine.resolve_xsd_path(paths, "RPM")
 
     st.json({
-        "LOG_template.xml": file_present(paths.templ_log),
-        "LTA_template.xml": file_present(paths.templ_lta),
-        "RCA_template.xml": file_present(paths.templ_rca),
-        "RPM_template.xml": file_present(paths.templ_rpm),
+        "source_LOG": str(src_log) if src_log else None,
+        "source_LTA": str(src_lta) if src_lta else None,
+        "source_RCA": str(src_rca) if src_rca else None,
+        "source_RPM": str(src_rpm) if src_rpm else None,
+        "xsd_LOG": str(xsd_log) if xsd_log else None,
+        "xsd_LTA": str(xsd_lta) if xsd_lta else None,
+        "xsd_RCA": str(xsd_rca) if xsd_rca else None,
+        "xsd_RPM": str(xsd_rpm) if xsd_rpm else None,
     })
 
     st.divider()
@@ -303,20 +304,20 @@ if page == "Template + Import":
         overwrite = st.checkbox("Sovrascrivi giornata", value=True)
     with colC:
         st.caption("Import LOG/LTA (facoltativo)")
-        import_log = st.checkbox("Importa LOG", value=False, disabled=not file_present(paths.templ_log))
-        import_lta = st.checkbox("Importa LTA", value=False, disabled=not file_present(paths.templ_lta))
+        import_log = st.checkbox("Importa LOG", value=False, disabled=src_log is None)
+        import_lta = st.checkbox("Importa LTA", value=False, disabled=src_lta is None)
 
     if st.button("ESEGUI IMPORT"):
         cfg2 = engine.ensure_config(paths)
         day = engine.reset_day(paths, target_date) if overwrite else engine.ensure_day(paths, target_date)
 
         # LOG/LTA import
-        if import_log and file_present(paths.templ_log):
-            cfg2, dlog = engine.import_log(cfg2, paths.templ_log.read_bytes(), target_date_iso=target_date)
+        if import_log and src_log is not None:
+            cfg2, dlog = engine.import_log(cfg2, src_log.read_bytes(), target_date_iso=target_date)
             day["titoli"].extend(dlog.get("titoli", []))
             day["transazioni"].extend(dlog.get("transazioni", []))
-        if import_lta and file_present(paths.templ_lta):
-            cfg2, dlta = engine.import_lta(cfg2, paths.templ_lta.read_bytes(), target_date_iso=target_date)
+        if import_lta and src_lta is not None:
+            cfg2, dlta = engine.import_lta(cfg2, src_lta.read_bytes(), target_date_iso=target_date)
             existing = {t.get("key") for t in day.get("titoli", [])}
             for t in dlta.get("titoli", []):
                 if t.get("key") not in existing:
@@ -325,19 +326,19 @@ if page == "Template + Import":
         # CAPENZE import
         if import_cap:
             if fonte_cap == "RPM":
-                if file_present(paths.templ_rpm):
-                    capmap = engine.parse_capienza_from_rpm(paths.templ_rpm.read_bytes())
+                if src_rpm is not None:
+                    capmap = engine.parse_capienza_from_rpm(src_rpm.read_bytes())
                     updated = engine.apply_capienza_to_cfg(cfg2, capmap)
                     st.info(f"Capienze aggiornate da RPM: {updated} settori.")
                 else:
-                    st.warning("RPM_template.xml mancante.")
+                    st.warning("Sorgente RPM non trovata.")
             else:
-                if file_present(paths.templ_rca):
-                    capmap = engine.parse_capienza_from_rca(paths.templ_rca.read_bytes())
+                if src_rca is not None:
+                    capmap = engine.parse_capienza_from_rca(src_rca.read_bytes())
                     updated = engine.apply_capienza_to_cfg(cfg2, capmap)
                     st.info(f"Capienze aggiornate da RCA: {updated} settori.")
                 else:
-                    st.warning("RCA_template.xml mancante.")
+                    st.warning("Sorgente RCA non trovata.")
 
         engine.save_config(paths, cfg2)
         engine.save_day(paths, target_date, day)
@@ -1091,12 +1092,15 @@ elif page == "Assistente AI (voce)":
 # ----------------------------
 elif page == "Export":
     st.markdown("### Export file (LOG/LTA giornalieri + RPM mensile)")
+    src_log = engine.resolve_source_path(paths, "LOG")
+    src_lta = engine.resolve_source_path(paths, "LTA")
+    src_rpm = engine.resolve_source_path(paths, "RPM")
 
     # --- Daily export (LOG/LTA) ---
     st.subheader("Giornaliero: LOG + LTA")
-    ok_daily = file_present(paths.templ_log) and file_present(paths.templ_lta)
+    ok_daily = (src_log is not None) and (src_lta is not None)
     if not ok_daily:
-        st.warning("Carica LOG_template.xml e LTA_template.xml in Template + Import.")
+        st.warning("Sorgenti LOG/LTA non trovate (usa file in ../dati o fallback templates/).")
 
     date_iso = st.date_input("Data export (giornaliero)", value=engine.dt_now().date()).isoformat()
     day = engine.ensure_day(paths, date_iso)
@@ -1150,9 +1154,9 @@ elif page == "Export":
 
     # --- Monthly export (RPM) ---
     st.subheader("Mensile: RPM (RiepilogoMensile)")
-    ok_rpm = file_present(paths.templ_rpm)
+    ok_rpm = src_rpm is not None
     if not ok_rpm:
-        st.warning("Carica RPM_template.xml in Template + Import (puoi usare i tuoi esempi come template).")
+        st.warning("Sorgente RPM non trovata (usa file in ../dati o fallback templates/).")
 
     # Scegli un giorno del mese (usato solo per selezionare il mese)
     date_month = st.date_input("Mese RPM (scegli una data del mese)", value=engine.dt_now().date(), key="rpm_month")

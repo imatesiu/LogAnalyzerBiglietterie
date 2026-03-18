@@ -147,6 +147,8 @@ class Paths:
     data_dir: Path
     journal_dir: Path
     templates_dir: Path
+    external_data_dir: Path
+    xsd_dir: Path
     reference_dir: Path
     config_path: Path
     templ_log: Path
@@ -158,12 +160,35 @@ def make_paths(base_dir: Path) -> Paths:
     data_dir = base_dir / "data"
     journal_dir = data_dir / "journal"
     templates_dir = base_dir / "templates"
+    ext_candidates = [
+        base_dir.parent / "dati",
+        Path("/app_ext/dati"),
+        base_dir / "dati",
+    ]
+    external_data_dir = next((p for p in ext_candidates if p.exists()), ext_candidates[0])
+    xsd_candidates = [
+        base_dir / "xsd",
+        base_dir.parent / "xsd",
+        Path("/app_ext/xsd"),
+    ]
+    def _usable_xsd_dir(d: Path) -> bool:
+        if not d.exists():
+            return False
+        try:
+            return any(p.exists() for p in d.glob("*.xsd"))
+        except Exception:
+            return False
+    xsd_dir = next((p for p in xsd_candidates if _usable_xsd_dir(p)), None)
+    if xsd_dir is None:
+        xsd_dir = next((p for p in xsd_candidates if p.exists()), xsd_candidates[0])
     reference_dir = base_dir / "reference"
     return Paths(
         base_dir=base_dir,
         data_dir=data_dir,
         journal_dir=journal_dir,
         templates_dir=templates_dir,
+        external_data_dir=external_data_dir,
+        xsd_dir=xsd_dir,
         reference_dir=reference_dir,
         config_path=data_dir / "config.yml",
         templ_log=templates_dir / "LOG_template.xml",
@@ -171,6 +196,120 @@ def make_paths(base_dir: Path) -> Paths:
         templ_rca=templates_dir / "RCA_template.xml",
         templ_rpm=templates_dir / "RPM_template.xml",
     )
+
+
+def _template_path_for_kind(paths: Paths, kind: str) -> Path:
+    k = str(kind or "").upper()
+    if k == "LOG":
+        return paths.templ_log
+    if k == "LTA":
+        return paths.templ_lta
+    if k == "RCA":
+        return paths.templ_rca
+    if k == "RPM":
+        return paths.templ_rpm
+    raise ValueError(f"Tipo sorgente non supportato: {kind}")
+
+
+def _candidate_roots(paths: Paths) -> List[Path]:
+    roots: List[Path] = []
+    if paths.external_data_dir.exists():
+        roots.append(paths.external_data_dir)
+    if paths.templates_dir.exists():
+        roots.append(paths.templates_dir)
+    return roots
+
+
+def _is_xml_like(path: Path) -> bool:
+    return path.is_file() and path.suffix.lower() in (".xml", ".xsi")
+
+
+def _matches_kind_minimum(path: Path, kind: str) -> bool:
+    try:
+        root = etree.parse(str(path)).getroot()
+    except Exception:
+        return False
+    k = str(kind or "").upper()
+    if k == "LOG":
+        return root.find("Transazione") is not None
+    if k == "LTA":
+        return root.find("LTA_Evento") is not None
+    if k == "RCA":
+        return root.find("Evento") is not None
+    if k == "RPM":
+        return (root.find("Titolare") is not None) and (root.find("Organizzatore") is not None)
+    return False
+
+
+def discover_source_paths(paths: Paths, kind: str, limit: int = 20) -> List[Path]:
+    k = str(kind or "").upper()
+    prefix = f"{k}_"
+    out: List[Path] = []
+    seen: set = set()
+
+    # 1) Preferenza: file in ../dati (e sottocartelle), più recenti prima
+    for root in _candidate_roots(paths):
+        xml_like: List[Path] = []
+        try:
+            xml_like = [p for p in root.rglob("*") if _is_xml_like(p)]
+        except Exception:
+            xml_like = []
+        xml_like.sort(key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True)
+        for p in xml_like:
+            name_up = p.name.upper()
+            if (prefix not in name_up) and (p == _template_path_for_kind(paths, k)):
+                # include anche il path template classico come fallback
+                pass
+            elif prefix not in name_up:
+                continue
+            rp = str(p.resolve())
+            if rp in seen:
+                continue
+            if not _matches_kind_minimum(p, k):
+                continue
+            seen.add(rp)
+            out.append(p)
+            if len(out) >= max(1, int(limit)):
+                return out
+    return out
+
+
+def resolve_source_path(paths: Paths, kind: str) -> Optional[Path]:
+    cands = discover_source_paths(paths, kind, limit=1)
+    return cands[0] if cands else None
+
+
+def read_source_bytes(paths: Paths, kind: str) -> bytes:
+    p = resolve_source_path(paths, kind)
+    if p is None:
+        raise FileNotFoundError(
+            f"Sorgente {kind} non trovata. Cerca in {paths.external_data_dir} o {paths.templates_dir}."
+        )
+    return p.read_bytes()
+
+
+def resolve_xsd_path(paths: Paths, kind: str) -> Optional[Path]:
+    k = str(kind or "").upper()
+    name_map = {
+        "LOG": "logTransazioni.xsd",
+        "LTA": "accessi.xsd",
+        "RCA": "riepilogogionaliero.xsd",
+        "RPM": "RiepilogoMensile.xsd",
+    }
+    name = name_map.get(k)
+    if not name:
+        return None
+    candidates = [
+        paths.xsd_dir / name,
+        Path("/app_ext/xsd") / name,
+        Path("/app_ext/resources") / name,
+        paths.base_dir.parent / "xsd" / name,
+        paths.base_dir.parent.parent / "src" / "main" / "resources" / name,
+    ]
+    for p in candidates:
+        if p.exists():
+            return p
+    return None
 
 def ensure_config(paths: Paths) -> Dict[str, Any]:
     cfg = load_yaml(paths.config_path)
@@ -939,7 +1078,7 @@ def set_block_status(day: Dict[str, Any], titolo_key: str, kind: str) -> None:
         t["stato"] = "BT" if support=="BT" else "BD"
 
 # -----------------------
-# Exporters (LOG/LTA) - require prototypes in template
+# Exporters (LOG/LTA) - sorgenti auto-risolte (../dati, fallback templates/)
 # -----------------------
 def set_text(el: etree._Element, xpath: str, text: str) -> None:
     n = el.find(xpath)
@@ -975,7 +1114,10 @@ class LogTemplates:
     ann_order: List[str]
 
 def load_log_templates(paths: Paths) -> LogTemplates:
-    root = etree.parse(str(paths.templ_log)).getroot()
+    src = resolve_source_path(paths, "LOG")
+    if src is None:
+        raise FileNotFoundError("Nessuna sorgente LOG trovata (né in ../dati né in templates).")
+    root = etree.parse(str(src)).getroot()
     base_ticket = base_ann = base_ba = base_ab = None
     for tr in root.findall("Transazione"):
         if base_ticket is None and tr.find("TitoloAccesso") is not None and "OriginaleAnnullato" not in tr.attrib:
@@ -986,10 +1128,55 @@ def load_log_templates(paths: Paths) -> LogTemplates:
             base_ba = tr
         if base_ab is None and tr.find("Abbonamento") is not None:
             base_ab = tr
-    if not all([base_ticket, base_ann, base_ba, base_ab]):
-        raise ValueError("LOG_template.xml deve contenere esempi per ticket + annullamento + BigliettoAbbonamento + Abbonamento.")
-    return LogTemplates(deepcopy(base_ticket), deepcopy(base_ann), deepcopy(base_ba), deepcopy(base_ab),
-                        list(base_ticket.attrib.keys()), list(base_ann.attrib.keys()))
+    default_order = [
+        "CFOrganizzatore",
+        "CFTitolare",
+        "IVAPreassolta",
+        "TipoTassazione",
+        "Valuta",
+        "SistemaEmissione",
+        "CartaAttivazione",
+        "SigilloFiscale",
+        "DataEmissione",
+        "OraEmissione",
+        "NumeroProgressivo",
+        "TipoTitolo",
+        "CodiceOrdine",
+        "Causale",
+        "CodiceRichiedenteEmissioneSigillo",
+        "ImponibileIntrattenimenti",
+    ]
+    ann_default_order = default_order + ["OriginaleAnnullato", "CartaOriginaleAnnullato", "CausaleAnnullamento"]
+
+    if base_ticket is None:
+        base_ticket = etree.Element("Transazione")
+        etree.SubElement(base_ticket, "TitoloAccesso")
+    if base_ann is None:
+        base_ann = etree.Element("Transazione")
+        base_ann.attrib["OriginaleAnnullato"] = "0"
+        base_ann.attrib["CartaOriginaleAnnullato"] = ""
+        base_ann.attrib["CausaleAnnullamento"] = "001"
+        ta = etree.SubElement(base_ann, "TitoloAccesso")
+        ta.attrib["Annullamento"] = "S"
+    if base_ba is None:
+        base_ba = etree.Element("Transazione")
+        etree.SubElement(base_ba, "BigliettoAbbonamento")
+    if base_ab is None:
+        base_ab = etree.Element("Transazione")
+        ab = etree.SubElement(base_ab, "Abbonamento")
+        turno = etree.SubElement(ab, "Turno")
+        turno.attrib["valore"] = "L"
+
+    attr_order = list(base_ticket.attrib.keys()) or default_order
+    ann_order = list(base_ann.attrib.keys()) or ann_default_order
+    return LogTemplates(
+        deepcopy(base_ticket),
+        deepcopy(base_ann),
+        deepcopy(base_ba),
+        deepcopy(base_ab),
+        attr_order,
+        ann_order,
+    )
 
 def build_common(cfg: Dict[str, Any], tx: Dict[str, Any], ivap: str) -> Dict[str,str]:
     return {
@@ -1012,7 +1199,10 @@ def build_common(cfg: Dict[str, Any], tx: Dict[str, Any], ivap: str) -> Dict[str
     }
 
 def export_log(paths: Paths, cfg: Dict[str, Any], day: Dict[str, Any]) -> bytes:
-    doc = etree.parse(str(paths.templ_log))
+    src = resolve_source_path(paths, "LOG")
+    if src is None:
+        raise FileNotFoundError("Sorgente LOG non trovata in ../dati o templates.")
+    doc = etree.parse(str(src))
     root = doc.getroot()
     for tr in list(root.findall("Transazione")):
         root.remove(tr)
@@ -1099,8 +1289,12 @@ def export_log(paths: Paths, cfg: Dict[str, Any], day: Dict[str, Any]) -> bytes:
     return etree.tostring(root, pretty_print=True, xml_declaration=True, encoding="UTF-8")
 
 def export_lta(paths: Paths, cfg: Dict[str, Any], day: Dict[str, Any]) -> bytes:
-    doc = etree.parse(str(paths.templ_lta))
-    root = doc.getroot()
+    src = resolve_source_path(paths, "LTA")
+    if src is not None:
+        doc = etree.parse(str(src))
+        root = doc.getroot()
+    else:
+        root = etree.Element("LTA_Giornaliera")
     root.attrib["SistemaCA"] = cfg["anagrafica"]["sistema_emissione"]
     root.attrib["CFTitolareCA"] = cfg["anagrafica"]["cf_titolare"]
     root.attrib["DataLTA"] = yyyymmdd_from_iso(day["data"])
@@ -1108,12 +1302,16 @@ def export_lta(paths: Paths, cfg: Dict[str, Any], day: Dict[str, Any]) -> bytes:
     for e in list(root.findall("LTA_Evento")):
         root.remove(e)
 
-    base_evt = etree.parse(str(paths.templ_lta)).getroot().find("LTA_Evento")
+    base_evt = deepcopy(root.find("LTA_Evento")) if root.find("LTA_Evento") is not None else None
+    if base_evt is None and src is not None:
+        base_evt = etree.parse(str(src)).getroot().find("LTA_Evento")
     if base_evt is None:
-        raise ValueError("LTA_template.xml deve contenere almeno 1 LTA_Evento di esempio.")
+        base_evt = etree.Element("LTA_Evento")
+        etree.SubElement(base_evt, "Supporto", TipoSupportoId="BIGLIETTO", CodSupportoId="BT")
+        etree.SubElement(base_evt, "TitoloAccesso")
     base_ta = base_evt.find("TitoloAccesso")
     if base_ta is None:
-        raise ValueError("LTA_template.xml deve contenere almeno 1 TitoloAccesso di esempio.")
+        base_ta = etree.SubElement(base_evt, "TitoloAccesso")
 
     by_event: Dict[str, List[Dict[str, Any]]] = {}
     for t in day.get("titoli", []):
@@ -1216,13 +1414,13 @@ def export_rpm(paths: Paths, cfg: Dict[str, Any], month_yyyymm: str,
               progressivo_generazione: int = 1, sostituzione: str = "S") -> bytes:
     """
     Genera RPM (RiepilogoMensile) per mese YYYYMM aggregando tutti i journal in data/journal.
-    Richiede templates/RPM_template.xml.
+    Usa una sorgente RPM auto-risolta (../dati, fallback templates/).
     """
     import re
-    if not paths.templ_rpm.exists():
-        raise FileNotFoundError("RPM_template.xml mancante in templates/")
-
-    tpl_bytes = paths.templ_rpm.read_bytes()
+    src = resolve_source_path(paths, "RPM")
+    if src is None:
+        raise FileNotFoundError("Sorgente RPM non trovata in ../dati o templates.")
+    tpl_bytes = src.read_bytes()
     doctype = _read_doctype(tpl_bytes)
 
     parser = etree.XMLParser(remove_blank_text=True)
@@ -1240,7 +1438,7 @@ def export_rpm(paths: Paths, cfg: Dict[str, Any], month_yyyymm: str,
     tit = root.find("Titolare")
     org = root.find("Organizzatore")
     if tit is None or org is None:
-        raise ValueError("RPM_template.xml non valido: mancano Titolare/Organizzatore")
+        raise ValueError(f"Sorgente RPM non valida ({src.name}): mancano Titolare/Organizzatore")
 
     def _set_text(parent, tag, val):
         n = parent.find(tag)

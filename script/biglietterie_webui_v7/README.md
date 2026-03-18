@@ -55,8 +55,10 @@ poi in UI usa `Preset vLLM` e `Base URL` `http://vllm:8000/v1`
 docker build -t biglietterie-webui-v7 .
 docker run --rm -p 8501:8501 \
   -v "$(pwd)/data:/app/data" \
-  -v "$(pwd)/templates:/app/templates" \
   -v "$(pwd)/reference:/app/reference" \
+  -v "$(pwd)/../dati:/app_ext/dati:ro" \
+  -v "$(pwd)/xsd:/app/xsd:ro" \
+  -v "$(pwd)/../../src/main/resources:/app_ext/resources:ro" \
   biglietterie-webui-v7
 ```
 
@@ -66,7 +68,9 @@ docker compose up --build
 ```
 
 ## Cartelle
-- `templates/` : carica LOG/LTA/RCA/RPM
+- `../dati/` : sorgenti XML/XSI usate automaticamente (LOG/LTA/RCA/RPM)
+- `xsd/` : schemi XSD di riferimento
+- `templates/` : fallback opzionale (non obbligatorio)
 - `data/config.yml`
 - `data/journal/YYYY-MM-DD.yml`
 - `reference/` : copie locali degli allegati (se presenti)
