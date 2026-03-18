@@ -11,6 +11,9 @@ import yaml
 from lxml import etree
 
 VALUTA_DEFAULT = "EUR"
+ANNULLED_STATES = {"AT", "AD"}
+TRANSITED_STATES = {"ZT", "ZD", "MT", "MD"}
+BLOCKED_STATES = {"BT", "BD", "DT", "DD", "FT", "FD"}
 
 def dt_now() -> datetime:
     return datetime.now().replace(microsecond=0)
@@ -64,6 +67,38 @@ def id_supporto20(seed: str) -> str:
     s = str(n)
     return (s + "0"*20)[:20]
 
+
+def title_is_annulled(title: Dict[str, Any]) -> bool:
+    if bool(title.get("annullato")):
+        return True
+    return str(title.get("stato", "")).upper() in ANNULLED_STATES
+
+
+def title_is_transited(title: Dict[str, Any]) -> bool:
+    st = str(title.get("stato", "")).upper()
+    if st in TRANSITED_STATES:
+        return True
+    return bool(title.get("DataIngresso")) or bool(title.get("OraIngresso"))
+
+
+def title_is_blocked(title: Dict[str, Any]) -> bool:
+    return str(title.get("stato", "")).upper() in BLOCKED_STATES
+
+
+def title_can_cancel(title: Dict[str, Any]) -> bool:
+    # Requisito: annullato mai ri-annullabile; transitato fuori dagli emessi.
+    return (not title_is_annulled(title)) and (not title_is_transited(title))
+
+
+def title_can_transit(title: Dict[str, Any]) -> bool:
+    # Requisito: blacklist esclude il transito; annullato/transitato non transitabili.
+    return (not title_is_annulled(title)) and (not title_is_transited(title)) and (not title_is_blocked(title))
+
+
+def title_can_block(title: Dict[str, Any]) -> bool:
+    # Requisito: annullato non bloccabile.
+    return (not title_is_annulled(title)) and (not title_is_transited(title))
+
 # -----------------------
 # Persistence
 # -----------------------
@@ -97,6 +132,13 @@ def default_config() -> Dict[str, Any]:
         "carte": [],
         "eventi": [],
         "abbonamenti_prodotti": [],
+        "ai": {
+            "provider": "localai",  # localai | vllm | openai
+            "base_url": "http://localai:8080/v1",
+            "api_key": "localai",
+            "command_model": "llama-3.2-3b-instruct:q4_k_m",
+            "transcribe_model": "whisper-1",
+        },
     }
 
 @dataclass
@@ -145,6 +187,12 @@ def ensure_config(paths: Paths) -> Dict[str, Any]:
     cfg.setdefault("carte", [])
     cfg.setdefault("eventi", [])
     cfg.setdefault("abbonamenti_prodotti", [])
+    cfg.setdefault("ai", base["ai"])
+    cfg["ai"].setdefault("provider", base["ai"]["provider"])
+    cfg["ai"].setdefault("base_url", base["ai"]["base_url"])
+    cfg["ai"].setdefault("api_key", base["ai"]["api_key"])
+    cfg["ai"].setdefault("command_model", base["ai"]["command_model"])
+    cfg["ai"].setdefault("transcribe_model", base["ai"]["transcribe_model"])
     return cfg
 
 def save_config(paths: Paths, cfg: Dict[str, Any]) -> None:
@@ -799,6 +847,10 @@ def cancel_ticket(cfg: Dict[str, Any], day: Dict[str, Any], date_iso: str, titol
             t = x; break
     if t is None:
         raise KeyError("Titolo non trovato nel giorno.")
+    if title_is_annulled(t):
+        raise ValueError("Titolo già annullato: non può essere annullato una seconda volta.")
+    if title_is_transited(t):
+        raise ValueError("Titolo già transitato: non è annullabile.")
     ev = find_event(cfg, t["evento_id"])
     card = find_card(cfg, carta_ann)
     prog = int(card.get("progressivo_next",1))
@@ -855,6 +907,12 @@ def record_access(day: Dict[str, Any], titolo_key: str, timestamp_iso: str, mode
             t = x; break
     if t is None:
         raise KeyError("Titolo non trovato.")
+    if title_is_annulled(t):
+        raise ValueError("Titolo annullato: non può transitare.")
+    if title_is_transited(t):
+        raise ValueError("Titolo già transitato.")
+    if title_is_blocked(t):
+        raise ValueError("Titolo in blacklist: non può transitare.")
     support = t.get("cod_supporto","BT")
     t["stato"] = ("MT" if support=="BT" else "MD") if mode=="MAN" else ("ZT" if support=="BT" else "ZD")
     t["DataIngresso"] = yyyymmdd_from_iso(timestamp_iso[:10])
@@ -867,6 +925,11 @@ def set_block_status(day: Dict[str, Any], titolo_key: str, kind: str) -> None:
             t = x; break
     if t is None:
         raise KeyError("Titolo non trovato.")
+    if title_is_annulled(t):
+        raise ValueError("Titolo annullato: non può essere messo in blacklist.")
+    if title_is_transited(t):
+        raise ValueError("Titolo già transitato: blocco non applicabile.")
+    kind = str(kind or "BL").upper()
     support = t.get("cod_supporto","BT")
     if kind == "DASPO":
         t["stato"] = "DT" if support=="BT" else "DD"

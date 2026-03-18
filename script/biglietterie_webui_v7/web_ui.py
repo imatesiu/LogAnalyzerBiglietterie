@@ -5,6 +5,7 @@ from pathlib import Path
 import streamlit as st
 import yaml
 
+import ai_agent
 import engine
 import refdata
 
@@ -101,9 +102,153 @@ def save_cfg():
 def file_present(p: Path) -> bool:
     return p.exists() and p.stat().st_size > 0
 
+
+def _chat_history():
+    return st.session_state.setdefault("global_chat_history", [])
+
+
+def _chat_add(role: str, text: str):
+    text = (text or "").strip()
+    if not text:
+        return
+    _chat_history().append({"role": role, "text": text})
+
+
+def render_global_assistant(page_name: str):
+    ai_cfg = cfg.setdefault("ai", {})
+    with st.sidebar:
+        st.markdown("## Chat Assistente")
+        st.caption(f"Attiva in tutte le pagine. Pagina corrente: {page_name}")
+
+        if st.session_state.pop("global_chat_clear_text_next_run", False):
+            st.session_state["global_chat_text"] = ""
+
+        ready, msg = ai_agent.check_agent_ready(ai_cfg)
+        if ready:
+            st.success(msg)
+        else:
+            st.warning(msg)
+
+        chat_date_iso = st.date_input(
+            "Data operativa chat",
+            value=engine.dt_now().date(),
+            key="global_chat_date",
+        ).isoformat()
+        auto_apply = st.checkbox(
+            "Applica automaticamente le azioni",
+            value=True,
+            key="global_chat_auto_apply",
+        )
+
+        pending = st.session_state.get("global_chat_pending")
+        ctop1, ctop2 = st.columns(2)
+        clear_chat = ctop1.button("Pulisci chat", key="global_chat_clear")
+        apply_pending = ctop2.button(
+            "Applica pendente",
+            key="global_chat_apply_pending",
+            disabled=not pending,
+        )
+
+        if clear_chat:
+            st.session_state["global_chat_history"] = []
+            st.session_state["global_chat_pending"] = None
+            st.rerun()
+
+        if apply_pending and pending:
+            try:
+                p_date = str(pending.get("date_iso", chat_date_iso))
+                p_actions = pending.get("actions", []) or []
+                p_day = engine.ensure_day(paths, p_date)
+                messages, changed_cfg, changed_day = ai_agent.apply_actions(cfg, p_day, p_date, p_actions)
+                if changed_cfg:
+                    save_cfg()
+                if changed_day:
+                    engine.save_day(paths, p_date, p_day)
+                _chat_add("assistant", "Azioni pendenti applicate:\n" + "\n".join(messages))
+                st.session_state["global_chat_pending"] = None
+                st.rerun()
+            except Exception as e:
+                _chat_add("assistant", f"Errore applicazione azioni pendenti: {e}")
+                st.rerun()
+
+        history = _chat_history()
+        for m in history[-12:]:
+            who = "Tu" if m.get("role") == "user" else "Bot"
+            st.markdown(f"**{who}:** {m.get('text','')}")
+
+        audio = st.audio_input("Parla al bot", key="global_chat_audio")
+        text_cmd = st.text_input(
+            "Scrivi al bot",
+            key="global_chat_text",
+            placeholder="Es: emetti 2 biglietti per evento ...",
+        )
+        send = st.button("Invia", key="global_chat_send")
+
+        if send:
+            prev_cmd_model = str(ai_cfg.get("command_model", ""))
+            prev_stt_model = str(ai_cfg.get("transcribe_model", ""))
+            try:
+                spoken = ""
+                if audio is not None and not text_cmd.strip():
+                    audio_bytes = audio.getvalue()
+                    if audio_bytes:
+                        spoken = ai_agent.transcribe_audio(
+                            audio_bytes,
+                            getattr(audio, "name", "chat.wav"),
+                            ai_cfg=ai_cfg,
+                        )
+                user_text = text_cmd.strip() or spoken.strip()
+                if not user_text:
+                    _chat_add("assistant", "Inserisci testo o registra audio.")
+                else:
+                    _chat_add("user", user_text)
+                    if not ready:
+                        _chat_add("assistant", f"Assistente non pronto: {msg}")
+                    else:
+                        day = engine.ensure_day(paths, chat_date_iso)
+                        context = ai_agent.build_context(cfg, day, chat_date_iso, page_name=page_name)
+                        parsed = ai_agent.parse_actions(user_text, context, ai_cfg=ai_cfg)
+                        st.session_state["global_chat_last_parse"] = parsed
+                        actions = parsed.get("actions", []) or []
+                        missing = parsed.get("missing_fields", []) or []
+
+                        if missing:
+                            _chat_add("assistant", "Mi mancano alcuni dati: " + ", ".join([str(x) for x in missing]))
+                        elif actions:
+                            if auto_apply:
+                                messages, changed_cfg, changed_day = ai_agent.apply_actions(cfg, day, chat_date_iso, actions)
+                                if changed_cfg:
+                                    save_cfg()
+                                if changed_day:
+                                    engine.save_day(paths, chat_date_iso, day)
+                                _chat_add("assistant", "Operazione eseguita:\n" + "\n".join(messages))
+                            else:
+                                st.session_state["global_chat_pending"] = {
+                                    "date_iso": chat_date_iso,
+                                    "actions": actions,
+                                }
+                                _chat_add("assistant", f"Ho preparato {len(actions)} azioni. Premi 'Applica pendente'.")
+                        else:
+                            summary = str(parsed.get("summary", "") or "").strip()
+                            _chat_add(
+                                "assistant",
+                                summary or "Non ho trovato azioni operative. Riformula in modo più specifico.",
+                            )
+            except Exception as e:
+                _chat_add("assistant", f"Errore: {e}")
+            finally:
+                changed_models = (
+                    str(ai_cfg.get("command_model", "")) != prev_cmd_model
+                    or str(ai_cfg.get("transcribe_model", "")) != prev_stt_model
+                )
+                if changed_models:
+                    save_cfg()
+                st.session_state["global_chat_clear_text_next_run"] = True
+                st.rerun()
+
 st.title("Biglietterie – Web UI v7")
 
-pages = ['Template + Import', 'Dati di riferimento', 'Anagrafica', 'Carte', 'Eventi (wizard)', 'Abbonamenti (wizard)', 'Giornata (wizard)', 'Export']
+pages = ['Template + Import', 'Dati di riferimento', 'Anagrafica', 'Carte', 'Eventi (wizard)', 'Abbonamenti (wizard)', 'Giornata (wizard)', 'Assistente AI (voce)', 'Export']
 page = st.radio("Navigazione", pages, horizontal=True, label_visibility="collapsed")
 
 with st.expander("⚙️ Impostazioni", expanded=False):
@@ -114,6 +259,8 @@ with st.expander("⚙️ Impostazioni", expanded=False):
                 p.unlink()
         st.success("Reset globale completato.")
         st.rerun()
+
+render_global_assistant(page)
 
 # ----------------------------
 # Template + Import
@@ -268,7 +415,12 @@ elif page == "Carte":
             st.success("Carta salvata.")
             st.rerun()
 
-    st.data_editor(cfg.get("carte", []), num_rows="dynamic", use_container_width=True)
+    st.data_editor(
+        cfg.get("carte", []),
+        num_rows="dynamic",
+        use_container_width=True,
+        key="cards_table_editor",
+    )
 
 # ----------------------------
 # Eventi wizard (controllato)
@@ -465,7 +617,12 @@ elif page == "Eventi (wizard)":
 
     st.divider()
     st.subheader("Editor tabellare eventi (avanzato)")
-    st.data_editor(cfg.get("eventi", []), num_rows="dynamic", use_container_width=True)
+    st.data_editor(
+        cfg.get("eventi", []),
+        num_rows="dynamic",
+        use_container_width=True,
+        key="events_table_editor",
+    )
 
 # ----------------------------
 # Abbonamenti wizard
@@ -511,7 +668,12 @@ elif page == "Abbonamenti (wizard)":
 
     st.divider()
     st.subheader("Editor tabellare (avanzato)")
-    st.data_editor(cfg.get("abbonamenti_prodotti", []), num_rows="dynamic", use_container_width=True)
+    st.data_editor(
+        cfg.get("abbonamenti_prodotti", []),
+        num_rows="dynamic",
+        use_container_width=True,
+        key="subs_products_table_editor",
+    )
 
 # ----------------------------
 # Giornata wizard
@@ -620,62 +782,309 @@ elif page == "Giornata (wizard)":
 
     # Annulla / Accessi / Blocchi
     with tabs[3]:
-        keys = [t.get("key") for t in day.get("titoli", []) if t.get("key")]
-        if not keys:
+        titles = [t for t in (day.get("titoli", []) or []) if t.get("key")]
+        if not titles:
             st.info("Nessun titolo nella giornata.")
         else:
+            emessi_keys = [t["key"] for t in titles if (not engine.title_is_annulled(t)) and (not engine.title_is_transited(t))]
+            transitati_keys = [t["key"] for t in titles if engine.title_is_transited(t)]
+            annullati_keys = [t["key"] for t in titles if engine.title_is_annulled(t)]
+            transitabili_keys = [t["key"] for t in titles if engine.title_can_transit(t)]
+            annullabili_keys = [t["key"] for t in titles if engine.title_can_cancel(t)]
+            bloccabili_keys = [t["key"] for t in titles if engine.title_can_block(t)]
+
+            st.caption(
+                f"Emessi attivi: {len(emessi_keys)} | Transitati: {len(transitati_keys)} | "
+                f"Annullati: {len(annullati_keys)} | Transitabili: {len(transitabili_keys)}"
+            )
+            blacklist_keys = [t["key"] for t in titles if engine.title_is_blocked(t)]
+            st.table([
+                {"Stato": "Emessi", "Totale": len(emessi_keys)},
+                {"Stato": "Transitati", "Totale": len(transitati_keys)},
+                {"Stato": "Annullati", "Totale": len(annullati_keys)},
+                {"Stato": "Blacklist", "Totale": len(blacklist_keys)},
+            ])
+
             col1,col2 = st.columns(2)
             with col1:
                 st.subheader("Annulla biglietto (Tab.5)")
-                with st.form("wiz_ann"):
-                    titolo_key = st.selectbox("Titolo", keys)
-                    caus = st.selectbox("CausaleAnnullamento", CAUSALI_CODES, index=0)
-                    carta_ann = st.selectbox("Carta per annullamento", [c["carta_attivazione"] for c in cfg.get("carte", [])])
-                    submitted = st.form_submit_button("Annulla")
-                    if submitted:
-                        engine.cancel_ticket(cfg, day, date_iso, titolo_key, caus, carta_ann)
-                        engine.save_config(paths, cfg)
-                        engine.save_day(paths, date_iso, day)
-                        st.success("Annullamento registrato.")
-                        st.rerun()
+                if not annullabili_keys:
+                    st.info("Nessun titolo annullabile (esclusi già annullati o già transitati).")
+                else:
+                    with st.form("wiz_ann"):
+                        titolo_key = st.selectbox("Titolo", annullabili_keys)
+                        caus = st.selectbox("CausaleAnnullamento", CAUSALI_CODES, index=0)
+                        carta_ann = st.selectbox("Carta per annullamento", [c["carta_attivazione"] for c in cfg.get("carte", [])])
+                        submitted = st.form_submit_button("Annulla")
+                        if submitted:
+                            engine.cancel_ticket(cfg, day, date_iso, titolo_key, caus, carta_ann)
+                            engine.save_config(paths, cfg)
+                            engine.save_day(paths, date_iso, day)
+                            st.success("Annullamento registrato.")
+                            st.rerun()
 
             with col2:
                 st.subheader("Accessi / Blocchi")
-                with st.form("wiz_access"):
-                    titolo_key = st.selectbox("Titolo", keys, key="acc_k")
-                    d_acc = st.date_input("Data ingresso", value=engine.dt_now().date(), key="acc_date")
-                    t_acc = st.time_input("Ora ingresso", value=engine.dt_now().time().replace(second=0, microsecond=0), key="acc_time")
-                    ts = f"{d_acc.isoformat()}T{t_acc.strftime('%H:%M:%S')}"
-                    mode = st.selectbox("Modalità accesso", ["AUTO","MAN"])
-                    submitted = st.form_submit_button("Registra accesso")
-                    if submitted:
-                        engine.record_access(day, titolo_key, ts, mode)
-                        engine.save_day(paths, date_iso, day)
-                        st.success("Accesso registrato.")
-                        st.rerun()
+                if not transitabili_keys:
+                    st.info("Nessun titolo transitabile (esclusi annullati, transitati o in blacklist).")
+                else:
+                    with st.form("wiz_access"):
+                        titolo_key = st.selectbox("Titolo", transitabili_keys, key="acc_k")
+                        d_acc = st.date_input("Data ingresso", value=engine.dt_now().date(), key="acc_date")
+                        t_acc = st.time_input("Ora ingresso", value=engine.dt_now().time().replace(second=0, microsecond=0), key="acc_time")
+                        ts = f"{d_acc.isoformat()}T{t_acc.strftime('%H:%M:%S')}"
+                        mode = st.selectbox("Modalità accesso", ["AUTO","MAN"])
+                        submitted = st.form_submit_button("Registra accesso")
+                        if submitted:
+                            engine.record_access(day, titolo_key, ts, mode)
+                            engine.save_day(paths, date_iso, day)
+                            st.success("Accesso registrato.")
+                            st.rerun()
 
-                with st.form("wiz_block"):
-                    titolo_key = st.selectbox("Titolo", keys, key="blk_k")
-                    kind = st.selectbox("Tipo blocco", ["BL","DASPO","RUBATO"])
-                    submitted = st.form_submit_button("Applica blocco")
-                    if submitted:
-                        engine.set_block_status(day, titolo_key, kind)
-                        engine.save_day(paths, date_iso, day)
-                        st.success("Blocco applicato.")
-                        st.rerun()
+                if not bloccabili_keys:
+                    st.info("Nessun titolo bloccabile (esclusi annullati o transitati).")
+                else:
+                    with st.form("wiz_block"):
+                        titolo_key = st.selectbox("Titolo", bloccabili_keys, key="blk_k")
+                        kind = st.selectbox("Tipo blocco", ["BL","DASPO","RUBATO"])
+                        submitted = st.form_submit_button("Applica blocco")
+                        if submitted:
+                            engine.set_block_status(day, titolo_key, kind)
+                            engine.save_day(paths, date_iso, day)
+                            st.success("Blocco applicato.")
+                            st.rerun()
 
     # Raw data
     with tabs[4]:
         st.subheader("Titoli (LTA source)")
-        tit = st.data_editor(day.get("titoli", []), num_rows="dynamic", use_container_width=True)
+        tit = st.data_editor(
+            day.get("titoli", []),
+            num_rows="dynamic",
+            use_container_width=True,
+            key="day_titles_table_editor",
+        )
         st.subheader("Transazioni (LOG source)")
-        tx = st.data_editor(day.get("transazioni", []), num_rows="dynamic", use_container_width=True)
+        tx = st.data_editor(
+            day.get("transazioni", []),
+            num_rows="dynamic",
+            use_container_width=True,
+            key="day_transactions_table_editor",
+        )
         if st.button("Salva dati tabellari"):
             day["titoli"] = tit
             day["transazioni"] = tx
             engine.save_day(paths, date_iso, day)
             st.success("Salvato.")
             st.rerun()
+
+# ----------------------------
+# Assistente AI (voce)
+# ----------------------------
+elif page == "Assistente AI (voce)":
+    st.markdown("### Assistente AI (voce + testo)")
+    st.caption("Detta o scrivi un comando operativo: l'agente propone azioni e le applica dopo conferma.")
+
+    date_iso = st.date_input("Data operativa", value=engine.dt_now().date(), key="ai_date").isoformat()
+    day = engine.ensure_day(paths, date_iso)
+
+    ai_cfg = cfg.setdefault("ai", {})
+
+    st.markdown("#### Configurazione Provider")
+    c0, c1, c2 = st.columns(3)
+    with c0:
+        if st.button("Preset LocalAI", key="ai_preset_localai"):
+            ai_cfg.update({
+                "provider": "localai",
+                "base_url": "http://localai:8080/v1",
+                "api_key": "localai",
+                "command_model": "llama-3.2-3b-instruct:q4_k_m",
+                "transcribe_model": "whisper-1",
+            })
+            save_cfg()
+            st.rerun()
+    with c1:
+        if st.button("Preset vLLM", key="ai_preset_vllm"):
+            ai_cfg.update({
+                "provider": "vllm",
+                "base_url": "http://vllm:8000/v1",
+                "api_key": "vllm",
+                "command_model": "Qwen/Qwen2.5-7B-Instruct",
+                "transcribe_model": "whisper-1",
+            })
+            save_cfg()
+            st.rerun()
+    with c2:
+        if st.button("Preset OpenAI", key="ai_preset_openai"):
+            ai_cfg.update({
+                "provider": "openai",
+                "base_url": "",
+                "api_key": "",
+                "command_model": "gpt-4.1-mini",
+                "transcribe_model": "gpt-4o-mini-transcribe",
+            })
+            save_cfg()
+            st.rerun()
+
+    with st.form("ai_config_form"):
+        ai_cfg["provider"] = st.selectbox(
+            "Provider",
+            ["localai", "vllm", "openai"],
+            index=["localai", "vllm", "openai"].index(str(ai_cfg.get("provider", "localai")).lower())
+            if str(ai_cfg.get("provider", "localai")).lower() in ("localai", "vllm", "openai")
+            else 0,
+        )
+        ai_cfg["base_url"] = st.text_input("Base URL API", value=str(ai_cfg.get("base_url", "")))
+        ai_cfg["api_key"] = st.text_input("API Key", value=str(ai_cfg.get("api_key", "")), type="password")
+        ai_cfg["command_model"] = st.text_input("Modello comandi", value=str(ai_cfg.get("command_model", "")))
+        ai_cfg["transcribe_model"] = st.text_input("Modello trascrizione", value=str(ai_cfg.get("transcribe_model", "")))
+        if st.form_submit_button("Salva configurazione AI"):
+            save_cfg()
+            st.success("Configurazione AI salvata.")
+            st.rerun()
+
+    resolved = ai_agent.resolve_ai_config(ai_cfg)
+    st.code(
+        f"provider={resolved['provider']}  base_url={resolved['base_url'] or '(default OpenAI)'}  "
+        f"command_model={resolved['command_model']}  transcribe_model={resolved['transcribe_model']}",
+        language="text",
+    )
+
+    ready, msg = ai_agent.check_agent_ready(ai_cfg)
+    if ready:
+        st.success(msg)
+    else:
+        st.warning(msg)
+
+    col_test, _ = st.columns([1, 3])
+    with col_test:
+        if st.button("Test connessione AI", key="ai_test_conn", disabled=not ready):
+            try:
+                with st.spinner("Verifica endpoint e modelli..."):
+                    models = ai_agent.list_models(ai_cfg)
+                if models:
+                    st.success(f"Connessione OK. Modelli: {', '.join(models[:8])}")
+                else:
+                    st.warning("Connessione OK ma nessun modello elencato da /models.")
+            except Exception as e:
+                st.error(str(e))
+
+    if resolved["provider"] == "localai":
+        st.markdown("#### Tooling LocalAI (gallery)")
+        st.caption("Primo download modelli: può richiedere diversi minuti.")
+        col_i1, col_i2 = st.columns(2)
+        with col_i1:
+            if st.button("Installa modello comandi", key="ai_install_cmd_model"):
+                try:
+                    out = ai_agent.localai_install_model(ai_cfg, resolved["command_model"])
+                    st.success(f"Install richiesta: {out}")
+                except Exception as e:
+                    st.error(str(e))
+        with col_i2:
+            if st.button("Installa modello trascrizione", key="ai_install_stt_model"):
+                try:
+                    out = ai_agent.localai_install_model(ai_cfg, resolved["transcribe_model"])
+                    st.success(f"Install richiesta: {out}")
+                except Exception as e:
+                    st.error(str(e))
+
+        search_q = st.text_input("Cerca modello in gallery", value="llama-3.2-3b")
+        if st.button("Cerca in gallery", key="ai_search_gallery_btn"):
+            try:
+                with st.spinner("Ricerca in corso..."):
+                    hits = ai_agent.localai_search_gallery_models(ai_cfg, search_q, limit=30)
+                st.session_state["ai_gallery_hits"] = hits
+            except Exception as e:
+                st.error(str(e))
+        hits = st.session_state.get("ai_gallery_hits", [])
+        if hits:
+            st.write(hits)
+
+        job_ref = st.text_input("Job URL/ID (opzionale) per stato install", value="")
+        if st.button("Controlla job install", key="ai_check_job_btn"):
+            if not job_ref.strip():
+                st.warning("Inserisci job URL o ID.")
+            else:
+                try:
+                    st.json(ai_agent.localai_get_job(ai_cfg, job_ref.strip()))
+                except Exception as e:
+                    st.error(str(e))
+
+    st.markdown("Esempi:")
+    st.code(
+        "Crea evento Teatro Roma domani alle 21:00 codice locale RM01 settore PL capienza 200 iva 10 e genere 1",
+        language="text",
+    )
+    st.code(
+        "Emetti 3 biglietti evento RM01_20260320_2100_Teatro_Roma settore PL prezzo intero carta CARD01",
+        language="text",
+    )
+    st.code(
+        "Vendi 2 abbonamenti ABB01 turno libero carta CARD01 adesso",
+        language="text",
+    )
+
+    audio = st.audio_input("Comando vocale", key="ai_audio")
+    text_cmd = st.text_area("Comando testuale (opzionale)", key="ai_text_cmd", height=120)
+
+    if st.button("Analizza comando", key="ai_analyze_btn", disabled=not ready):
+        prev_cmd_model = str(ai_cfg.get("command_model", ""))
+        prev_stt_model = str(ai_cfg.get("transcribe_model", ""))
+        try:
+            spoken = ""
+            if audio is not None:
+                audio_bytes = audio.getvalue()
+                if audio_bytes:
+                    with st.spinner("Trascrizione audio in corso..."):
+                        spoken = ai_agent.transcribe_audio(audio_bytes, getattr(audio, "name", "comando.wav"), ai_cfg=ai_cfg)
+
+            command_text = text_cmd.strip() or spoken.strip()
+            if not command_text:
+                st.error("Nessun comando rilevato. Inserisci testo o registra audio.")
+            else:
+                with st.spinner("Interpretazione comando in corso..."):
+                    context = ai_agent.build_context(cfg, day, date_iso, page_name=page)
+                    parsed = ai_agent.parse_actions(command_text, context, ai_cfg=ai_cfg)
+                st.session_state["ai_last_command_text"] = command_text
+                st.session_state["ai_last_parse"] = parsed
+        except Exception as e:
+            st.error(str(e))
+        finally:
+            changed = (
+                str(ai_cfg.get("command_model", "")) != prev_cmd_model
+                or str(ai_cfg.get("transcribe_model", "")) != prev_stt_model
+            )
+            if changed:
+                save_cfg()
+                st.info(
+                    f"Config AI aggiornata automaticamente: "
+                    f"command_model={ai_cfg.get('command_model','')} "
+                    f"transcribe_model={ai_cfg.get('transcribe_model','')}"
+                )
+
+    last_text = st.session_state.get("ai_last_command_text", "")
+    parsed = st.session_state.get("ai_last_parse")
+
+    if last_text:
+        st.text_area("Comando interpretato", value=last_text, height=100, disabled=True, key="ai_last_text_area")
+    if parsed:
+        st.subheader("Piano azioni")
+        st.json(parsed)
+        missing = parsed.get("missing_fields", []) or []
+        actions = parsed.get("actions", []) or []
+        if missing:
+            st.warning("Campi mancanti/ambigui: " + ", ".join([str(x) for x in missing]))
+        if actions and st.button("Applica azioni", type="primary", key="ai_apply_btn"):
+            try:
+                messages, changed_cfg, changed_day = ai_agent.apply_actions(cfg, day, date_iso, actions)
+                if changed_cfg:
+                    engine.save_config(paths, cfg)
+                if changed_day:
+                    engine.save_day(paths, date_iso, day)
+                for m in messages:
+                    st.success(m)
+                st.rerun()
+            except Exception as e:
+                st.error(str(e))
 
 # ----------------------------
 # Export

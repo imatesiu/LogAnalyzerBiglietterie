@@ -6,8 +6,40 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8501:8501"
+    environment:
+      AI_PROVIDER: localai
+      OPENAI_BASE_URL: http://localai:8080/v1
+      OPENAI_API_KEY: localai
+      OPENAI_COMMAND_MODEL: llama-3.2-3b-instruct:q4_k_m
+      OPENAI_TRANSCRIBE_MODEL: whisper-1
     volumes:
       - ./data:/app/data
       - ./templates:/app/templates
       - ./reference:/app/reference
+    restart: unless-stopped
+
+  localai:
+    container_name: localai
+    image: localai/localai:latest-aio-cpu
+    volumes:
+      - ./models/localai:/models
+    restart: unless-stopped
+
+  vllm:
+    container_name: vllm-openai
+    image: vllm/vllm-openai:latest
+    profiles: ["vllm"]
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models/hf:/root/.cache/huggingface
+    command: ["--model", "Qwen/Qwen2.5-7B-Instruct"]
+    ipc: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     restart: unless-stopped
