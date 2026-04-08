@@ -168,6 +168,30 @@ A_FIELDS = {
 
 ORDERED_CATS = ["LTA", "NoAccesso", "Automatizzati", "Manuali", "Annullati", "Daspati", "Rubati", "Blacklist"]
 
+STATUS_LABELS = {
+    "VT": "Valido (tradizionale)",
+    "VD": "Valido (digitale)",
+    "ZT": "Accesso automatizzato (tradizionale)",
+    "ZD": "Accesso automatizzato (digitale)",
+    "MT": "Accesso manuale (tradizionale)",
+    "MD": "Accesso manuale (digitale)",
+    "AT": "Annullato (tradizionale)",
+    "AD": "Annullato (digitale)",
+    "DT": "Daspato (tradizionale)",
+    "DD": "Daspato (digitale)",
+    "FT": "Denuncia furto (tradizionale)",
+    "FD": "Denuncia furto (digitale)",
+    "BT": "Black list (tradizionale)",
+    "BD": "Black list (digitale)",
+}
+
+STATUS_LEGEND_ORDER = [
+    "VT", "VD", "ZT", "ZD",
+    "MT", "MD", "AT", "AD",
+    "DT", "DD", "FT", "FD",
+    "BT", "BD",
+]
+
 
 def read_counts(tt: ET.Element, fields: Dict[str, Tuple[str, Optional[str]]]) -> Dict[str, Dict[str, int]]:
     """
@@ -917,10 +941,28 @@ def build_html(data: Dict, file_title: str) -> str:
     </div>
     """
 
+    legend_rows = "".join(
+        f"<tr><td><code>{esc(code)}</code></td><td>{esc(STATUS_LABELS[code])}</td></tr>"
+        for code in STATUS_LEGEND_ORDER
+    )
+    legend_block = f"""
+    <div class="card" style="margin-top:12px;">
+      <h2>Legenda Stati</h2>
+      <div class="muted">T = tradizionale, D = digitale. Nel riepilogo RCA le colonne aggregate corrispondono a: NoAccesso = VT/VD, Automatizzati = ZT/ZD, Manuali = MT/MD, Annullati = AT/AD, Daspati = DT/DD, Rubati = FT/FD, Blacklist = BT/BD.</div>
+      <div class="tablewrap small" style="margin-top:10px;">
+        <table>
+          <thead><tr><th>Codice</th><th>Significato</th></tr></thead>
+          <tbody>{legend_rows}</tbody>
+        </table>
+      </div>
+    </div>
+    """
+
     body = f"""
     <div class="wrap">
       {header_cards}
       {event_table}
+      {legend_block}
     </div>
     """
 

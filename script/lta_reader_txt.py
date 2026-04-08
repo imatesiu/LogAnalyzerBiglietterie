@@ -20,6 +20,30 @@ from typing import Dict, List, Optional, Tuple
 # ============================================================
 RECORD_LEN = 518
 
+STATUS_LABELS = {
+    "VT": "Valido (tradizionale)",
+    "VD": "Valido (digitale)",
+    "ZT": "Accesso automatizzato (tradizionale)",
+    "ZD": "Accesso automatizzato (digitale)",
+    "MT": "Accesso manuale (tradizionale)",
+    "MD": "Accesso manuale (digitale)",
+    "AT": "Annullato (tradizionale)",
+    "AD": "Annullato (digitale)",
+    "DT": "Daspato (tradizionale)",
+    "DD": "Daspato (digitale)",
+    "FT": "Denuncia furto (tradizionale)",
+    "FD": "Denuncia furto (digitale)",
+    "BT": "Black list (tradizionale)",
+    "BD": "Black list (digitale)",
+}
+
+STATUS_LEGEND_ORDER = [
+    "VT", "VD", "ZT", "ZD",
+    "MT", "MD", "AT", "AD",
+    "DT", "DD", "FT", "FD",
+    "BT", "BD",
+]
+
 # (name, pos(1-index), length, type A/N)
 FIELDS: List[Tuple[str, int, int, str]] = [
     # Dati identificativi (titolare + sistema CA + evento)
@@ -520,6 +544,21 @@ def build_html(records: List[Dict[str, str]], title: str) -> str:
     if invalid:
         invalid_note = f"<div class='status bad'>Record NON conformi (len != 518): {len(invalid)} (visualizzati solo nel dettaglio raw)</div>"
 
+    legend_rows = "".join(
+        f"<tr><td><code>{html.escape(code)}</code></td><td>{html.escape(STATUS_LABELS[code])}</td></tr>"
+        for code in STATUS_LEGEND_ORDER
+    )
+    legend_block = f"""
+  <h2>Legenda stati</h2>
+  <div class="status">T = tradizionale, D = digitale.</div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Codice</th><th>Significato</th></tr></thead>
+      <tbody>{legend_rows}</tbody>
+    </table>
+  </div>
+"""
+
     html_doc = f"""<!doctype html>
 <html>
 <head>
@@ -554,6 +593,7 @@ def build_html(records: List[Dict[str, str]], title: str) -> str:
 
   {"<h2>Record non validi (raw)</h2>" if invalid else ""}
   {"".join(f"<pre class='raw'>{html.escape(x.get('Raw',''))}</pre>" for x in invalid) if invalid else ""}
+  {legend_block}
 
 <script>{js}</script>
 </body>

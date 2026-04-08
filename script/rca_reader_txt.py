@@ -159,6 +159,25 @@ STATUS_ORDER = [
     "VT", "VD", "ZT", "ZD", "MT", "MD", "AT", "AD", "DT", "DD", "FT", "FD", "BT", "BD"
 ]
 
+STATUS_LABELS = {
+    "VT": "Valido (tradizionale)",
+    "VD": "Valido (digitale)",
+    "ZT": "Accesso automatizzato (tradizionale)",
+    "ZD": "Accesso automatizzato (digitale)",
+    "MT": "Accesso manuale (tradizionale)",
+    "MD": "Accesso manuale (digitale)",
+    "AT": "Annullato (tradizionale)",
+    "AD": "Annullato (digitale)",
+    "DT": "Daspato (tradizionale)",
+    "DD": "Daspato (digitale)",
+    "FT": "Denuncia furto (tradizionale)",
+    "FD": "Denuncia furto (digitale)",
+    "BT": "Black list (tradizionale)",
+    "BD": "Black list (digitale)",
+}
+
+STATUS_LEGEND_ORDER = STATUS_ORDER[1:]
+
 def parse_record_01(rec: str) -> Dict[str, str]:
     d: Dict[str, str] = {"Raw": rec}
     for name, pos, ln in FIELDS_01:
@@ -633,6 +652,23 @@ def build_html(filename: str,
     }
     """
 
+    legend_rows = "".join(
+        f"<tr><td><code>{esc(code)}</code></td><td>{esc(STATUS_LABELS[code])}</td></tr>"
+        for code in STATUS_LEGEND_ORDER
+    )
+    legend_block = f"""
+  <div class="card">
+    <h3>Legenda stati</h3>
+    <div class="muted">T = tradizionale, D = digitale. TotLTA = somma di VT, VD, ZT, ZD, MT, MD, AT, AD, DT, DD, FT, FD, BT, BD.</div>
+    <div class="tablewrap" style="margin-top:10px;">
+      <table class="kv">
+        <thead><tr><th>Codice</th><th>Significato</th></tr></thead>
+        <tbody>{legend_rows}</tbody>
+      </table>
+    </div>
+  </div>
+"""
+
     return f"""<!doctype html>
 <html>
 <head>
@@ -668,6 +704,7 @@ def build_html(filename: str,
   {ev_table}
   {titoli_block}
   {abb_block}
+  {legend_block}
 
 <script>{js}</script>
 </body>

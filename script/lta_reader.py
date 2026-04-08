@@ -176,6 +176,13 @@ STATUS_LABELS = {
     "BD": "Black list (dig.)",
 }
 
+STATUS_LEGEND_ORDER = [
+    "VT", "VD", "ZT", "ZD",
+    "MT", "MD", "AT", "AD",
+    "DT", "DD", "FT", "FD",
+    "BT", "BD",
+]
+
 GROUPS = [
     ("Validi", {"VT", "VD"}, "ok"),
     ("Automatizzati", {"ZT", "ZD"}, "info"),
@@ -1037,10 +1044,28 @@ def build_html(data: Dict, file_title: str, cents_mode: bool) -> str:
     </div>
     """
 
+    legend_rows = "".join(
+        f"<tr><td><code>{esc(code)}</code></td><td>{esc(STATUS_LABELS[code])}</td></tr>"
+        for code in STATUS_LEGEND_ORDER
+    )
+    legend_block = f"""
+    <div class="card" style="margin-top:12px;">
+      <h2>Legenda Stati</h2>
+      <div class="muted">T = tradizionale, D = digitale.</div>
+      <div class="tablewrap small" style="margin-top:10px;">
+        <table class="mini main">
+          <thead><tr><th>Codice</th><th>Significato</th></tr></thead>
+          <tbody>{legend_rows}</tbody>
+        </table>
+      </div>
+    </div>
+    """
+
     body = f"""
     <div class="wrap">
       {header_cards}
       {event_table}
+      {legend_block}
     </div>
     """
 
