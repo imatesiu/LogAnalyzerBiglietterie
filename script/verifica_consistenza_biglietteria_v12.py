@@ -48,7 +48,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 import xml.etree.ElementTree as ET
 
 
-SCRIPT_VERSION = "2026-04-08.6"
+SCRIPT_VERSION = "2026-04-08.7"
 
 
 # -------------------------
@@ -1083,7 +1083,7 @@ CHECK_DEFS: Dict[str, str] = {
     "LTA_vs_RPM": "LTA↔RPM: coerenza quantità titoli (accesso/annullati)",
     "FIS_LOG_IVA_ISI": "Fiscale (LOG): ricostruzione IVA/ISI & ImponibileIntrattenimenti (calcolo-ISI) — solo TipoTassazione=I",
     "FIS_RPM_OMAGGI": "Fiscale (RPM): eccedenza omaggi (IVAEccedenteOmaggi) su prezzo massimo (corrispettivo, no prevendita)",
-    "FIS_RPM_IMP_INTR": "Fiscale (RPM): ImponibileIntrattenimenti evento = LOG netto + imponibile figurativo eccedenza omaggi",
+    "RPM_incidenza_spettacolo": "RPM: Incidenza Intrattenimento > 0 su evento con TipoTassazione='S' (spettacolo)",
     "FIS_LOGONLY_RIEPILOGO": "Fiscale (LOG-only): riepilogo fiscale parziale (no ISI/eccedenza omaggi senza RPM)",
 }
 
@@ -1168,6 +1168,24 @@ def run_checks(
         inc = ev.get("Incidenza")
         if inc is not None:
             inc_map[k] = int(inc)
+
+    # Coerenza RPM: evento di tipo spettacolo non dovrebbe dichiarare incidenza intrattenimento > 0
+    for ek, ev in rpm_event_info.items():
+        tipo_tass = (ev.get("TipoTassazione") or "").strip().upper()
+        inc = ev.get("Incidenza")
+        if tipo_tass == "S" and inc is not None and int(inc) > 0:
+            issues.append(Issue(
+                severity="WARN",
+                check="RPM_incidenza_spettacolo",
+                message="RPM: Incidenza Intrattenimento > 0 su evento con TipoTassazione='S'",
+                context={
+                    "evento": f"{ek[2]} {ek[3]} {ek[1]}",
+                    "file": ev.get("_file"),
+                    "TipoTassazione": tipo_tass,
+                    "Incidenza": int(inc),
+                    "ImponibileIntrattenimenti": ev.get("ImponibileIntrattenimenti"),
+                },
+            ))
 
     # 1) LOG duplicates (emissioni)
     # -------------------------
@@ -2164,12 +2182,7 @@ def run_checks(
         else:
             rpm_omaggi_net[key] -= q
 
-    # Accumulatori per check evento (ImponibileIntrattenimenti)
-    additions_by_event: Dict[Tuple[str, str, str, str], int] = defaultdict(int)
     event_inferred: Dict[Tuple[str, str, str, str], bool] = defaultdict(bool)
-    rpm_imp_by_event: Dict[Tuple[str, str, str, str], Optional[int]] = {}
-    for ek, ev_rr in rpm_event_info.items():
-        rpm_imp_by_event[ek] = ev_rr.get("ImponibileIntrattenimenti")
 
     # Iteriamo SOLO sugli ordini presenti nei LOG (scope)
     all_order_keys = set(log_groups.keys())
@@ -2185,7 +2198,6 @@ def run_checks(
         capienza = order_rr.get("Capienza") if order_rr else None
         rpm_iva_ecc = int(order_rr.get("IVAEccedenteOmaggi") or 0) if order_rr else None
         inc = event_rr.get("Incidenza") if event_rr else None
-        rpm_imp_intr_event = rpm_imp_by_event.get(event_key)
 
         om_log = count_omaggi_net(rows) if rows else 0
         om_rpm = rpm_omaggi_net.get(ok) if ok in rpm_omaggi_net else None
@@ -2220,30 +2232,6 @@ def run_checks(
                 price_source = "RPM_BigliettiAbbonamento"
                 inferred = True
 
-        # se ancora manca e abbiamo RPM imponibile evento, inferisci un prezzo massimo (solo per spiegazione/verifica interna)
-        if max_price <= 0 and ecc > 0 and rpm_imp_intr_event is not None:
-            diff = int(rpm_imp_intr_event) - int(net_imp_event_log.get(event_key, 0))
-            if diff > 0:
-                base_unit_est = diff // ecc
-                if max_gen is None:
-                    c = Counter([int(r.get("TipoGenere") or 0) for r in rows if int(r.get("TipoGenere") or 0) != 0])
-                    if c:
-                        max_gen = c.most_common(1)[0][0]
-                iva_rate, isi_rate = resolved_rates.get(max_gen or 0, (0.0, 0.0))
-                denom_intr = (1.0 + iva_rate + isi_rate)
-                quota_intr_est = int(round(base_unit_est * denom_intr))
-                gross_est = int(round(quota_intr_est * 100 / int(inc))) if int(inc) != 0 else quota_intr_est
-                cand_price = None
-                for g in range(max(0, gross_est - 5000), gross_est + 5001):
-                    calc = calc_intr_sp_from_gross(g, int(inc), iva_rate, isi_rate)
-                    if calc["imponibile_intr"] == base_unit_est:
-                        cand_price = g
-                        break
-                if cand_price is not None and cand_price > 0:
-                    max_price = cand_price
-                    price_source = "INFERITO_DA_RPM"
-                    inferred = True
-
         if max_gen is None:
             # Senza tipo genere non posso collegare aliquote
             continue
@@ -2270,13 +2258,10 @@ def run_checks(
         # legacy flag (comodo per report sintetico): soglia applicata su almeno una delle due parti
         soglia_flag = bool(soglia_intr or soglia_sp)
 
-        # contribuzione dell'ordine all'imponibile evento
-        addition_imp = ecc * imponibile_intr_unit
-        additions_by_event[event_key] += addition_imp
         if inferred:
             event_inferred[event_key] = True
 
-        # details row (l'Expected_ImponibileIntr_evento verrà compilato dopo, a livello evento)
+        # details row
         details["fiscale_omaggi"].append({
             "CF": cf,
             "CodiceLocale": loc,
@@ -2308,10 +2293,6 @@ def run_checks(
             "IVAUnit_ecc": iva_unit_ecc,
             "Expected_IVAEccedenteOmaggi": expected_iva_ecc,
             "RPM_IVAEccedenteOmaggi": rpm_iva_ecc,
-            "ImponibileIntr_addition": addition_imp,
-            "Net_ImponibileIntr_LOG_evento": net_imp_event_log.get(event_key, 0),
-            "Expected_ImponibileIntr_evento": None,  # filled later
-            "RPM_ImponibileIntr_evento": rpm_imp_intr_event,
             "Inferred_price": inferred,
         })
 
@@ -2371,36 +2352,6 @@ def run_checks(
                     "fonte": price_source,
                 },
             ))
-
-    # Check evento: ImponibileIntrattenimenti (una volta per evento)
-    expected_imp_event: Dict[Tuple[str, str, str, str], int] = {}
-    for ek, net_log in net_imp_event_log.items():
-        expected = int(net_log) + int(additions_by_event.get(ek, 0))
-        expected_imp_event[ek] = expected
-        rpm_val = rpm_imp_by_event.get(ek)
-        if rpm_val is None:
-            continue
-        if int(rpm_val) != int(expected):
-            sev = "WARN" if event_inferred.get(ek, False) else "ERROR"
-            issues.append(Issue(
-                severity=sev,
-                check="FIS_RPM_IMP_INTR",
-                message="RPM: ImponibileIntrattenimenti evento non coerente con LOG netto + imponibile eccedenza omaggi (somma ordini)",
-                context={
-                    "evento": f"{ek[2]} {ek[3]} {ek[1]}",
-                    "net_log_event": int(net_log),
-                    "add_omaggi_event": int(additions_by_event.get(ek, 0)),
-                    "expected": int(expected),
-                    "rpm": int(rpm_val),
-                    "note": "prezzo inferito in almeno un ordine" if event_inferred.get(ek, False) else "",
-                },
-            ))
-
-    # Riempiamo l'expected evento dentro le righe di dettaglio (per comodità di report)
-    for row in details.get("fiscale_omaggi", []):
-        ek = (row.get("CF") or "", row.get("CodiceLocale") or "", row.get("DataEvento") or "", row.get("OraEvento") or "")
-        if ek in expected_imp_event:
-            row["Expected_ImponibileIntr_evento"] = expected_imp_event[ek]
 
     # -------------------------
     # 9) Riepilogo fiscale per evento e TipoTitolo (RPM, al netto degli annulli) + riga "*" eccedenza omaggi
@@ -3106,8 +3057,6 @@ def build_html_report(summary: Dict[str, Any], issues: List[Issue], metrics: Dic
                 f"<td>{'Sì' if r.get('Soglia_applicata_sp') else 'No'}</td>"
                 f"<td class='num'>{cents_to_eur_str(int(r.get('Expected_IVAEccedenteOmaggi') or 0))}</td>"
                 f"<td class='num'>{('n/d' if r.get('RPM_IVAEccedenteOmaggi') is None else cents_to_eur_str(int(r.get('RPM_IVAEccedenteOmaggi') or 0)))}</td>"
-                f"<td class='num'>{'n/d' if r.get('Expected_ImponibileIntr_evento') is None else cents_to_eur_str(int(r.get('Expected_ImponibileIntr_evento') or 0))}</td>"
-                f"<td class='num'>{'n/d' if r.get('RPM_ImponibileIntr_evento') is None else cents_to_eur_str(int(r.get('RPM_ImponibileIntr_evento') or 0))}</td>"
                 "</tr>"
             )
 
@@ -3143,7 +3092,6 @@ def build_html_report(summary: Dict[str, Any], issues: List[Issue], metrics: Dic
                 <th>Soglia sp</th>
                 <th class='num'>IVA ecc attesa</th>
                 <th class='num'>IVA ecc RPM</th>
-                <th class='num'>Imp. evento atteso</th><th class='num'>Imp. evento RPM</th>
               </tr>
             </thead>
             <tbody>
