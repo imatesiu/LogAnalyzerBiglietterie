@@ -555,6 +555,23 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
         """)
 
     # --- Header cards
+    if len(orgs) != 1:
+        organizers_html = (
+            "<ul>" + "".join(
+                f"<li><b>{html.escape(text_path(org,'Denominazione'))}</b> - {html.escape(text_path(org,'CodiceFiscale'))} "
+                f"(tipo {html.escape(attr_path(org,'TipoOrganizzatore','valore') or 'n/d')})</li>"
+                for org in orgs
+            ) + "</ul>"
+        )
+    else:
+        organizers_html = f"""
+        <ul>
+          <li><b>Denominazione</b>: {html.escape(text_path(primary_org,'Denominazione'))}</li>
+          <li><b>Codice Fiscale</b>: {html.escape(text_path(primary_org,'CodiceFiscale'))}</li>
+          <li><b>Tipo organizzatore</b>: {html.escape(attr_path(primary_org,'TipoOrganizzatore','valore'))}</li>
+        </ul>
+        """
+
     top = f"""
     <h1>RPM Reader</h1>
     <div class="muted">{html.escape(file_title)}</div>
@@ -581,19 +598,7 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
 
       <div class="card">
         <h2>Organizzatori ({len(orgs)})</h2>
-        {(
-            "<ul>" + "".join(
-                f"<li><b>{html.escape(text_path(org,'Denominazione'))}</b> - {html.escape(text_path(org,'CodiceFiscale'))} "
-                f"(tipo {html.escape(attr_path(org,'TipoOrganizzatore','valore') or 'n/d')})</li>"
-                for org in orgs
-            ) + "</ul>"
-        ) if len(orgs) != 1 else f"""
-        <ul>
-          <li><b>Denominazione</b>: {html.escape(text_path(primary_org,'Denominazione'))}</li>
-          <li><b>Codice Fiscale</b>: {html.escape(text_path(primary_org,'CodiceFiscale'))}</li>
-          <li><b>Tipo organizzatore</b>: {html.escape(attr_path(primary_org,'TipoOrganizzatore','valore'))}</li>
-        </ul>
-        """}
+        {organizers_html}
       </div>
     </div>
     """
