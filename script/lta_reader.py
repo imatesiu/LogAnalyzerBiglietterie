@@ -564,6 +564,7 @@ def build_html(data: Dict, file_title: str, cents_mode: bool) -> str:
             row_blob = " ".join([
                 str(idx), str(j), stato, stato_label,
                 ta.get("TipoTitolo",""), ta.get("SistemaEmissione",""),
+                ta.get("ProgressivoFiscale",""), ta.get("SigilloFiscale",""),
                 ta.get("CodiceOrdine",""), ta.get("Posto",""),
                 ta.get("CodSupporto",""), ta.get("IdSupporto",""),
                 partecipante,
