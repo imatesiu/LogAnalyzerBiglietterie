@@ -431,11 +431,17 @@ def parse_log(path: str) -> List[Dict[str, Any]]:
 
     for tr in root.findall(".//Transazione"):
         title_node = tr.find("TitoloAccesso")
-        abbo_node = tr.find("BigliettoAbbonamento")
-        node = title_node if title_node is not None else abbo_node
+        abbo_ticket_node = tr.find("BigliettoAbbonamento")
+        abbo_node = tr.find("Abbonamento")
+        node = title_node if title_node is not None else (abbo_ticket_node if abbo_ticket_node is not None else abbo_node)
         if node is None:
             continue
-        kind = "TitoloAccesso" if title_node is not None else "BigliettoAbbonamento"
+        if title_node is not None:
+            kind = "TitoloAccesso"
+        elif abbo_ticket_node is not None:
+            kind = "BigliettoAbbonamento"
+        else:
+            kind = "Abbonamento"
 
         # Nei LOG osservati (esempio): i campi chiave sono attributi della Transazione.
         # Manteniamo fallback su eventuali elementi/attributi nel nodo titolo per robustezza.
@@ -487,6 +493,10 @@ def parse_log(path: str) -> List[Dict[str, Any]]:
             "ImportoFigurativo": to_int(_find_text(node, "ImportoFigurativo"), 0),
             "IVAFigurativa": to_int(_find_text(node, "IVAFigurativa"), 0),
             "CodiceAbbonamento": _find_text(node, "CodiceAbbonamento"),
+            "Rateo": to_int(_find_text(node, "Rateo"), 0),
+            "RateoIVA": to_int(_find_text(node, "RateoIVA"), 0),
+            "RateoIntrattenimenti": to_int(_find_text(node, "RateoIntrattenimenti"), 0),
+            "QuantitaEventiAbilitati": to_int(_find_text(node, "QuantitaEventiAbilitati"), 0),
         }
         out.append(rec)
 
@@ -1261,7 +1271,7 @@ def run_checks(
 
     # Indice LOG per chiave completa (utile per reverse-check annullamenti)
     log_by_key: Dict[TicketKey, Dict[str, Any]] = {}
-    for rr in log_ticket_recs:
+    for rr in log_recs:
         log_by_key.setdefault(rr["key"], rr)
 
     # 3.a) Emissioni: la chiave completa del titolo deve essere presente in LTA
@@ -2167,6 +2177,16 @@ def run_checks(
                     max_gen = int(r.get("TipoGenere") or 0) or None
                     source = "LOG_BigliettoAbbonamento"
                 continue
+            if kind == "Abbonamento":
+                rateo = int(r.get("Rateo") or 0)
+                q_evt = int(r.get("QuantitaEventiAbilitati") or 0)
+                corr = int(r.get("CorrispettivoLordo") or 0)
+                unit = rateo if rateo > 0 else (round_half_up_int(Decimal(corr) / Decimal(q_evt)) if corr > 0 and q_evt > 0 else 0)
+                if unit > max_price:
+                    max_price = unit
+                    max_gen = int(r.get("TipoGenere") or 0) or None
+                    source = "LOG_Abbonamento"
+                continue
 
             corr = int(r.get("CorrispettivoLordo") or 0)
             if corr > 0 and not tipo.startswith("O"):
@@ -2418,7 +2438,7 @@ def run_checks(
         event_code_map[ek] = best_code
 
     log_event_codes: Dict[Tuple[str, str, str, str], Counter[int]] = defaultdict(Counter)
-    for r in log_recs:
+    for r in log_ticket_recs:
         ek = (
             (r.get("CFOrganizzatore") or "").strip(),
             (r.get("CodiceLocale") or "").strip(),
