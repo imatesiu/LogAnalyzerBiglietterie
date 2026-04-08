@@ -293,6 +293,31 @@ if page == "Sorgenti + Import":
         "xsd_RPM": str(xsd_rpm) if xsd_rpm else None,
     })
 
+    st.subheader("Upload file import (opzionale)")
+    st.caption("Se carichi un file qui, l'import usa quello; altrimenti usa la sorgente automatica da ../dati.")
+    u1, u2, u3, u4 = st.columns(4)
+    with u1:
+        up_log = st.file_uploader("LOG (xml/xsi/txt)", type=["xml", "xsi", "txt"], key="src_up_log")
+    with u2:
+        up_lta = st.file_uploader("LTA (xml/xsi/txt)", type=["xml", "xsi", "txt"], key="src_up_lta")
+    with u3:
+        up_rca = st.file_uploader("RCA (xml/xsi/txt)", type=["xml", "xsi", "txt"], key="src_up_rca")
+    with u4:
+        up_rpm = st.file_uploader("RPM (xml/xsi/txt)", type=["xml", "xsi", "txt"], key="src_up_rpm")
+
+    log_bytes = up_log.getvalue() if up_log is not None else (src_log.read_bytes() if src_log is not None else None)
+    lta_bytes = up_lta.getvalue() if up_lta is not None else (src_lta.read_bytes() if src_lta is not None else None)
+    rca_bytes = up_rca.getvalue() if up_rca is not None else (src_rca.read_bytes() if src_rca is not None else None)
+    rpm_bytes = up_rpm.getvalue() if up_rpm is not None else (src_rpm.read_bytes() if src_rpm is not None else None)
+
+    st.caption(
+        "Origine attiva: "
+        f"LOG={'upload' if up_log else ('auto' if src_log else 'n.d.')}, "
+        f"LTA={'upload' if up_lta else ('auto' if src_lta else 'n.d.')}, "
+        f"RCA={'upload' if up_rca else ('auto' if src_rca else 'n.d.')}, "
+        f"RPM={'upload' if up_rpm else ('auto' if src_rpm else 'n.d.')}"
+    )
+
     st.divider()
     st.subheader("Import")
     colA,colB,colC = st.columns(3)
@@ -304,20 +329,20 @@ if page == "Sorgenti + Import":
         overwrite = st.checkbox("Sovrascrivi giornata", value=True)
     with colC:
         st.caption("Import LOG/LTA (facoltativo)")
-        import_log = st.checkbox("Importa LOG", value=False, disabled=src_log is None)
-        import_lta = st.checkbox("Importa LTA", value=False, disabled=src_lta is None)
+        import_log = st.checkbox("Importa LOG", value=False, disabled=log_bytes is None)
+        import_lta = st.checkbox("Importa LTA", value=False, disabled=lta_bytes is None)
 
     if st.button("ESEGUI IMPORT"):
         cfg2 = engine.ensure_config(paths)
         day = engine.reset_day(paths, target_date) if overwrite else engine.ensure_day(paths, target_date)
 
         # LOG/LTA import
-        if import_log and src_log is not None:
-            cfg2, dlog = engine.import_log(cfg2, src_log.read_bytes(), target_date_iso=target_date)
+        if import_log and log_bytes is not None:
+            cfg2, dlog = engine.import_log(cfg2, log_bytes, target_date_iso=target_date)
             day["titoli"].extend(dlog.get("titoli", []))
             day["transazioni"].extend(dlog.get("transazioni", []))
-        if import_lta and src_lta is not None:
-            cfg2, dlta = engine.import_lta(cfg2, src_lta.read_bytes(), target_date_iso=target_date)
+        if import_lta and lta_bytes is not None:
+            cfg2, dlta = engine.import_lta(cfg2, lta_bytes, target_date_iso=target_date)
             existing = {t.get("key") for t in day.get("titoli", [])}
             for t in dlta.get("titoli", []):
                 if t.get("key") not in existing:
@@ -326,15 +351,15 @@ if page == "Sorgenti + Import":
         # CAPENZE import
         if import_cap:
             if fonte_cap == "RPM":
-                if src_rpm is not None:
-                    capmap = engine.parse_capienza_from_rpm(src_rpm.read_bytes())
+                if rpm_bytes is not None:
+                    capmap = engine.parse_capienza_from_rpm(rpm_bytes)
                     updated = engine.apply_capienza_to_cfg(cfg2, capmap)
                     st.info(f"Capienze aggiornate da RPM: {updated} settori.")
                 else:
                     st.warning("Sorgente RPM non trovata.")
             else:
-                if src_rca is not None:
-                    capmap = engine.parse_capienza_from_rca(src_rca.read_bytes())
+                if rca_bytes is not None:
+                    capmap = engine.parse_capienza_from_rca(rca_bytes)
                     updated = engine.apply_capienza_to_cfg(cfg2, capmap)
                     st.info(f"Capienze aggiornate da RCA: {updated} settori.")
                 else:
