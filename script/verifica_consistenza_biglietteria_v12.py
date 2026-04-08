@@ -48,7 +48,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 import xml.etree.ElementTree as ET
 
 
-SCRIPT_VERSION = "2026-04-08.7"
+SCRIPT_VERSION = "2026-04-08.9"
 
 
 # -------------------------
@@ -430,26 +430,30 @@ def parse_log(path: str) -> List[Dict[str, Any]]:
     out: List[Dict[str, Any]] = []
 
     for tr in root.findall(".//Transazione"):
-        ta = tr.find("TitoloAccesso")
-        if ta is None:
+        title_node = tr.find("TitoloAccesso")
+        abbo_node = tr.find("BigliettoAbbonamento")
+        node = title_node if title_node is not None else abbo_node
+        if node is None:
             continue
+        kind = "TitoloAccesso" if title_node is not None else "BigliettoAbbonamento"
 
         # Nei LOG osservati (esempio): i campi chiave sono attributi della Transazione.
-        # Manteniamo fallback su eventuali elementi/attributi nel TitoloAccesso per robustezza.
-        sistema = (tr.get("SistemaEmissione") or _find_text(ta, "SistemaEmissione") or "").strip()
-        carta = (tr.get("CartaAttivazione") or _find_text(ta, "CartaAttivazione") or "").strip()
+        # Manteniamo fallback su eventuali elementi/attributi nel nodo titolo per robustezza.
+        sistema = (tr.get("SistemaEmissione") or _find_text(node, "SistemaEmissione") or "").strip()
+        carta = (tr.get("CartaAttivazione") or _find_text(node, "CartaAttivazione") or "").strip()
         prog = (
             tr.get("NumeroProgressivo")
             or tr.get("ProgressivoFiscale")
-            or _find_text(ta, "NumeroProgressivo")
-            or _find_text(ta, "ProgressivoFiscale")
+            or _find_text(node, "NumeroProgressivo")
+            or _find_text(node, "ProgressivoFiscale")
             or ""
         ).strip()
-        sig = (tr.get("SigilloFiscale") or _find_text(ta, "SigilloFiscale") or "").strip()
+        sig = (tr.get("SigilloFiscale") or _find_text(node, "SigilloFiscale") or "").strip()
         key = TicketKey(sistema=sistema, carta=carta, progressivo=prog, sigillo=sig)
 
         rec = {
             "_file": os.path.basename(path),
+            "kind": kind,
             "key": key,
 
             "CFOrganizzatore": (tr.get("CFOrganizzatore") or "").strip(),
@@ -461,26 +465,28 @@ def parse_log(path: str) -> List[Dict[str, Any]]:
             "Posto": (tr.get("Posto") or "").strip(),
             "ImponibileIntrattenimenti": to_int(tr.get("ImponibileIntrattenimenti"), 0),
 
-            # Attributi fiscali possono stare su Transazione (frequente) o su TitoloAccesso
-            "TipoTassazione": (tr.get("TipoTassazione") or ta.get("TipoTassazione") or "").strip(),
-            "IVAPreassolta": (tr.get("IVAPreassolta") or ta.get("IVAPreassolta") or "").strip(),
+            # Attributi fiscali possono stare su Transazione o sul nodo titolo
+            "TipoTassazione": (tr.get("TipoTassazione") or node.get("TipoTassazione") or "").strip(),
+            "IVAPreassolta": (tr.get("IVAPreassolta") or node.get("IVAPreassolta") or "").strip(),
 
-            # TitoloAccesso
-            "Annullamento": (ta.get("Annullamento") or "").strip(),
-            "OriginaleAnnullato": (tr.get("OriginaleAnnullato") or ta.get("OriginaleAnnullato") or "").strip(),
-            "CartaOriginaleAnnullato": (tr.get("CartaOriginaleAnnullato") or ta.get("CartaOriginaleAnnullato") or "").strip(),
-            "CausaleAnnullamento": (tr.get("CausaleAnnullamento") or ta.get("CausaleAnnullamento") or "").strip(),
+            "Annullamento": (node.get("Annullamento") or "").strip(),
+            "OriginaleAnnullato": (tr.get("OriginaleAnnullato") or node.get("OriginaleAnnullato") or "").strip(),
+            "CartaOriginaleAnnullato": (tr.get("CartaOriginaleAnnullato") or node.get("CartaOriginaleAnnullato") or "").strip(),
+            "CausaleAnnullamento": (tr.get("CausaleAnnullamento") or node.get("CausaleAnnullamento") or "").strip(),
 
-            "CodiceLocale": _find_text(ta, "CodiceLocale"),
-            "DataEvento": _find_text(ta, "DataEvento"),
-            "OraEvento": _find_text(ta, "OraEvento"),
-            "TipoGenere": to_int(_find_text(ta, "TipoGenere"), 0),
-            "TitoloEvento": _find_text(ta, "Titolo"),
+            "CodiceLocale": _find_text(node, "CodiceLocale"),
+            "DataEvento": _find_text(node, "DataEvento"),
+            "OraEvento": _find_text(node, "OraEvento"),
+            "TipoGenere": to_int(_find_text(node, "TipoGenere"), 0),
+            "TitoloEvento": _find_text(node, "Titolo"),
 
-            "CorrispettivoLordo": to_int(_find_text(ta, "CorrispettivoLordo"), 0),
-            "Prevendita": to_int(_find_text(ta, "Prevendita"), 0),
-            "IVACorrispettivo": to_int(_find_text(ta, "IVACorrispettivo"), 0),
-            "IVAPrevendita": to_int(_find_text(ta, "IVAPrevendita"), 0),
+            "CorrispettivoLordo": to_int(_find_text(node, "CorrispettivoLordo"), 0),
+            "Prevendita": to_int(_find_text(node, "Prevendita"), 0),
+            "IVACorrispettivo": to_int(_find_text(node, "IVACorrispettivo"), 0),
+            "IVAPrevendita": to_int(_find_text(node, "IVAPrevendita"), 0),
+            "ImportoFigurativo": to_int(_find_text(node, "ImportoFigurativo"), 0),
+            "IVAFigurativa": to_int(_find_text(node, "IVAFigurativa"), 0),
+            "CodiceAbbonamento": _find_text(node, "CodiceAbbonamento"),
         }
         out.append(rec)
 
@@ -1121,8 +1127,9 @@ def run_checks(
     # -------------------------
     # Indexes
     # -------------------------
-    log_emis = [r for r in log_recs if r.get("Annullamento") == "N"]
-    log_ann = [r for r in log_recs if r.get("Annullamento") == "S"]
+    log_ticket_recs = [r for r in log_recs if (r.get("kind") or "TitoloAccesso") == "TitoloAccesso"]
+    log_emis = [r for r in log_ticket_recs if r.get("Annullamento") == "N"]
+    log_ann = [r for r in log_ticket_recs if r.get("Annullamento") == "S"]
 
     lta_by_key: Dict[TicketKey, Dict[str, Any]] = {r["key"]: r for r in lta_recs}
 
@@ -1254,7 +1261,7 @@ def run_checks(
 
     # Indice LOG per chiave completa (utile per reverse-check annullamenti)
     log_by_key: Dict[TicketKey, Dict[str, Any]] = {}
-    for rr in log_recs:
+    for rr in log_ticket_recs:
         log_by_key.setdefault(rr["key"], rr)
 
     # 3.a) Emissioni: la chiave completa del titolo deve essere presente in LTA
@@ -1977,7 +1984,7 @@ def run_checks(
 
         # group log by TipoGenere
         by_code: Dict[int, List[Dict[str, Any]]] = defaultdict(list)
-        for r in log_recs:
+        for r in log_ticket_recs:
             tass = (r.get("TipoTassazione") or "").upper()
             if tass != "I":
                 continue
@@ -2040,7 +2047,7 @@ def run_checks(
         skipped = 0
         skipped_tassazione = 0
         mism = 0
-        for r in log_recs:
+        for r in log_ticket_recs:
             tass = (r.get("TipoTassazione") or "").upper()
             if tass != "I":
                 skipped_tassazione += 1
@@ -2137,6 +2144,8 @@ def run_checks(
     def count_omaggi_net(rows: List[Dict[str, Any]]) -> int:
         cnt = 0
         for r in rows:
+            if (r.get("kind") or "TitoloAccesso") != "TitoloAccesso":
+                continue
             sign = 1 if r.get("Annullamento") == "N" else -1
             tipo = r.get("TipoTitolo") or ""
             if tipo.startswith("O") and int(r.get("CorrispettivoLordo") or 0) == 0 and int(r.get("Prevendita") or 0) == 0:
@@ -2149,13 +2158,22 @@ def run_checks(
         max_gen: Optional[int] = None
         source = "LOG"
         for r in rows:
+            kind = (r.get("kind") or "TitoloAccesso")
             tipo = r.get("TipoTitolo") or ""
+            if kind == "BigliettoAbbonamento":
+                imp_fig = int(r.get("ImportoFigurativo") or 0)
+                if imp_fig > max_price:
+                    max_price = imp_fig
+                    max_gen = int(r.get("TipoGenere") or 0) or None
+                    source = "LOG_BigliettoAbbonamento"
+                continue
+
             corr = int(r.get("CorrispettivoLordo") or 0)
-            # escludo omaggi
             if corr > 0 and not tipo.startswith("O"):
                 if corr > max_price:
                     max_price = corr
                     max_gen = int(r.get("TipoGenere") or 0) or None
+                    source = "LOG"
         if max_gen is None:
             # fallback: tipo genere più frequente nel gruppo
             c = Counter([int(r.get("TipoGenere") or 0) for r in rows if int(r.get("TipoGenere") or 0) != 0])
@@ -2213,24 +2231,25 @@ def run_checks(
         max_price, max_gen, price_source = max_title_price(rows)
         inferred = False
 
-        # se manca, prova da BigliettiAbbonamento RPM
-        if max_price <= 0:
-            best = 0
-            for rr in rpm_recs:
-                if rr.get("kind") != "BigliettiAbbonamento":
-                    continue
-                if (rr.get("Organizzatore_CF") or "", rr.get("CodiceLocale") or "", rr.get("DataEvento") or "", rr.get("OraEvento") or "", rr.get("CodiceOrdine") or "") != ok:
-                    continue
-                q = int(rr.get("Quantita") or 0)
-                imp = int(rr.get("ImportoFigurativo") or 0)
-                if q > 0 and imp > 0:
-                    unit = int(round_half_up_int(Decimal(imp) / Decimal(q)))
-                    if unit > best:
-                        best = unit
-            if best > 0:
-                max_price = best
-                price_source = "RPM_BigliettiAbbonamento"
-                inferred = True
+        # confronta anche i ratei abbonamento RPM: vanno considerati se piu alti dei titoli tradizionali
+        best = 0
+        best_kind = ""
+        for rr in rpm_recs:
+            if rr.get("kind") not in ("BigliettiAbbonamento", "AbbonamentiFissi"):
+                continue
+            if (rr.get("Organizzatore_CF") or "", rr.get("CodiceLocale") or "", rr.get("DataEvento") or "", rr.get("OraEvento") or "", rr.get("CodiceOrdine") or "") != ok:
+                continue
+            q = int(rr.get("Quantita") or 0)
+            imp = int(rr.get("ImportoFigurativo") or 0)
+            if q > 0 and imp > 0:
+                unit = int(round_half_up_int(Decimal(imp) / Decimal(q)))
+                if unit > best:
+                    best = unit
+                    best_kind = str(rr.get("kind") or "")
+        if best > max_price:
+            max_price = best
+            price_source = f"RPM_{best_kind}" if best_kind else "RPM_Abbonamento"
+            inferred = True
 
         if max_gen is None:
             # Senza tipo genere non posso collegare aliquote
@@ -2354,11 +2373,15 @@ def run_checks(
             ))
 
     # -------------------------
-    # 9) Riepilogo fiscale per evento e TipoTitolo (RPM, al netto degli annulli) + riga "*" eccedenza omaggi
+    # 9) Riepilogo fiscale per evento e TipoTitolo
+    #    - LOG primario se presente
+    #    - fallback RPM solo se il LOG manca
+    #    - BigliettiAbbonamento / AbbonamentiFissi sempre da RPM (figurativi)
     # -------------------------
     # Questo riepilogo serve a mettere in evidenza quanto lo script ricostruisce (calcolo-ISI)
     # per ciascuna tipologia di titolo (I1, R1, O*, ...), al netto degli annullamenti.
-    # Per coprire *tutti* gli eventi del periodo, usa gli aggregati RPM (TitoliAccesso/TitoliAnnullati).
+    # Quando i LOG sono presenti, i calcoli partono dai singoli record LOG; se i LOG mancano,
+    # usa gli aggregati RPM (TitoliAccesso/TitoliAnnullati).
     # In aggiunta, per ogni evento inserisce una riga "* Eccedenza omaggi" che riporta:
     # - imponibile imposta / ISI calcolati sull'eccedenza (sempre)
     # - imponibile IVA / IVA lorda calcolati sull'eccedenza con applicazione della soglia sulle singole parti Intrattenimento e Spettacolo
@@ -2376,7 +2399,7 @@ def run_checks(
             return float(cand[0]), isi
         return 0.0, 0.0
 
-    # Seleziona un TipoGenere "rappresentativo" per evento (da MultiGenere)
+    # Seleziona un TipoGenere "rappresentativo" per evento (da MultiGenere RPM, con fallback sui LOG)
     event_code_map: Dict[Tuple[str, str, str, str], int] = {}
     for ek, ev_rr in rpm_event_info.items():
         mg_list = (ev_rr.get("MultiGenere") or []) if isinstance(ev_rr, dict) else []
@@ -2394,18 +2417,21 @@ def run_checks(
                 best_code = code
         event_code_map[ek] = best_code
 
-    # Calcolo per evento dell'eccedenza omaggi (per la riga "*") usando i dati RPM
-    # --------------------------------------------------------------------------------
-    # Regole:
-    # - eccedenza per OrdineDiPosto: ecc = omaggi_net - floor(capienza * pct)
-    # - titolo di riferimento: prezzo più alto (biglietto: CorrispettivoLordo unitario, NO prevendita) oppure rateo abbonamento (ImportoFigurativo/q)
-    # - se un Ordine non contiene alcun titolo a pagamento (solo omaggi/zeri), fallback:
-    #     1) usa il prezzo massimo a livello Evento (da altri Ordini)
-    #     2) se ancora mancante, prova ad INFERIRE un prezzo unitario dal campo RPM Evento/Intrattenimento/ImponibileIntrattenimenti
-    #        (caso tipico: evento composto solo da omaggi; l'imponibile intrattenimenti deriva dall'eccedenza omaggi).
-    #
-    # Nota: la soglia IVA (default 50,00€ LORDO) viene applicata *separatamente* alla quota Intrattenimento e alla quota Spettacolo.
-    # L'ISI, dove prevista, viene invece sempre calcolata sulla quota Intrattenimento (non soggetta a soglia).
+    log_event_codes: Dict[Tuple[str, str, str, str], Counter[int]] = defaultdict(Counter)
+    for r in log_recs:
+        ek = (
+            (r.get("CFOrganizzatore") or "").strip(),
+            (r.get("CodiceLocale") or "").strip(),
+            (r.get("DataEvento") or "").strip(),
+            (r.get("OraEvento") or "").strip(),
+        )
+        code = int(r.get("TipoGenere") or 0)
+        if code:
+            log_event_codes[ek][code] += 1
+
+    for ek, cnt in log_event_codes.items():
+        if ek not in event_code_map and cnt:
+            event_code_map[ek] = int(cnt.most_common(1)[0][0])
 
     rpm_tickets_by_order: Dict[Tuple[str, str, str, str, str], List[Dict[str, Any]]] = defaultdict(list)
     rpm_abbo_by_order: Dict[Tuple[str, str, str, str, str], List[Dict[str, Any]]] = defaultdict(list)
@@ -2433,320 +2459,355 @@ def run_checks(
             ek = (ok[0], ok[1], ok[2], ok[3])
             rpm_abbo_by_event[ek].append(rr)
 
-    # Pass 1: per ogni Ordine calcolo (a) eccedenza omaggi e (b) prezzo massimo disponibile, e aggiorno il max prezzo evento.
-    order_ecc: Dict[Tuple[str, str, str, str, str], int] = {}
-    order_max_price: Dict[Tuple[str, str, str, str, str], int] = {}
-    event_ecc_total: Dict[Tuple[str, str, str, str], int] = defaultdict(int)
-    event_max_price: Dict[Tuple[str, str, str, str], int] = defaultdict(int)
-
-    for ok, od_rr in rpm_order_info.items():
-        cf, loc, data, ora, ordine = ok
-        ek = (cf, loc, data, ora)
-
-        capienza = int(od_rr.get("Capienza") or 0)
-        if capienza <= 0:
-            continue
-
-        # --- conteggio omaggi net RPM nell'ordine (solo O* a 0,00)
-        om_rpm_net = 0
-        for tr in rpm_tickets_by_order.get(ok, []):
-            tipo = (tr.get("TipoTitolo") or "").strip()
-            if not tipo.startswith("O"):
-                continue
-            if int(tr.get("CorrispettivoLordo") or 0) != 0 or int(tr.get("Prevendita") or 0) != 0:
-                continue
-            q = int(tr.get("Quantita") or 0)
-            if tr.get("kind") in ("TitoliAccesso", "TitoliAccessoIVAPreassolta"):
-                om_rpm_net += q
-            else:
-                om_rpm_net -= q
-
-        allowed = int(math.floor(capienza * (omaggi_pct / 100.0)))
-        ecc = max(0, om_rpm_net - allowed)
-        if ecc > 0:
-            order_ecc[ok] = int(ecc)
-            event_ecc_total[ek] += int(ecc)
-
-        # --- prezzo massimo di riferimento per l'ordine: biglietti (CorrispettivoLordo/q) + ratei abbonamento (ImportoFigurativo/q)
-        max_price = 0
-
-        for tr in rpm_tickets_by_order.get(ok, []):
-            tipo = (tr.get("TipoTitolo") or "").strip()
-            if tipo.startswith("O"):
-                continue
-            corr_total = int(tr.get("CorrispettivoLordo") or 0)
-            q = int(tr.get("Quantita") or 0)
-            if corr_total > 0 and q > 0:
-                unit = round_half_up_int(Decimal(corr_total) / Decimal(q))
-                if unit > max_price:
-                    max_price = int(unit)
-
-        for br in rpm_abbo_by_order.get(ok, []):
-            imp_total = int(br.get("ImportoFigurativo") or 0)
-            q = int(br.get("Quantita") or 0)
-            if imp_total > 0 and q > 0:
-                unit = round_half_up_int(Decimal(imp_total) / Decimal(q))
-                if unit > max_price:
-                    max_price = int(unit)
-
-        if max_price > 0:
-            order_max_price[ok] = int(max_price)
-            if int(max_price) > int(event_max_price.get(ek, 0) or 0):
-                event_max_price[ek] = int(max_price)
-
-    # Pass 2: inferenza prezzo massimo a livello evento quando:
-    # - esiste eccedenza omaggi (event_ecc_total>0)
-    # - non abbiamo nessun titolo a pagamento / rateo da cui ricavare un prezzo (event_max_price==0)
-    inferred_event_price: Dict[Tuple[str, str, str, str], int] = {}
-
-    def _infer_price_from_event_imponibile(ek: Tuple[str, str, str, str]) -> Optional[int]:
-        """Inferisce un prezzo unitario LORDO (corrispettivo, no prevendita) tale che
-        calc_intr_sp_from_gross(prezzo, incidenza, iva, isi).imponibile_intr ~= (ImponibileIntrattenimenti_evento / ecc_tot).
-        Ritorna None se non inferibile."""
-        ecc_tot = int(event_ecc_total.get(ek, 0) or 0)
-        if ecc_tot <= 0:
-            return None
-
-        if int(event_max_price.get(ek, 0) or 0) > 0:
-            return None  # già determinato da titoli a pagamento
-
-        ev_rr = rpm_event_info.get(ek)
-        imp_event = int(ev_rr.get("ImponibileIntrattenimenti") or 0) if ev_rr else 0
-        if imp_event <= 0:
-            return None
-
-        inc = inc_map.get(ek)
-        if inc is None or int(inc) <= 0:
-            return None
-
-        code = int(event_code_map.get(ek, 0) or 0)
-        iva_rate, isi_rate = rates_for_code(code)
-
-        target_imp_unit = round_half_up_ratio(int(imp_event), int(ecc_tot))
-
-        # stima gross iniziale e ricerca locale
-        denom = 1.0 + float(iva_rate) + float(isi_rate)
-        quota_intr_est = int(round(float(target_imp_unit) * denom))
-        gross_est = int(round(quota_intr_est * 100 / int(inc))) if int(inc) != 0 else quota_intr_est
-
-        best_g = None
-        best_diff = None
-        for g in range(max(0, gross_est - 5000), gross_est + 5001):
-            c = calc_intr_sp_from_gross(int(g), int(inc), float(iva_rate), float(isi_rate))
-            diff = abs(int(c.get("imponibile_intr", 0)) - int(target_imp_unit))
-            if best_diff is None or diff < best_diff:
-                best_diff = diff
-                best_g = int(g)
-                if diff == 0:
-                    break
-
-        # accettiamo inferenza solo se molto vicina (0 o 1 cent di differenza)
-        if best_g is not None and (best_diff is None or int(best_diff) <= 1):
-            return int(best_g)
-        return None
-
-    for ek in sorted(event_ecc_total.keys(), key=lambda x: (x[2], x[3], x[1], x[0])):
-        if int(event_max_price.get(ek, 0) or 0) > 0:
-            continue
-        p = _infer_price_from_event_imponibile(ek)
-        if p is not None and p > 0:
-            inferred_event_price[ek] = int(p)
-
-    # Pass 3: calcolo importi fiscali della riga "* Eccedenza omaggi" aggregati per evento
     ecc_by_event: Dict[Tuple[str, str, str, str], Dict[str, int]] = defaultdict(lambda: defaultdict(int))
 
-    for ok, ecc in order_ecc.items():
-        if int(ecc) <= 0:
-            continue
-        cf, loc, data, ora, ordine = ok
-        ek = (cf, loc, data, ora)
+    if log_recs:
+        for row in details["fiscale_omaggi"]:
+            ek = (
+                (row.get("CF") or "").strip(),
+                (row.get("CodiceLocale") or "").strip(),
+                (row.get("DataEvento") or "").strip(),
+                (row.get("OraEvento") or "").strip(),
+            )
+            ecc = int(row.get("Eccedenza") or 0)
+            if ecc <= 0:
+                continue
+            imp_intr_unit = int(row.get("ImponibileIntr_unit") or 0)
+            imp_sp_unit = int(row.get("ImponibileSp_unit") or 0)
+            soglia_intr = bool(row.get("Soglia_applicata_intr"))
+            soglia_sp = bool(row.get("Soglia_applicata_sp"))
+            base_vat_unit = (0 if soglia_intr else imp_intr_unit) + (0 if soglia_sp else imp_sp_unit)
 
-        inc = inc_map.get(ek)
-        if inc is None:
-            # senza incidenza non posso fare lo split; assumo 0 (solo spettacolo)
-            inc = 0
+            ecc_by_event[ek]["EccedenzaTitoli"] += ecc
+            if float(row.get("ISI_rate") or 0.0) > 0.0:
+                ecc_by_event[ek]["ImponibileImposta"] += ecc * imp_intr_unit
+            ecc_by_event[ek]["ImpostaIntrattenimento"] += ecc * int(row.get("ISI_unit") or 0)
+            ecc_by_event[ek]["ImponibileIVA"] += ecc * base_vat_unit
+            ecc_by_event[ek]["IVALorda"] += int(row.get("Expected_IVAEccedenteOmaggi") or 0)
+    else:
+        # Calcolo per evento dell'eccedenza omaggi (per la riga "*") usando i dati RPM
+        # --------------------------------------------------------------------------
+        # Regole:
+        # - eccedenza per OrdineDiPosto: ecc = omaggi_net - floor(capienza * pct)
+        # - titolo di riferimento: prezzo più alto (biglietto: CorrispettivoLordo unitario, NO prevendita) oppure rateo abbonamento (ImportoFigurativo/q)
+        # - se un Ordine non contiene alcun titolo a pagamento (solo omaggi/zeri), fallback:
+        #     1) usa il prezzo massimo a livello Evento (da altri Ordini)
+        #     2) se ancora mancante, prova ad INFERIRE un prezzo unitario dal campo RPM Evento/Intrattenimento/ImponibileIntrattenimenti
+        #        (caso tipico: evento composto solo da omaggi; l'imponibile intrattenimenti deriva dall'eccedenza omaggi).
+        #
+        # Nota: la soglia IVA (default 50,00€ LORDO) viene applicata *separatamente* alla quota Intrattenimento e alla quota Spettacolo.
+        # L'ISI, dove prevista, viene invece sempre calcolata sulla quota Intrattenimento (non soggetta a soglia).
+        order_ecc: Dict[Tuple[str, str, str, str, str], int] = {}
+        order_max_price: Dict[Tuple[str, str, str, str, str], int] = {}
+        event_ecc_total: Dict[Tuple[str, str, str, str], int] = defaultdict(int)
+        event_max_price: Dict[Tuple[str, str, str, str], int] = defaultdict(int)
 
-        code = int(event_code_map.get(ek, 0) or 0)
-        iva_rate, isi_rate = rates_for_code(code)
+        for ok, od_rr in rpm_order_info.items():
+            cf, loc, data, ora, ordine = ok
+            ek = (cf, loc, data, ora)
 
-        # prezzo di riferimento: preferenza ordine -> evento -> inferito
-        max_price = int(order_max_price.get(ok, 0) or 0)
-        if max_price <= 0:
-            max_price = int(event_max_price.get(ek, 0) or 0)
-        if max_price <= 0:
-            max_price = int(inferred_event_price.get(ek, 0) or 0)
+            capienza = int(od_rr.get("Capienza") or 0)
+            if capienza <= 0:
+                continue
 
-        if max_price <= 0:
-            issues.append(Issue(
-                severity="WARN",
-                check="FIS_RPM_OMAGGI",
-                message="Eccedenza omaggi presente ma impossibile determinare il prezzo massimo di riferimento (biglietto/rateo) per calcolare IVA/ISI",
-                context={"evento": f"{data} {ora} {loc} Ord={ordine}", "eccedenza": int(ecc)},
-            ))
-            continue
+            om_rpm_net = 0
+            for tr in rpm_tickets_by_order.get(ok, []):
+                tipo = (tr.get("TipoTitolo") or "").strip()
+                if not tipo.startswith("O"):
+                    continue
+                if int(tr.get("CorrispettivoLordo") or 0) != 0 or int(tr.get("Prevendita") or 0) != 0:
+                    continue
+                q = int(tr.get("Quantita") or 0)
+                if tr.get("kind") in ("TitoliAccesso", "TitoliAccessoIVAPreassolta"):
+                    om_rpm_net += q
+                else:
+                    om_rpm_net -= q
 
-        unit_calc = calc_intr_sp_from_gross(int(max_price), int(inc), float(iva_rate), float(isi_rate))
+            allowed = int(math.floor(capienza * (omaggi_pct / 100.0)))
+            ecc = max(0, om_rpm_net - allowed)
+            if ecc > 0:
+                order_ecc[ok] = int(ecc)
+                event_ecc_total[ek] += int(ecc)
 
-        quota_intr_unit = int(unit_calc["quota_intr"])
-        quota_sp_unit = int(unit_calc["quota_sp"])
-        soglia_intr = quota_intr_unit <= soglia_omaggi_cents
-        soglia_sp = quota_sp_unit <= soglia_omaggi_cents
+            max_price = 0
 
-        base_vat_unit = (0 if soglia_intr else int(unit_calc["imponibile_intr"])) + (0 if soglia_sp else int(unit_calc["imponibile_sp"]))
-        vat_unit = (0 if soglia_intr else int(unit_calc["iva_intr"])) + (0 if soglia_sp else int(unit_calc["iva_sp"]))
+            for tr in rpm_tickets_by_order.get(ok, []):
+                tipo = (tr.get("TipoTitolo") or "").strip()
+                if tipo.startswith("O"):
+                    continue
+                corr_total = int(tr.get("CorrispettivoLordo") or 0)
+                q = int(tr.get("Quantita") or 0)
+                if corr_total > 0 and q > 0:
+                    unit = round_half_up_int(Decimal(corr_total) / Decimal(q))
+                    if unit > max_price:
+                        max_price = int(unit)
 
-        ecc_by_event[ek]["EccedenzaTitoli"] += int(ecc)
-        # ImponibileImposta: solo dove ISI prevista (isi_rate > 0)
-        ecc_by_event[ek]["ImponibileImposta"] += int(ecc) * (int(unit_calc["imponibile_intr"]) if float(isi_rate) > 0.0 else 0)
-        ecc_by_event[ek]["ImpostaIntrattenimento"] += int(ecc) * int(unit_calc["isi"])
-        ecc_by_event[ek]["ImponibileIVA"] += int(ecc) * int(base_vat_unit)
-        ecc_by_event[ek]["IVALorda"] += int(ecc) * int(vat_unit)
-    # Accumuli per evento/tipologia dai Titoli RPM (copertura completa)
+            for br in rpm_abbo_by_order.get(ok, []):
+                imp_total = int(br.get("ImportoFigurativo") or 0)
+                q = int(br.get("Quantita") or 0)
+                if imp_total > 0 and q > 0:
+                    unit = round_half_up_int(Decimal(imp_total) / Decimal(q))
+                    if unit > max_price:
+                        max_price = int(unit)
+
+            if max_price > 0:
+                order_max_price[ok] = int(max_price)
+                if int(max_price) > int(event_max_price.get(ek, 0) or 0):
+                    event_max_price[ek] = int(max_price)
+
+        inferred_event_price: Dict[Tuple[str, str, str, str], int] = {}
+
+        def _infer_price_from_event_imponibile(ek: Tuple[str, str, str, str]) -> Optional[int]:
+            """Inferisce un prezzo unitario LORDO (corrispettivo, no prevendita) tale che
+            calc_intr_sp_from_gross(prezzo, incidenza, iva, isi).imponibile_intr ~= (ImponibileIntrattenimenti_evento / ecc_tot).
+            Ritorna None se non inferibile."""
+            ecc_tot = int(event_ecc_total.get(ek, 0) or 0)
+            if ecc_tot <= 0:
+                return None
+
+            if int(event_max_price.get(ek, 0) or 0) > 0:
+                return None
+
+            ev_rr = rpm_event_info.get(ek)
+            imp_event = int(ev_rr.get("ImponibileIntrattenimenti") or 0) if ev_rr else 0
+            if imp_event <= 0:
+                return None
+
+            inc = inc_map.get(ek)
+            if inc is None or int(inc) <= 0:
+                return None
+
+            code = int(event_code_map.get(ek, 0) or 0)
+            iva_rate, isi_rate = rates_for_code(code)
+
+            target_imp_unit = round_half_up_ratio(int(imp_event), int(ecc_tot))
+
+            denom = 1.0 + float(iva_rate) + float(isi_rate)
+            quota_intr_est = int(round(float(target_imp_unit) * denom))
+            gross_est = int(round(quota_intr_est * 100 / int(inc))) if int(inc) != 0 else quota_intr_est
+
+            best_g = None
+            best_diff = None
+            for g in range(max(0, gross_est - 5000), gross_est + 5001):
+                c = calc_intr_sp_from_gross(int(g), int(inc), float(iva_rate), float(isi_rate))
+                diff = abs(int(c.get("imponibile_intr", 0)) - int(target_imp_unit))
+                if best_diff is None or diff < best_diff:
+                    best_diff = diff
+                    best_g = int(g)
+                    if diff == 0:
+                        break
+
+            if best_g is not None and (best_diff is None or int(best_diff) <= 1):
+                return int(best_g)
+            return None
+
+        for ek in sorted(event_ecc_total.keys(), key=lambda x: (x[2], x[3], x[1], x[0])):
+            if int(event_max_price.get(ek, 0) or 0) > 0:
+                continue
+            p = _infer_price_from_event_imponibile(ek)
+            if p is not None and p > 0:
+                inferred_event_price[ek] = int(p)
+
+        for ok, ecc in order_ecc.items():
+            if int(ecc) <= 0:
+                continue
+            cf, loc, data, ora, ordine = ok
+            ek = (cf, loc, data, ora)
+
+            inc = inc_map.get(ek)
+            if inc is None:
+                inc = 0
+
+            code = int(event_code_map.get(ek, 0) or 0)
+            iva_rate, isi_rate = rates_for_code(code)
+
+            max_price = int(order_max_price.get(ok, 0) or 0)
+            if max_price <= 0:
+                max_price = int(event_max_price.get(ek, 0) or 0)
+            if max_price <= 0:
+                max_price = int(inferred_event_price.get(ek, 0) or 0)
+
+            if max_price <= 0:
+                issues.append(Issue(
+                    severity="WARN",
+                    check="FIS_RPM_OMAGGI",
+                    message="Eccedenza omaggi presente ma impossibile determinare il prezzo massimo di riferimento (biglietto/rateo) per calcolare IVA/ISI",
+                    context={"evento": f"{data} {ora} {loc} Ord={ordine}", "eccedenza": int(ecc)},
+                ))
+                continue
+
+            unit_calc = calc_intr_sp_from_gross(int(max_price), int(inc), float(iva_rate), float(isi_rate))
+
+            quota_intr_unit = int(unit_calc["quota_intr"])
+            quota_sp_unit = int(unit_calc["quota_sp"])
+            soglia_intr = quota_intr_unit <= soglia_omaggi_cents
+            soglia_sp = quota_sp_unit <= soglia_omaggi_cents
+
+            base_vat_unit = (0 if soglia_intr else int(unit_calc["imponibile_intr"])) + (0 if soglia_sp else int(unit_calc["imponibile_sp"]))
+            vat_unit = (0 if soglia_intr else int(unit_calc["iva_intr"])) + (0 if soglia_sp else int(unit_calc["iva_sp"]))
+
+            ecc_by_event[ek]["EccedenzaTitoli"] += int(ecc)
+            ecc_by_event[ek]["ImponibileImposta"] += int(ecc) * (int(unit_calc["imponibile_intr"]) if float(isi_rate) > 0.0 else 0)
+            ecc_by_event[ek]["ImpostaIntrattenimento"] += int(ecc) * int(unit_calc["isi"])
+            ecc_by_event[ek]["ImponibileIVA"] += int(ecc) * int(base_vat_unit)
+            ecc_by_event[ek]["IVALorda"] += int(ecc) * int(vat_unit)
+
+    # Accumuli per evento/tipologia
     event_type_acc: Dict[Tuple[str, str, str, str], Dict[str, Dict[str, int]]] = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
     event_meta: Dict[Tuple[str, str, str, str], Dict[str, Any]] = {}
 
     accesso_kinds = ("TitoliAccesso", "TitoliAccessoIVAPreassolta")
     ann_kinds = ("TitoliAnnullati", "TitoliIVAPreassoltaAnnullati")
 
-    for rr in rpm_recs:
-        kind = rr.get("kind")
-        if kind not in accesso_kinds and kind not in ann_kinds:
-            continue
+    if log_recs:
+        log_rows_by_event: Dict[Tuple[str, str, str, str], List[Dict[str, Any]]] = defaultdict(list)
+        tass_by_event: Dict[Tuple[str, str, str, str], set[str]] = defaultdict(set)
+        titolo_by_event: Dict[Tuple[str, str, str, str], str] = {}
 
-        ek = (
-            (rr.get("Organizzatore_CF") or "").strip(),
-            (rr.get("CodiceLocale") or "").strip(),
-            (rr.get("DataEvento") or "").strip(),
-            (rr.get("OraEvento") or "").strip(),
-        )
-
-        tipo = (rr.get("TipoTitolo") or "").strip() or "(n/d)"
-        q = int(rr.get("Quantita") or 0)
-        if q <= 0:
-            continue
-
-        inc = inc_map.get(ek)
-        if inc is None:
-            # senza incidenza non possiamo applicare il calcolo-ISI in modo coerente
-            continue
-
-        code = int(event_code_map.get(ek, 0) or 0)
-        iva_rate, isi_rate = rates_for_code(code)
-
-        corr_total = int(rr.get("CorrispettivoLordo") or 0)
-        prev_total = int(rr.get("Prevendita") or 0)
-        unit_corr = round_half_up_int(Decimal(corr_total) / Decimal(q))
-        unit_prev = round_half_up_int(Decimal(prev_total) / Decimal(q))
-        unit_gross = int(unit_corr) + int(unit_prev)
-
-        calc = calc_intr_sp_from_gross(unit_gross, int(inc), float(iva_rate), float(isi_rate))
-
-        sign = 1 if kind in accesso_kinds else -1
-        acc = event_type_acc[ek][tipo]
-        acc["TitoliNetti"] += sign * q
-        if kind in ann_kinds:
-            acc["TitoliAnnullati"] += q
-
-        # Imponibile imposta: esposto solo quando ISI > 0 ("dove previsto")
-        acc["ImponibileImposta"] += sign * q * (int(calc["imponibile_intr"]) if float(isi_rate) > 0.0 else 0)
-        acc["ImpostaIntrattenimento"] += sign * q * int(calc["isi"])
-        acc["ImponibileIVA"] += sign * q * int(calc["imponibile_intr"] + calc["imponibile_sp"])
-        acc["IVALorda"] += sign * q * int(calc["iva_tot"])
-
-        if ek not in event_meta:
-            ev_rr = rpm_event_info.get(ek)
-            titolo_ev = ""
-            if ev_rr and isinstance(ev_rr, dict):
-                # titolo (se presente) del MultiGenere selezionato
-                sel = int(event_code_map.get(ek, 0) or 0)
-                for mg in (ev_rr.get("MultiGenere") or []):
-                    if int(mg.get("TipoGenere") or 0) == sel:
-                        titolo_ev = (mg.get("Titolo") or "")
-                        break
-            event_meta[ek] = {
-                "CF": ek[0],
-                "CodiceLocale": ek[1],
-                "DenominazioneLocale": (ev_rr.get("DenominazioneLocale") if ev_rr else "") or "",
-                "DataEvento": ek[2],
-                "OraEvento": ek[3],
-                "Incidenza": int(inc),
-                "TipoTassazione": (ev_rr.get("TipoTassazione") if ev_rr else "") or "",
-                "TitoloEvento": titolo_ev,
-            }
-
-
-
-    # Fallback LOG-only: se RPM assente (o privo di eventi), costruiamo un riepilogo fiscale parziale dai LOG.
-    # Nota: senza RPM non disponiamo di Capienza e Incidenza, quindi NON calcoliamo:
-    # - ISI (Imposta intrattenimento) in modo affidabile
-    # - Eccedenza omaggi
-    # Manteniamo comunque: conteggi titoli netti/annullati e IVA lorda (da LOG). L'Imponibile IVA è esposto solo per tassazione != 'I'.
-    if not rpm_event_info:
-        issues.append(Issue(
-            severity="INFO",
-            check="FIS_LOGONLY_RIEPILOGO",
-            message="RPM assente: riepilogo fiscale calcolato dai LOG (parziale). ISI ed eccedenza omaggi non calcolabili senza Capienza/Incidenza.",
-            context={},
-        ))
-
-        tass_by_event = defaultdict(set)
-        titolo_by_event = {}
-
-        for r in log_recs:
+        for r in log_ticket_recs:
             ek = (
                 (r.get("CFOrganizzatore") or "").strip(),
                 (r.get("CodiceLocale") or "").strip(),
                 (r.get("DataEvento") or "").strip(),
                 (r.get("OraEvento") or "").strip(),
             )
-            tipo = (r.get("TipoTitolo") or "").strip() or "(n/d)"
-            ann = (r.get("Annullamento") or "").upper().strip()
-            sign = 1 if ann != "S" else -1  # se vuoto lo trattiamo come emissione
-
-            acc = event_type_acc[ek][tipo]
-            acc["TitoliNetti"] += sign
-            if ann == "S":
-                acc["TitoliAnnullati"] += 1
-
-            iva = int(r.get("IVACorrispettivo") or 0) + int(r.get("IVAPrevendita") or 0)
-            gross = int(r.get("CorrispettivoLordo") or 0) + int(r.get("Prevendita") or 0)
-            acc["IVALorda"] += sign * iva
-
+            log_rows_by_event[ek].append(r)
             tass = (r.get("TipoTassazione") or "").upper().strip()
-            tass_by_event[ek].add(tass)
-
-            # In LOG-only, per tassazione I l'Imponibile IVA dipende da split Intr/Sp e ISI -> non esponibile senza RPM.
-            if tass and tass != "I":
-                acc["ImponibileIVA"] += sign * (gross - iva)
-
-            # titolo evento (se presente)
-            if ek not in titolo_by_event:
+            if tass:
+                tass_by_event[ek].add(tass)
+            if ek not in titolo_by_event and (r.get("TitoloEvento") or "").strip():
                 titolo_by_event[ek] = (r.get("TitoloEvento") or "").strip()
 
-        for ek in tass_by_event.keys():
-            tass_set = {t for t in tass_by_event[ek] if t}
-            tass_val = next(iter(tass_set)) if len(tass_set) == 1 else ("MIX" if tass_set else "")
-            event_meta[ek] = {
+        for ek, rows in log_rows_by_event.items():
+            ev_rr = rpm_event_info.get(ek)
+            tass_set = {t for t in tass_by_event.get(ek, set()) if t}
+            tass_val = next(iter(tass_set)) if len(tass_set) == 1 else ("MIX" if tass_set else (((ev_rr.get("TipoTassazione") if ev_rr else "") or "").strip()))
+            inc_val = inc_map.get(ek)
+
+            titolo_ev = titolo_by_event.get(ek, "")
+            if not titolo_ev and ev_rr and isinstance(ev_rr, dict):
+                sel = int(event_code_map.get(ek, 0) or 0)
+                for mg in (ev_rr.get("MultiGenere") or []):
+                    if int(mg.get("TipoGenere") or 0) == sel:
+                        titolo_ev = (mg.get("Titolo") or "")
+                        break
+
+            needs_intr_split = any(((r.get("TipoTassazione") or "").upper().strip() == "I") for r in rows)
+            meta = {
                 "CF": ek[0],
                 "CodiceLocale": ek[1],
-                "DenominazioneLocale": "",
+                "DenominazioneLocale": (ev_rr.get("DenominazioneLocale") if ev_rr else "") or "",
                 "DataEvento": ek[2],
                 "OraEvento": ek[3],
-                "Incidenza": None,
+                "Incidenza": int(inc_val) if inc_val is not None else None,
                 "TipoTassazione": tass_val,
-                "TitoloEvento": titolo_by_event.get(ek, ""),
+                "TitoloEvento": titolo_ev,
                 "_source": "LOG",
-                "_nd_imposta": True,
-                "_nd_eccedenza": True,
-                "_nd_imponibile_iva": True if tass_val in ("I", "MIX") else False,
             }
+            if inc_val is None and needs_intr_split:
+                meta["_nd_imposta"] = True
+                meta["_nd_imponibile_iva"] = True
+            event_meta[ek] = meta
+
+            for r in rows:
+                tipo = (r.get("TipoTitolo") or "").strip() or "(n/d)"
+                ann = (r.get("Annullamento") or "").upper().strip()
+                sign = 1 if ann != "S" else -1
+                tass = (r.get("TipoTassazione") or "").upper().strip()
+                gross = int(r.get("CorrispettivoLordo") or 0) + int(r.get("Prevendita") or 0)
+                iva_actual = int(r.get("IVACorrispettivo") or 0) + int(r.get("IVAPrevendita") or 0)
+                code = int(r.get("TipoGenere") or 0) or int(event_code_map.get(ek, 0) or 0)
+
+                acc = event_type_acc[ek][tipo]
+                acc["TitoliNetti"] += sign
+                if ann == "S":
+                    acc["TitoliAnnullati"] += 1
+
+                if tass == "I" and inc_val is not None:
+                    iva_rate, isi_rate = rates_for_code(code)
+                    calc = calc_intr_sp_from_gross(gross, int(inc_val), float(iva_rate), float(isi_rate))
+                    acc["ImponibileImposta"] += sign * (int(calc["imponibile_intr"]) if float(isi_rate) > 0.0 else 0)
+                    acc["ImpostaIntrattenimento"] += sign * int(calc["isi"])
+                    acc["ImponibileIVA"] += sign * int(calc["imponibile_intr"] + calc["imponibile_sp"])
+                    acc["IVALorda"] += sign * int(calc["iva_tot"])
+                else:
+                    acc["IVALorda"] += sign * iva_actual
+                    if tass and tass != "I":
+                        acc["ImponibileIVA"] += sign * int(gross - iva_actual)
 
         metrics["FIS_riepilogo_source"] = "LOG"
         metrics["FIS_riepilogo_events"] = len(event_meta)
+    else:
+        for rr in rpm_recs:
+            kind = rr.get("kind")
+            if kind not in accesso_kinds and kind not in ann_kinds:
+                continue
 
-    # Costruzione tabelle evento (eventi in RPM; fallback: eventi trovati nei LOG)
+            ek = (
+                (rr.get("Organizzatore_CF") or "").strip(),
+                (rr.get("CodiceLocale") or "").strip(),
+                (rr.get("DataEvento") or "").strip(),
+                (rr.get("OraEvento") or "").strip(),
+            )
+
+            tipo = (rr.get("TipoTitolo") or "").strip() or "(n/d)"
+            q = int(rr.get("Quantita") or 0)
+            if q <= 0:
+                continue
+
+            inc = inc_map.get(ek)
+            if inc is None:
+                continue
+
+            code = int(event_code_map.get(ek, 0) or 0)
+            iva_rate, isi_rate = rates_for_code(code)
+
+            corr_total = int(rr.get("CorrispettivoLordo") or 0)
+            prev_total = int(rr.get("Prevendita") or 0)
+            unit_corr = round_half_up_int(Decimal(corr_total) / Decimal(q))
+            unit_prev = round_half_up_int(Decimal(prev_total) / Decimal(q))
+            unit_gross = int(unit_corr) + int(unit_prev)
+
+            calc = calc_intr_sp_from_gross(unit_gross, int(inc), float(iva_rate), float(isi_rate))
+
+            sign = 1 if kind in accesso_kinds else -1
+            acc = event_type_acc[ek][tipo]
+            acc["TitoliNetti"] += sign * q
+            if kind in ann_kinds:
+                acc["TitoliAnnullati"] += q
+
+            acc["ImponibileImposta"] += sign * q * (int(calc["imponibile_intr"]) if float(isi_rate) > 0.0 else 0)
+            acc["ImpostaIntrattenimento"] += sign * q * int(calc["isi"])
+            acc["ImponibileIVA"] += sign * q * int(calc["imponibile_intr"] + calc["imponibile_sp"])
+            acc["IVALorda"] += sign * q * int(calc["iva_tot"])
+
+            if ek not in event_meta:
+                ev_rr = rpm_event_info.get(ek)
+                titolo_ev = ""
+                if ev_rr and isinstance(ev_rr, dict):
+                    sel = int(event_code_map.get(ek, 0) or 0)
+                    for mg in (ev_rr.get("MultiGenere") or []):
+                        if int(mg.get("TipoGenere") or 0) == sel:
+                            titolo_ev = (mg.get("Titolo") or "")
+                            break
+                event_meta[ek] = {
+                    "CF": ek[0],
+                    "CodiceLocale": ek[1],
+                    "DenominazioneLocale": (ev_rr.get("DenominazioneLocale") if ev_rr else "") or "",
+                    "DataEvento": ek[2],
+                    "OraEvento": ek[3],
+                    "Incidenza": int(inc),
+                    "TipoTassazione": (ev_rr.get("TipoTassazione") if ev_rr else "") or "",
+                    "TitoloEvento": titolo_ev,
+                    "_source": "RPM",
+                }
+
+        metrics["FIS_riepilogo_source"] = "RPM"
+        metrics["FIS_riepilogo_events"] = len(event_meta)
+
+    # Costruzione tabelle evento
     fisc_ev_tables: List[Dict[str, Any]] = []
-    event_keys_iter = rpm_event_info.keys() if rpm_event_info else event_meta.keys()
+    event_keys_iter = event_meta.keys()
     for ek in sorted(event_keys_iter, key=lambda x: (x[2], x[3], x[1], x[0])):
         ev_rr = rpm_event_info.get(ek)
         meta = event_meta.get(ek, {
@@ -3249,12 +3310,11 @@ def build_html_report(summary: Dict[str, Any], issues: List[Issue], metrics: Dic
 
         ev_tables_html = f"""
         <details open>
-          <summary><b>Riepilogo fiscale per evento e tipologia titolo (RPM / LOG-only, netto annulli + *eccedenza omaggi*)</b> (eventi: {len(ev_tables_sorted)})</summary>
+          <summary><b>Riepilogo fiscale per evento e tipologia titolo (LOG se presente, altrimenti RPM; netto annulli + *eccedenza omaggi*)</b> (eventi: {len(ev_tables_sorted)})</summary>
           <div class="hint">
-            Valori calcolati dallo script sugli aggregati RPM (se RPM è presente). Se RPM non è presente, il riepilogo è calcolato dai LOG ed è parziale: ISI ed eccedenza omaggi non sono calcolabili senza Capienza/Incidenza, e l'Imponibile IVA per tassazione I non è esposto. (Corrispettivo+Prevendita), usando Incidenza da RPM e aliquote da TAB.1.
-            La colonna “Imponibile imposta” è valorizzata solo dove l’ISI è prevista. La riga <b>* Eccedenza omaggi</b> riporta le componenti fiscali calcolate
-            sul prezzo massimo (corrispettivo, senza prevendita) e la soglia IVA è applicata separatamente su Intrattenimento e Spettacolo.
-            <b>Nota:</b> nei totali dell'evento la riga “*” è inclusa solo per gli importi fiscali (non nei conteggi titoli).<br/><b>Nuovo:</b> i <b>Biglietti Abbonamento</b> (e AbbonamentiFissi se presenti) sono mostrati dopo il “Totale” dell’evento e contribuiscono al <b>Totale generale</b>.
+            Valori calcolati dallo script a partire dai <b>LOG</b> quando presenti; se i LOG mancano, il riepilogo usa gli aggregati <b>RPM</b>. I metadati evento (Incidenza, TipoTassazione, Capienza) restano letti da RPM quando disponibili. I <b>Biglietti Abbonamento</b> e gli <b>AbbonamentiFissi</b> sono sempre esposti come righe figurative da RPM, dopo il totale evento.
+            La colonna “Imponibile imposta” è valorizzata solo dove l’ISI è prevista. La riga <b>* Eccedenza omaggi</b> usa gli ordini presenti nei LOG se i LOG sono disponibili; in fallback viene calcolata da RPM.
+            Se manca l’Incidenza necessaria per titoli con tassazione <b>I</b>, Imponibile imposta e Imponibile IVA non vengono esposti. Nei totali dell'evento la riga “*” è inclusa solo per gli importi fiscali (non nei conteggi titoli).
           </div>
           {''.join(blocks)}
         </details>
