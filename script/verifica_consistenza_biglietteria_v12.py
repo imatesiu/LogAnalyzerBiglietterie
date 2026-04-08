@@ -48,6 +48,9 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 import xml.etree.ElementTree as ET
 
 
+SCRIPT_VERSION = "2026-04-08.6"
+
+
 # -------------------------
 # Helpers: parsing & money
 # -------------------------
@@ -841,6 +844,7 @@ def parse_rpm(path: str) -> List[Dict[str, Any]]:
 
             # record evento (unico)
             out.append({
+                "_file": os.path.basename(path),
                 "kind": "Evento",
                 "Organizzatore_CF": cf_org,
                 "CodiceLocale": loc,
@@ -861,6 +865,7 @@ def parse_rpm(path: str) -> List[Dict[str, Any]]:
 
                 # record ordine di posto
                 out.append({
+                    "_file": os.path.basename(path),
                     "kind": "OrdineDiPosto",
                     "Organizzatore_CF": cf_org,
                     "CodiceLocale": loc,
@@ -875,6 +880,7 @@ def parse_rpm(path: str) -> List[Dict[str, Any]]:
                 def emit_titoli(kind: str) -> None:
                     for node in od.findall(f"./{kind}"):
                         out.append({
+                            "_file": os.path.basename(path),
                             "kind": kind,
                             "Organizzatore_CF": cf_org,
                             "CodiceLocale": loc,
@@ -900,6 +906,7 @@ def parse_rpm(path: str) -> List[Dict[str, Any]]:
                 # BigliettiAbbonamento (ratei figurativi)
                 for node in od.findall("./BigliettiAbbonamento"):
                     out.append({
+                        "_file": os.path.basename(path),
                         "kind": "BigliettiAbbonamento",
                         "Organizzatore_CF": cf_org,
                         "CodiceLocale": loc,
@@ -919,6 +926,7 @@ def parse_rpm(path: str) -> List[Dict[str, Any]]:
                 # AbbonamentiFissi (ratei figurativi su eventi con abbonamenti fissi)
                 for node in od.findall("./AbbonamentiFissi"):
                     out.append({
+                        "_file": os.path.basename(path),
                         "kind": "AbbonamentiFissi",
                         "Organizzatore_CF": cf_org,
                         "CodiceLocale": loc,
@@ -1398,8 +1406,79 @@ def run_checks(
     def _empty_rca_bucket() -> Dict[str, int]:
         return {f: 0 for f in rca_fields}
 
+    def _format_key_rca(key_rca: Tuple[str, str, str, str, str, str, str]) -> Dict[str, str]:
+        sistema, cf_org, cod_loc, data_ev, ora_ev, ordine, tipo = key_rca
+        return {
+            "SistemaEmissione": sistema,
+            "CFOrganizzatore": cf_org,
+            "CodiceLocale": cod_loc,
+            "DataEvento": data_ev,
+            "OraEvento": ora_ev,
+            "CodiceOrdine": ordine,
+            "TipoTitolo": tipo,
+            "Evento": f"{data_ev} {ora_ev} {cod_loc}".strip(),
+        }
+
+    def _compact_bucket(bucket: Dict[str, int]) -> Dict[str, int]:
+        return {k: int(v) for k, v in bucket.items() if int(v or 0) != 0}
+
+    def _state_to_rca_field(stato: str) -> Optional[str]:
+        stato = (stato or "").strip().upper()
+        if len(stato) < 2:
+            return None
+        prefix = stato[0]
+        suffix = stato[1]
+        trad_dig = "Tradiz" if suffix == "T" else ("Digitali" if suffix == "D" else None)
+        if trad_dig is None:
+            return None
+        cat = None
+        if prefix == "V":
+            cat = "NoAccesso"
+        elif prefix == "Z":
+            cat = "Automatizzati"
+        elif prefix == "M":
+            cat = "Manuali"
+        elif prefix == "A":
+            cat = "Annullati"
+        elif prefix == "D":
+            cat = "Daspati"
+        elif prefix in {"F", "R"}:
+            cat = "Rubati"
+        elif prefix == "B":
+            cat = "BL"
+        if cat is None:
+            return None
+        return f"TotaleTitoli{cat}{trad_dig}"
+
+    def _sample_lta_rows(rows: List[Dict[str, Any]], limit: int = 5) -> List[str]:
+        out: List[str] = []
+        for r in rows[:limit]:
+            kk: TicketKey = r["key"]
+            out.append(
+                f"{kk.short()} stato={r.get('StatoTitolo','')} ann={r.get('Annullamento','')} file={r.get('_file','')}"
+            )
+        return out
+
+    def _sample_rca_rows(rows: List[Dict[str, Any]], limit: int = 5) -> List[str]:
+        out: List[str] = []
+        for rr in rows[:limit]:
+            nz = _compact_bucket({fld: int(rr.get(fld, 0) or 0) for fld in rca_fields})
+            out.append(
+                f"file={rr.get('_file','')} valori_non_zero={nz}"
+            )
+        return out
+
+    def _sum_rca_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+        if not rows:
+            return {}
+        summed = dict(rows[0])
+        for fld in rca_fields:
+            summed[fld] = sum(int(rr.get(fld, 0) or 0) for rr in rows)
+        return summed
+
     # Aggregazione LTA
     lta_rca: Dict[Tuple[str, str, str, str, str, str, str], Dict[str, int]] = defaultdict(_empty_rca_bucket)
+    lta_rows_by_key: Dict[Tuple[str, str, str, str, str, str, str], List[Dict[str, Any]]] = defaultdict(list)
     unknown_lta_states: Counter = Counter()
 
     for r in lta_recs:
@@ -1414,6 +1493,7 @@ def run_checks(
             (r.get("TipoTitolo") or "").strip(),
         )
         b = lta_rca[key_rca]
+        lta_rows_by_key[key_rca].append(r)
         b["TotaleTitoliLTA"] += 1
 
         stato = (r.get("StatoTitolo") or "").strip().upper()
@@ -1464,7 +1544,8 @@ def run_checks(
 
     # Mappa RCA per chiave comparabile
     rca_map: Dict[Tuple[str, str, str, str, str, str, str], Dict[str, Any]] = {}
-    dup_rca = 0
+    rca_rows_by_key: Dict[Tuple[str, str, str, str, str, str, str], List[Dict[str, Any]]] = defaultdict(list)
+    rca_files_by_key: Dict[Tuple[str, str, str, str, str, str, str], List[str]] = defaultdict(list)
     for rr in rca_recs:
         key_rca = (
             (rr.get("SistemaEmissione") or "").strip(),
@@ -1475,30 +1556,58 @@ def run_checks(
             (rr.get("CodiceOrdine") or "").strip(),
             (rr.get("TipoTitolo") or "").strip(),
         )
-        if key_rca in rca_map:
-            dup_rca += 1
-        rca_map.setdefault(key_rca, rr)
+        rca_rows_by_key[key_rca].append(rr)
+        rca_files_by_key[key_rca].append(str(rr.get("_file") or ""))
 
-    if dup_rca:
+    for key_rca, rows in rca_rows_by_key.items():
+        rca_map[key_rca] = _sum_rca_rows(rows)
+
+    multi_entry_keys = [key for key, rows in rca_rows_by_key.items() if len(rows) > 1]
+    if multi_entry_keys:
         issues.append(Issue(
-            severity="WARN",
+            severity="INFO",
             check="RCA_internal",
-            message="RCA contiene chiavi duplicate (stesso evento/ordine/tipo) - viene usata la prima occorrenza",
-            context={"duplicate_keys": dup_rca},
+            message="RCA contiene piu entry sulla stessa chiave: nel confronto vengono sommate",
+            context={"Chiavi_multi_entry": len(multi_entry_keys), "Entry_aggiuntive_totali": sum(len(rca_rows_by_key[k]) - 1 for k in multi_entry_keys)},
         ))
+        for key_rca in sorted(multi_entry_keys):
+            key_ctx = _format_key_rca(key_rca)
+            rows = rca_rows_by_key[key_rca]
+            summed_row = rca_map.get(key_rca, {})
+            issues.append(Issue(
+                severity="INFO",
+                check="RCA_internal",
+                message="Chiave RCA con piu entry: nel confronto viene usata la somma delle occorrenze",
+                context={
+                    **key_ctx,
+                    "Occorrenze": len(rows),
+                    "RCA_files": sorted({str(r.get("_file") or "") for r in rows if str(r.get("_file") or "")}),
+                    "Entry_RCA": _sample_rca_rows(rows),
+                    "Somma_usata_per_il_confronto": _compact_bucket({fld: int(summed_row.get(fld, 0) or 0) for fld in rca_fields}),
+                },
+            ))
 
     # Confronto
     all_keys = set(lta_rca.keys()) | set(rca_map.keys())
     for key_rca in sorted(all_keys):
         lta_bucket = lta_rca.get(key_rca)
         rca_rec = rca_map.get(key_rca)
+        key_ctx = _format_key_rca(key_rca)
+        lta_rows = lta_rows_by_key.get(key_rca, [])
+        lta_files = sorted({str(r.get("_file") or "") for r in lta_rows if str(r.get("_file") or "")})
+        rca_files = sorted({x for x in rca_files_by_key.get(key_rca, []) if x})
+        lta_state_counts = dict(Counter((r.get("StatoTitolo") or "").strip() for r in lta_rows if (r.get("StatoTitolo") or "").strip()))
 
         if lta_bucket is None:
             issues.append(Issue(
                 severity="WARN",
                 check="LTA_vs_RCA",
                 message="Chiave presente in RCA ma assente in LTA",
-                context={"key": "/".join(key_rca)},
+                context={
+                    **key_ctx,
+                    "RCA_files": rca_files,
+                    "RCA_valori_non_zero": _compact_bucket({fld: int(rca_rec.get(fld, 0) or 0) for fld in rca_fields}) if rca_rec else {},
+                },
             ))
             continue
         if rca_rec is None:
@@ -1506,7 +1615,13 @@ def run_checks(
                 severity="WARN",
                 check="LTA_vs_RCA",
                 message="Chiave presente in LTA ma assente in RCA",
-                context={"key": "/".join(key_rca)},
+                context={
+                    **key_ctx,
+                    "LTA_files": lta_files,
+                    "LTA_stati": lta_state_counts,
+                    "LTA_valori_non_zero": _compact_bucket(lta_bucket),
+                    "LTA_titoli_esempio": _sample_lta_rows(lta_rows),
+                },
             ))
             continue
 
@@ -1514,14 +1629,22 @@ def run_checks(
             lta_v = int(lta_bucket.get(fld, 0))
             rca_v = int(rca_rec.get(fld, 0) or 0)
             if lta_v != rca_v:
+                matching_lta_rows = [r for r in lta_rows if _state_to_rca_field(r.get("StatoTitolo") or "") == fld]
                 issues.append(Issue(
                     severity="WARN",
                     check="LTA_vs_RCA",
                     message=f"Differenza conteggio {fld} tra LTA e RCA",
                     context={
-                        "key": "/".join(key_rca),
-                        "lta": lta_v,
-                        "rca": rca_v,
+                        **key_ctx,
+                        "LTA": lta_v,
+                        "RCA": rca_v,
+                        "Delta_LTA_meno_RCA": lta_v - rca_v,
+                        "LTA_files": lta_files,
+                        "RCA_files": rca_files,
+                        "LTA_stati": lta_state_counts,
+                        "LTA_titoli_categoria_esempio": _sample_lta_rows(matching_lta_rows),
+                        "LTA_titoli_chiave_esempio": _sample_lta_rows(lta_rows),
+                        "RCA_valori_non_zero": _compact_bucket({f: int(rca_rec.get(f, 0) or 0) for f in rca_fields}),
                     },
                 ))
 
@@ -1542,8 +1665,10 @@ def run_checks(
                 message="RCA: TotaleTitoliLTA diverso dalla somma delle categorie",
                 context={
                     "evento": f"{rr.get('DataEvento')} {rr.get('OraEvento')} {rr.get('CodiceLocale')} Ord={rr.get('CodiceOrdine')} Tipo={rr.get('TipoTitolo')}",
+                    "file": rr.get("_file"),
                     "totale": tot,
                     "somma_categorie": sum_cats,
+                    "valori_non_zero": _compact_bucket({fld: int(rr.get(fld, 0) or 0) for fld in rca_fields}),
                 },
             ))
 
@@ -1620,9 +1745,49 @@ def run_checks(
     # Nota: LTA è giornaliero, RPM è mensile. Per evitare falsi mismatch, confrontiamo solo
     # le chiavi evento/ordine/tipo presenti in LTA (quindi, gli eventi "in scope" per il giorno analizzato).
 
+    def _format_key6(key6: Tuple[str, str, str, str, str, str]) -> Dict[str, str]:
+        cf_org, cod_loc, data_ev, ora_ev, ordine, tipo = key6
+        return {
+            "CFOrganizzatore": cf_org,
+            "CodiceLocale": cod_loc,
+            "DataEvento": data_ev,
+            "OraEvento": ora_ev,
+            "CodiceOrdine": ordine,
+            "TipoTitolo": tipo,
+            "Evento": f"{data_ev} {ora_ev} {cod_loc}".strip(),
+        }
+
+    def _sample_rpm_rows(rows: List[Dict[str, Any]], limit: int = 6) -> List[str]:
+        out: List[str] = []
+        for rr in rows[:limit]:
+            parts = [f"kind={rr.get('kind','')}"]
+            if rr.get("Quantita") not in (None, ""):
+                parts.append(f"q={int(rr.get('Quantita', 0) or 0)}")
+            if int(rr.get("CorrispettivoLordo", 0) or 0):
+                parts.append(f"Corr={int(rr.get('CorrispettivoLordo', 0) or 0)}")
+            if int(rr.get("Prevendita", 0) or 0):
+                parts.append(f"Prev={int(rr.get('Prevendita', 0) or 0)}")
+            if int(rr.get("ImportoFigurativo", 0) or 0):
+                parts.append(f"ImpFig={int(rr.get('ImportoFigurativo', 0) or 0)}")
+            if int(rr.get("IVAFigurativa", 0) or 0):
+                parts.append(f"IVAFig={int(rr.get('IVAFigurativa', 0) or 0)}")
+            parts.append(f"file={rr.get('_file','')}")
+            out.append(" ".join(parts))
+        return out
+
+    def _sample_lta_titles_for_gap(rows: List[Dict[str, Any]], limit: int = 6) -> List[str]:
+        out: List[str] = []
+        for r in rows[:limit]:
+            kk: TicketKey = r["key"]
+            out.append(
+                f"{kk.short()} stato={r.get('StatoTitolo','')} ann={r.get('Annullamento','')} abbonamento={r.get('Abbonamento','')} file={r.get('_file','')}"
+            )
+        return out
+
     # Aggregazione LTA
     lta_qty_accesso: Dict[Tuple[str, str, str, str, str, str], int] = Counter()
     lta_qty_ann: Dict[Tuple[str, str, str, str, str, str], int] = Counter()
+    lta_rows_by_key6: Dict[Tuple[str, str, str, str, str, str], List[Dict[str, Any]]] = defaultdict(list)
 
     for r in lta_recs:
         key6 = (
@@ -1633,6 +1798,7 @@ def run_checks(
             (r.get("CodiceOrdine") or "").strip(),
             (r.get("TipoTitolo") or "").strip(),
         )
+        lta_rows_by_key6[key6].append(r)
         lta_qty_accesso[key6] += 1  # include anche titoli poi annullati (sono comunque titoli emessi)
         if (r.get("Annullamento") or "").upper() == "S":
             lta_qty_ann[key6] += 1
@@ -1640,6 +1806,8 @@ def run_checks(
     # Aggregazione RPM
     rpm_qty_accesso: Dict[Tuple[str, str, str, str, str, str], int] = Counter()
     rpm_qty_ann: Dict[Tuple[str, str, str, str, str, str], int] = Counter()
+    rpm_related_by_key6: Dict[Tuple[str, str, str, str, str, str], List[Dict[str, Any]]] = defaultdict(list)
+    rpm_abbo_qty_by_key6: Dict[Tuple[str, str, str, str, str, str], int] = Counter()
 
     for rr in rpm_recs:
         kind = rr.get("kind") or ""
@@ -1654,30 +1822,83 @@ def run_checks(
         q = int(rr.get("Quantita", 0) or 0)
         if kind in ("TitoliAccesso", "TitoliAccessoIVAPreassolta"):
             rpm_qty_accesso[key6] += q
+            rpm_related_by_key6[key6].append(rr)
         elif kind in ("TitoliAnnullati", "TitoliIVAPreassoltaAnnullati"):
             rpm_qty_ann[key6] += q
+            rpm_related_by_key6[key6].append(rr)
+        elif kind in ("BigliettiAbbonamento", "AbbonamentiFissi"):
+            rpm_abbo_qty_by_key6[key6] += q
+            rpm_related_by_key6[key6].append(rr)
 
     # Confronto per chiavi presenti in LTA
     for key6 in sorted(lta_qty_accesso.keys()):
         lta_acc = int(lta_qty_accesso.get(key6, 0))
         lta_ann = int(lta_qty_ann.get(key6, 0))
+        key_ctx = _format_key6(key6)
+        lta_rows = lta_rows_by_key6.get(key6, [])
+        lta_ann_rows = [r for r in lta_rows if (r.get("Annullamento") or "").upper() == "S"]
+        lta_non_ann_rows = [r for r in lta_rows if (r.get("Annullamento") or "").upper() != "S"]
+        lta_abbo_rows = [r for r in lta_non_ann_rows if (r.get("Abbonamento") or "").upper() == "S"]
+        rpm_related_rows = rpm_related_by_key6.get(key6, [])
+        rpm_abbo_rows = [rr for rr in rpm_related_rows if (rr.get("kind") or "") in ("BigliettiAbbonamento", "AbbonamentiFissi")]
+        rpm_abbo_qty = int(rpm_abbo_qty_by_key6.get(key6, 0))
+        lta_files = sorted({str(r.get("_file") or "") for r in lta_rows if str(r.get("_file") or "")})
+        probable_note = None
 
         rpm_acc = rpm_qty_accesso.get(key6, None)
         rpm_an = rpm_qty_ann.get(key6, None)
+        rpm_acc_base = int(rpm_acc or 0)
+        rpm_acc_total = rpm_acc_base + rpm_abbo_qty
+        rpm_access_like_present = (rpm_acc is not None) or (rpm_abbo_qty > 0)
 
-        if rpm_acc is None:
+        if rpm_abbo_qty > 0 and len(lta_abbo_rows) > 0:
+            delta_acc_tmp = lta_acc - rpm_acc_base
+            if delta_acc_tmp == len(lta_abbo_rows) == rpm_abbo_qty:
+                probable_note = "Possibile classificazione RPM su AbbonamentiFissi/BigliettiAbbonamento per i titoli LTA marcati Abbonamento='S'"
+            elif rpm_acc is None and lta_acc == len(lta_abbo_rows) == rpm_abbo_qty:
+                probable_note = "Tutti i titoli LTA di questa chiave risultano abbonamenti e in RPM compaiono solo come AbbonamentiFissi/BigliettiAbbonamento"
+
+        if not rpm_access_like_present:
             issues.append(Issue(
                 severity="WARN",
                 check="LTA_vs_RPM",
-                message="RPM: chiave (evento/ordine/tipo) presente in LTA ma assente in RPM (TitoliAccesso)",
-                context={"key": "/".join(key6), "lta_TitoliAccesso": lta_acc},
+                message="RPM: chiave (evento/ordine/tipo) presente in LTA ma assente in RPM (TitoliAccesso/Abbonamenti)",
+                context={
+                    **key_ctx,
+                    "LTA_TitoliAccesso": lta_acc,
+                    "LTA_files": lta_files,
+                    "LTA_titoli_candidati": _sample_lta_titles_for_gap(lta_non_ann_rows),
+                    "LTA_titoli_abbonamento_candidati": _sample_lta_titles_for_gap(lta_abbo_rows),
+                    "RPM_TitoliAccesso": rpm_acc_base,
+                    "RPM_entry_correlate": _sample_rpm_rows(rpm_related_rows),
+                    "RPM_abbonamenti_correlati": _sample_rpm_rows(rpm_abbo_rows),
+                    "RPM_q_Abbonamenti": rpm_abbo_qty,
+                    "Nota_probabile": probable_note,
+                },
             ))
-        elif int(rpm_acc) != lta_acc:
+        elif rpm_acc_total != lta_acc:
+            delta_acc = lta_acc - rpm_acc_total
+            candidate_rows = lta_abbo_rows if delta_acc > 0 and len(lta_abbo_rows) == delta_acc else lta_non_ann_rows
             issues.append(Issue(
                 severity="WARN",
                 check="LTA_vs_RPM",
-                message="Differenza TitoliAccesso tra LTA e RPM per evento/ordine/tipo",
-                context={"key": "/".join(key6), "lta": lta_acc, "rpm": int(rpm_acc)},
+                message="Differenza TitoliAccesso tra LTA e RPM per evento/ordine/tipo (inclusi AbbonamentiFissi/BigliettiAbbonamento)",
+                context={
+                    **key_ctx,
+                    "LTA": lta_acc,
+                    "RPM_TitoliAccesso": rpm_acc_base,
+                    "RPM_Abbonamenti": rpm_abbo_qty,
+                    "RPM_TotaleConsiderato": rpm_acc_total,
+                    "Delta_LTA_meno_RPM": delta_acc,
+                    "LTA_files": lta_files,
+                    "LTA_titoli_candidati": _sample_lta_titles_for_gap(candidate_rows),
+                    "LTA_titoli_chiave_esempio": _sample_lta_titles_for_gap(lta_non_ann_rows),
+                    "LTA_titoli_abbonamento_candidati": _sample_lta_titles_for_gap(lta_abbo_rows),
+                    "RPM_entry_correlate": _sample_rpm_rows(rpm_related_rows),
+                    "RPM_abbonamenti_correlati": _sample_rpm_rows(rpm_abbo_rows),
+                    "RPM_q_Abbonamenti": rpm_abbo_qty,
+                    "Nota_probabile": probable_note,
+                },
             ))
 
         if rpm_an is None:
@@ -1687,7 +1908,13 @@ def run_checks(
                     severity="WARN",
                     check="LTA_vs_RPM",
                     message="RPM: chiave presente in LTA ma assente in RPM (TitoliAnnullati)",
-                    context={"key": "/".join(key6), "lta_TitoliAnnullati": lta_ann},
+                    context={
+                        **key_ctx,
+                        "LTA_TitoliAnnullati": lta_ann,
+                        "LTA_titoli_annullati_candidati": _sample_lta_titles_for_gap(lta_ann_rows),
+                        "RPM_entry_correlate": _sample_rpm_rows(rpm_related_rows),
+                        "RPM_abbonamenti_correlati": _sample_rpm_rows(rpm_abbo_rows),
+                    },
                 ))
         else:
             if int(rpm_an) != lta_ann:
@@ -1695,7 +1922,15 @@ def run_checks(
                     severity="WARN",
                     check="LTA_vs_RPM",
                     message="Differenza TitoliAnnullati tra LTA e RPM per evento/ordine/tipo",
-                    context={"key": "/".join(key6), "lta": lta_ann, "rpm": int(rpm_an)},
+                    context={
+                        **key_ctx,
+                        "LTA": lta_ann,
+                        "RPM": int(rpm_an),
+                        "Delta_LTA_meno_RPM": lta_ann - int(rpm_an),
+                        "LTA_titoli_annullati_candidati": _sample_lta_titles_for_gap(lta_ann_rows),
+                        "RPM_entry_correlate": _sample_rpm_rows(rpm_related_rows),
+                        "RPM_abbonamenti_correlati": _sample_rpm_rows(rpm_abbo_rows),
+                    },
                 ))
 
 # 7) Fiscal checks - LOG IVA/ISI & ImponibileIntrattenimenti
@@ -2808,10 +3043,29 @@ def build_html_report(summary: Dict[str, Any], issues: List[Issue], metrics: Dic
         )
 
     # Issues grouped
+    def _render_issue_value(val: Any) -> str:
+        if isinstance(val, dict):
+            if not val:
+                return "<span class='muted'>n/d</span>"
+            parts = []
+            for kk, vv in val.items():
+                parts.append(f"<div><code>{html.escape(str(kk))}</code>: {html.escape(str(vv))}</div>")
+            return "".join(parts)
+        if isinstance(val, (list, tuple, set)):
+            vals = list(val)
+            if not vals:
+                return "<span class='muted'>n/d</span>"
+            return "".join(f"<div>{html.escape(str(x))}</div>" for x in vals)
+        sval = str(val)
+        return html.escape(sval) if sval else "<span class='muted'>n/d</span>"
+
     issues_sorted = sorted(issues, key=lambda x: ({"ERROR":0,"WARN":1,"INFO":2}.get(x.severity,9), x.check, x.message))
     issue_blocks = []
     for iss in issues_sorted:
-        ctx = "<br/>".join(f"<b>{html.escape(str(k))}</b>: {html.escape(str(v))}" for k, v in iss.context.items())
+        ctx = "".join(
+            f"<div><b>{html.escape(str(k))}</b>: {_render_issue_value(v)}</div>"
+            for k, v in iss.context.items()
+        )
         issue_blocks.append(
             f"<div class='issue {iss.severity.lower()}'>"
             f"<div class='issue-head'><span class='sev'>{html.escape(iss.severity)}</span> "
@@ -3137,7 +3391,7 @@ def build_html_report(summary: Dict[str, Any], issues: List[Issue], metrics: Dic
         vertical-align: top;
     }}
     th {{
-        text-align: left;
+        text-align: center;
         position: sticky;
         top: 0;
         background: #f9fafb;
@@ -3146,7 +3400,7 @@ def build_html_report(summary: Dict[str, Any], issues: List[Issue], metrics: Dic
         color: #374151;
     }}
     td.num {{
-        text-align: right;
+        text-align: center;
         white-space: nowrap;
         font-variant-numeric: tabular-nums;
     }}
@@ -3230,6 +3484,7 @@ def build_html_report(summary: Dict[str, Any], issues: List[Issue], metrics: Dic
 <header>
   <h1>Report consistenza biglietteria</h1>
   <div class="sub">Generato: {html.escape(summary.get('generated_at',''))}</div>
+  <div class="sub">Versione script: {html.escape(SCRIPT_VERSION)}</div>
 </header>
 <div class="wrap">
   <div class="cards">
