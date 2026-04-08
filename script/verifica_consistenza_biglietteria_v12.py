@@ -4,10 +4,10 @@
 verifica_consistenza_biglietteria.py
 
 Verifica di consistenza (tecnica + fiscale) tra file SIAE/biglietteria:
-- LOG_*.xsi  : Log transazioni (emissioni/annullamenti)
-- LTA_*.xsi  : Lista titoli accesso (stato titoli)
-- RCA_*.xsi  : Riepilogo controllo accessi
-- RPM_*.xsi  : Riepilogo mensile
+- LOG_*.xsi/.xml  : Log transazioni (emissioni/annullamenti)
+- LTA_*.xsi/.xml/.txt  : Lista titoli accesso (stato titoli)
+- RCA_*.xsi/.xml/.txt  : Riepilogo controllo accessi
+- RPM_*.xsi/.xml  : Riepilogo mensile
 - aliquote_tab1.csv (opzionale ma consigliato): mappa TipoGenere -> aliquote IVA/ISI (Tabella 1)
 
 Controlli principali:
@@ -289,6 +289,138 @@ def _find_text(el: Optional[ET.Element], path: str) -> str:
     return found.text.strip() if found is not None and found.text else ""
 
 
+def _read_text_with_fallback(path: str) -> str:
+    for enc in ("utf-8-sig", "utf-8", "cp1252"):
+        try:
+            with open(path, "r", encoding=enc, errors="replace") as f:
+                return f.read()
+        except Exception:
+            pass
+    with open(path, "r", errors="replace") as f:
+        return f.read()
+
+
+def _slice_1based(s: str, pos: int, length: int) -> str:
+    return s[pos - 1 : pos - 1 + length]
+
+
+def _parse_fixed_width_record(
+    raw: str,
+    fields: Iterable[Tuple[str, int, int, str]],
+) -> Dict[str, str]:
+    rec: Dict[str, str] = {}
+    for name, pos, ln, typ in fields:
+        val = _slice_1based(raw, pos, ln)
+        rec[name] = val.rstrip() if typ == "A" else val.strip()
+    return rec
+
+
+def _is_xml_path(path: str) -> bool:
+    return path.lower().endswith((".xsi", ".xml"))
+
+
+def _is_txt_path(path: str) -> bool:
+    return path.lower().endswith(".txt")
+
+
+def _blank_if_all_zero(raw: Any) -> str:
+    s = str(raw or "").strip()
+    if not s or set(s) == {"0"}:
+        return ""
+    return s
+
+
+LTA_TXT_RECORD_LEN = 518
+LTA_TXT_FIELDS: List[Tuple[str, int, int, str]] = [
+    ("CFTitolareCA", 1, 16, "A"),
+    ("CodiceSistemaCA", 17, 8, "A"),
+    ("CFOrganizzatore", 25, 16, "A"),
+    ("CodiceLocale", 41, 13, "N"),
+    ("DataEvento", 54, 8, "N"),
+    ("OraEvento", 62, 4, "N"),
+    ("TitoloEvento", 66, 40, "A"),
+    ("TipoGenere", 106, 2, "A"),
+    ("DataAperturaAccessi", 108, 8, "N"),
+    ("OraAperturaAccessi", 116, 6, "N"),
+    ("SistemaEmissione", 122, 8, "A"),
+    ("CartaAttivazione", 130, 8, "A"),
+    ("ProgressivoFiscale", 138, 8, "N"),
+    ("SigilloFiscale", 146, 16, "A"),
+    ("DataEmissione", 162, 8, "N"),
+    ("OraEmissione", 170, 4, "N"),
+    ("TipoTitolo", 174, 2, "A"),
+    ("CorrispettivoLordo", 176, 9, "N"),
+    ("CodiceOrdinePosto", 185, 2, "A"),
+    ("IdentificativoPosto", 187, 6, "A"),
+    ("CFAbbonamento", 193, 16, "A"),
+    ("CodiceAbbonamento", 209, 8, "A"),
+    ("ProgressivoAbbonamento", 217, 8, "N"),
+    ("QuantitaEventiAbilitati", 225, 4, "N"),
+    ("DataAnnullamento", 229, 8, "N"),
+    ("OraAnnullamento", 237, 4, "N"),
+    ("CartaAttivazioneANN", 241, 8, "A"),
+    ("SigilloFiscaleANN", 249, 16, "A"),
+    ("ProgressivoFiscaleANN", 265, 8, "N"),
+    ("CodSupportoId", 273, 2, "A"),
+    ("TipoSupportoId", 275, 32, "A"),
+    ("IdSupporto", 307, 32, "A"),
+    ("IdSupportoAlt", 339, 32, "A"),
+    ("CognomePartecipante", 371, 40, "A"),
+    ("NomePartecipante", 411, 30, "A"),
+    ("DataNascitaPartecipante", 441, 8, "N"),
+    ("LuogoNascitaPartecipante", 449, 40, "A"),
+    ("DataInserimentoLTA", 489, 8, "N"),
+    ("OraInserimentoLTA", 497, 6, "N"),
+    ("Stato", 503, 2, "A"),
+    ("DataIngresso", 505, 8, "N"),
+    ("OraIngresso", 513, 6, "N"),
+]
+
+
+RCA_TXT_FIELDS_01: List[Tuple[str, int, int, str]] = [
+    ("TipoRecord", 1, 2, "A"),
+    ("CFTitolareCA", 3, 16, "A"),
+    ("DenomTitolareCA", 19, 30, "A"),
+    ("SistemaCA", 49, 8, "A"),
+    ("CFOrganizzatore", 57, 16, "A"),
+    ("DenomOrganizzatore", 73, 30, "A"),
+    ("TipologiaOrganizzatore", 103, 1, "A"),
+    ("SpettacoloIntrattenimento", 104, 1, "A"),
+    ("IncidenzaIntrattenimento", 105, 3, "N"),
+    ("DenomLocale", 108, 30, "A"),
+    ("CodiceLocale", 138, 13, "N"),
+    ("DataInizioEvento", 151, 8, "N"),
+    ("OraInizioEvento", 159, 4, "N"),
+    ("TipoEvento", 163, 2, "A"),
+    ("TitoloEvento", 165, 40, "A"),
+    ("Autore", 205, 30, "A"),
+    ("Esecutore", 235, 40, "A"),
+    ("NazionalitaFilm", 275, 4, "A"),
+    ("NumeroOpereRappresentate", 279, 3, "N"),
+]
+
+
+RCA_TXT_FIXED_14_15: List[Tuple[str, int, int, str]] = [
+    ("TipoRecord", 1, 2, "A"),
+    ("SistemaCA", 3, 8, "A"),
+    ("CFTitolareCA", 11, 16, "A"),
+    ("CFOrganizzatore", 27, 16, "A"),
+    ("CFTitolareEmissione", 43, 16, "A"),
+    ("SistemaEmissione", 59, 8, "A"),
+    ("CodiceLocale", 67, 13, "N"),
+    ("DataInizioEvento", 80, 8, "N"),
+    ("OraInizioEvento", 88, 4, "N"),
+    ("OrdinePosto", 92, 2, "A"),
+    ("Capienza", 94, 7, "N"),
+    ("OccorrenzeTipiTitolo", 101, 2, "N"),
+]
+RCA_TXT_GROUP_LEN = 107
+RCA_TXT_STATUS_ORDER = [
+    "TotaleLTA",
+    "VT", "VD", "ZT", "ZD", "MT", "MD", "AT", "AD", "DT", "DD", "FT", "FD", "BT", "BD",
+]
+
+
 def parse_log(path: str) -> List[Dict[str, Any]]:
     tree = ET.parse(path)
     root = tree.getroot()
@@ -353,7 +485,7 @@ def parse_log(path: str) -> List[Dict[str, Any]]:
 
 
 
-def parse_lta(path: str) -> List[Dict[str, Any]]:
+def parse_lta_xml(path: str) -> List[Dict[str, Any]]:
     """
     Parsing LTA.
 
@@ -423,8 +555,180 @@ def parse_lta(path: str) -> List[Dict[str, Any]]:
     return out
 
 
+def parse_lta_txt(path: str) -> List[Dict[str, Any]]:
+    out: List[Dict[str, Any]] = []
+    content = _read_text_with_fallback(path)
+    for raw_line in content.splitlines():
+        line = raw_line.rstrip("\r\n")
+        if not line.strip():
+            continue
+        if len(line) != LTA_TXT_RECORD_LEN:
+            continue
 
-def parse_rca(path: str) -> List[Dict[str, Any]]:
+        rec = _parse_fixed_width_record(line, LTA_TXT_FIELDS)
+        key = TicketKey(
+            sistema=(rec.get("SistemaEmissione") or "").strip(),
+            carta=(rec.get("CartaAttivazione") or "").strip(),
+            progressivo=(rec.get("ProgressivoFiscale") or "").strip(),
+            sigillo=(rec.get("SigilloFiscale") or "").strip(),
+        )
+
+        data_ann = _blank_if_all_zero(rec.get("DataAnnullamento"))
+        ora_ann = _blank_if_all_zero(rec.get("OraAnnullamento"))
+        carta_ann = _blank_if_all_zero(rec.get("CartaAttivazioneANN"))
+        prog_ann = _blank_if_all_zero(rec.get("ProgressivoFiscaleANN"))
+        sig_ann = _blank_if_all_zero(rec.get("SigilloFiscaleANN"))
+        prog_abbonamento = _blank_if_all_zero(rec.get("ProgressivoAbbonamento"))
+        ann_fields = (
+            data_ann,
+            ora_ann,
+            carta_ann,
+            prog_ann,
+            sig_ann,
+        )
+        is_ann = any(x for x in ann_fields)
+        support_id = (rec.get("IdSupporto") or "").strip() or (rec.get("IdSupportoAlt") or "").strip()
+        has_abbonamento = any(
+            x for x in (
+                (rec.get("CFAbbonamento") or "").strip(),
+                (rec.get("CodiceAbbonamento") or "").strip(),
+                prog_abbonamento,
+            )
+        )
+
+        out.append({
+            "_file": os.path.basename(path),
+            "key": key,
+            "CFOrganizzatore": (rec.get("CFOrganizzatore") or "").strip(),
+            "CodiceLocale": (rec.get("CodiceLocale") or "").strip(),
+            "DataEvento": (rec.get("DataEvento") or "").strip(),
+            "OraEvento": (rec.get("OraEvento") or "").strip(),
+            "TipoGenere": (rec.get("TipoGenere") or "").strip(),
+            "TitoloEvento": (rec.get("TitoloEvento") or "").strip(),
+            "StatoTitolo": (rec.get("Stato") or "").strip(),
+            "Annullamento": "S" if is_ann else "N",
+            "TipoTitolo": (rec.get("TipoTitolo") or "").strip(),
+            "CodiceOrdine": (rec.get("CodiceOrdinePosto") or "").strip(),
+            "CorrispettivoLordo_LTA": to_int(rec.get("CorrispettivoLordo"), 0),
+            "Abbonamento": "S" if has_abbonamento else "N",
+            "CodSupporto": (rec.get("CodSupportoId") or "").strip(),
+            "IdSupporto": support_id,
+            "DataEmissione": (rec.get("DataEmissione") or "").strip(),
+            "OraEmissione": (rec.get("OraEmissione") or "").strip(),
+            "DataLTA": (rec.get("DataInserimentoLTA") or "").strip(),
+            "OraLTA": (rec.get("OraInserimentoLTA") or "").strip(),
+            "DataANN": data_ann,
+            "OraANN": ora_ann,
+            "CartaAttivazioneANN": carta_ann,
+            "ProgressivoFiscaleANN": prog_ann,
+            "SigilloFiscaleANN": sig_ann,
+        })
+
+    return out
+
+
+def parse_lta(path: str) -> List[Dict[str, Any]]:
+    if _is_xml_path(path):
+        return parse_lta_xml(path)
+    if _is_txt_path(path):
+        return parse_lta_txt(path)
+    raise ValueError(f"Formato LTA non supportato: {path}")
+
+
+def _rca_txt_split_records(content: str) -> List[str]:
+    if "&" in content:
+        flat = content.replace("\r", "").replace("\n", "")
+        return [p.strip() for p in flat.split("&") if p.strip()]
+    return [ln.strip("\r\n") for ln in content.splitlines() if ln.strip()]
+
+
+def _parse_rca_txt_record_01(rec: str) -> Dict[str, str]:
+    return _parse_fixed_width_record(rec, RCA_TXT_FIELDS_01)
+
+
+def _parse_rca_txt_record_14_15(rec: str) -> Dict[str, Any]:
+    d: Dict[str, Any] = _parse_fixed_width_record(rec, RCA_TXT_FIXED_14_15)
+    occ = to_int(d.get("OccorrenzeTipiTitolo"), 0)
+    groups: List[Dict[str, int]] = []
+    base0 = 102
+
+    for i in range(occ):
+        start = base0 + i * RCA_TXT_GROUP_LEN
+        chunk = rec[start : start + RCA_TXT_GROUP_LEN]
+        if len(chunk) < RCA_TXT_GROUP_LEN:
+            break
+        tipo_titolo = chunk[0:2].strip()
+        nums = [chunk[2 + j * 7 : 2 + (j + 1) * 7] for j in range(15)]
+        group: Dict[str, int] = {"TipoTitolo": tipo_titolo}  # type: ignore[assignment]
+        for j, key in enumerate(RCA_TXT_STATUS_ORDER):
+            group[key] = to_int(nums[j], 0)
+        groups.append(group)
+
+    d["Gruppi"] = groups
+    return d
+
+
+def parse_rca_txt(path: str) -> List[Dict[str, Any]]:
+    content = _read_text_with_fallback(path)
+    records = _rca_txt_split_records(content)
+    events: Dict[Tuple[str, str, str, str], Dict[str, str]] = {}
+    parsed_14_15: List[Dict[str, Any]] = []
+
+    for rec in records:
+        rec_type = rec[:2]
+        if rec_type == "01":
+            evt = _parse_rca_txt_record_01(rec)
+            key = (
+                (evt.get("CFOrganizzatore") or "").strip(),
+                (evt.get("CodiceLocale") or "").strip(),
+                (evt.get("DataInizioEvento") or "").strip(),
+                (evt.get("OraInizioEvento") or "").strip(),
+            )
+            events[key] = evt
+        elif rec_type in {"14", "15"}:
+            parsed_14_15.append(_parse_rca_txt_record_14_15(rec))
+
+    out: List[Dict[str, Any]] = []
+    for row in parsed_14_15:
+        evt = events.get((
+            (row.get("CFOrganizzatore") or "").strip(),
+            (row.get("CodiceLocale") or "").strip(),
+            (row.get("DataInizioEvento") or "").strip(),
+            (row.get("OraInizioEvento") or "").strip(),
+        ), {})
+        for group in row.get("Gruppi", []):
+            out.append({
+                "_file": os.path.basename(path),
+                "CFOrganizzatore": (row.get("CFOrganizzatore") or "").strip(),
+                "CodiceLocale": (row.get("CodiceLocale") or "").strip(),
+                "DataEvento": (row.get("DataInizioEvento") or "").strip(),
+                "OraEvento": (row.get("OraInizioEvento") or "").strip(),
+                "SistemaEmissione": (row.get("SistemaEmissione") or "").strip(),
+                "IncidenzaIntrattenimento": to_int(evt.get("IncidenzaIntrattenimento"), 0),
+                "CodiceOrdine": (row.get("OrdinePosto") or "").strip(),
+                "Capienza": to_int(row.get("Capienza"), 0),
+                "TipoTitolo": str(group.get("TipoTitolo", "") or "").strip(),
+                "TotaleTitoliLTA": to_int(group.get("TotaleLTA"), 0),
+                "TotaleTitoliNoAccessoTradiz": to_int(group.get("VT"), 0),
+                "TotaleTitoliNoAccessoDigitali": to_int(group.get("VD"), 0),
+                "TotaleTitoliAutomatizzatiTradiz": to_int(group.get("ZT"), 0),
+                "TotaleTitoliAutomatizzatiDigitali": to_int(group.get("ZD"), 0),
+                "TotaleTitoliManualiTradiz": to_int(group.get("MT"), 0),
+                "TotaleTitoliManualiDigitali": to_int(group.get("MD"), 0),
+                "TotaleTitoliAnnullatiTradiz": to_int(group.get("AT"), 0),
+                "TotaleTitoliAnnullatiDigitali": to_int(group.get("AD"), 0),
+                "TotaleTitoliDaspatiTradiz": to_int(group.get("DT"), 0),
+                "TotaleTitoliDaspatiDigitali": to_int(group.get("DD"), 0),
+                "TotaleTitoliRubatiTradiz": to_int(group.get("FT"), 0),
+                "TotaleTitoliRubatiDigitali": to_int(group.get("FD"), 0),
+                "TotaleTitoliBLTradiz": to_int(group.get("BT"), 0),
+                "TotaleTitoliBLDigitali": to_int(group.get("BD"), 0),
+            })
+
+    return out
+
+
+def parse_rca_xml(path: str) -> List[Dict[str, Any]]:
     """
     Parsing RCA (RiepilogoControlloAccessi).
 
@@ -493,6 +797,14 @@ def parse_rca(path: str) -> List[Dict[str, Any]]:
                     out.append(rec)
 
     return out
+
+
+def parse_rca(path: str) -> List[Dict[str, Any]]:
+    if _is_xml_path(path):
+        return parse_rca_xml(path)
+    if _is_txt_path(path):
+        return parse_rca_txt(path)
+    raise ValueError(f"Formato RCA non supportato: {path}")
 
 
 def parse_rpm(path: str) -> List[Dict[str, Any]]:
@@ -651,6 +963,11 @@ def discover_files(directory: str) -> Dict[str, List[str]]:
                 out["RCA"].append(path)
             elif low.startswith("rpm_"):
                 out["RPM"].append(path)
+        elif low.endswith(".txt"):
+            if low.startswith("lta_"):
+                out["LTA"].append(path)
+            elif low.startswith("rca_"):
+                out["RCA"].append(path)
         elif low.endswith(".csv") and "aliquote" in low and "tab1" in low:
             out["ALIQ"].append(path)
     # ordina per stabilità
@@ -1065,7 +1382,7 @@ def run_checks(
     # -------------------------
     # Mappatura StatoTitolo (2 lettere) -> categorie RCA.
     # Convenzione tipica osservata negli esempi:
-    #   V? = NoAccesso, Z? = Automatizzati, M? = Manuali, A? = Annullati, D? = Daspati, R? = Rubati, B? = BlackList
+    #   V? = NoAccesso, Z? = Automatizzati, M? = Manuali, A? = Annullati, D? = Daspati, F?/R? = Rubati, B? = BlackList
     #   ?T = Tradizionale, ?D = Digitale
     rca_fields = [
         "TotaleTitoliLTA",
@@ -1123,7 +1440,7 @@ def run_checks(
             cat = "Annullati"
         elif prefix == "D":
             cat = "Daspati"
-        elif prefix == "R":
+        elif prefix in {"F", "R"}:
             cat = "Rubati"
         elif prefix == "B":
             cat = "BL"
@@ -2961,7 +3278,7 @@ def build_html_report(summary: Dict[str, Any], issues: List[Issue], metrics: Dic
 
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description="Verifica consistenza biglietteria (LOG/LTA/RCA/RPM) con controlli fiscali.")
-    ap.add_argument("directory", nargs="?", default=".", help="Cartella contenente i file .xsi/.xml/.csv")
+    ap.add_argument("directory", nargs="?", default=".", help="Cartella contenente i file .xsi/.xml/.txt/.csv")
     ap.add_argument("--out", default=None, help="Percorso report HTML di output (default: report_verifica.html nella cartella)")
     ap.add_argument("--aliquote-tab1", default=None, help="Percorso aliquote_tab1.csv (se omesso: ricerca automatica)")
     ap.add_argument("--rpm", default=None, help="Percorso RPM_*.xsi da usare (se omesso: usa l’ultimo trovato nella cartella)")
