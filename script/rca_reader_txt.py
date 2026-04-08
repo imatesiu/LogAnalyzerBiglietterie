@@ -14,6 +14,9 @@ from collections import Counter, defaultdict
 from typing import Dict, List, Optional, Tuple
 
 
+SCRIPT_VERSION = "2026-04-08.4"
+
+
 # =========================
 # Helpers
 # =========================
@@ -463,6 +466,7 @@ def build_html(filename: str,
               <summary>{esc(title)} — {esc(fmt_date8(d))} {esc(fmt_time4(o))} — {esc(codloc)} — {esc(sistema_em)} — {esc(ordine)} (cap {esc(cap)})</summary>
               <div class="pad">
                 <div class="muted">Evento: {esc(ev.get("TitoloEvento","").strip())} — {esc(ev.get("DenomLocale","").strip())}</div>
+                <div class="muted">Chiave confronto: {esc('|'.join([cf_org, codloc, d, o, ordine, sistema_em]))}</div>
                 <h4>Dettaglio per TipoTitolo (gruppo ripetuto “Occorrenze tipi-titolo”)</h4>
                 <div class="tablewrap small">
                   <table>
@@ -679,6 +683,7 @@ def build_html(filename: str,
 <body>
   <h1>RCA Reader (TXT)</h1>
   <div class="muted">{esc(filename)}</div>
+  <div class="muted">Versione script: {esc(SCRIPT_VERSION)}</div>
 
   <div class="grid">
     <div class="card">
@@ -688,11 +693,12 @@ def build_html(filename: str,
     <div class="card">
       <h3>Riepilogo</h3>
       <table class="kv"><tbody>
+        <tr><td><b>Versione script</b></td><td>{esc(SCRIPT_VERSION)}</td></tr>
         <tr><td><b>Eventi</b></td><td>{n_events}</td></tr>
         <tr><td><b>Record 14</b></td><td>{n14}</td></tr>
         <tr><td><b>Record 15</b></td><td>{n15}</td></tr>
       </tbody></table>
-      <div class="muted" style="margin-top:8px;">Nota: i record 14/15 hanno lunghezza variabile in base alle “Occorrenze tipi-titolo”.</div>
+      <div class="muted" style="margin-top:8px;">Nota: i record 14/15 hanno lunghezza variabile in base alle “Occorrenze tipi-titolo”. Se la stessa chiave evento/ordine/tipo compare piu volte, il viewer la mostra come entry separate.</div>
     </div>
   </div>
 
