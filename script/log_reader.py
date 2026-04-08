@@ -13,6 +13,19 @@ import xml.etree.ElementTree as ET
 from collections import Counter
 from typing import Optional, List, Dict, Tuple
 
+CAUSALE_ANN_MAP = {
+    "001": "Errata compilazione",
+    "002": "Stampa non valida",
+    "003": "Transazione non completata",
+    "004": "Annullamento su richiesta del cliente",
+    "005": "Annullamento per motivi di servizio",
+    "006": "Annullamento Evento",
+    "007": "Annullamento per cambio nominativo",
+    "008": "Annullamento per rivendita",
+    "009": "Annullamento per furto/smarrimento",
+    "010": "Annullamento per sostituzione contestuale con titolo diverso",
+}
+
 
 # -------------------------
 # XML helpers (namespace-safe)
@@ -91,6 +104,13 @@ def money_from_cents(value: str, cents_mode: bool = True) -> str:
     us = f"{amount:,.2f}"
     it = us.replace(",", "X").replace(".", ",").replace("X", ".")
     return it + " EUR"
+
+def format_causale_annullamento(code: str) -> str:
+    code = (code or "").strip()
+    if not code:
+        return ""
+    desc = CAUSALE_ANN_MAP.get(code, "")
+    return f"{code} - {desc}" if desc else code
 
 
 # -------------------------
@@ -332,6 +352,9 @@ def parse_log(root: ET.Element) -> List[Dict[str, str]]:
             "CodiceRichiedenteEmissioneSigillo": t.attrib.get("CodiceRichiedenteEmissioneSigillo", ""),
             "TipoTassazione": t.attrib.get("TipoTassazione", ""),
             "Valuta": t.attrib.get("Valuta", ""),
+            "OriginaleAnnullato": t.attrib.get("OriginaleAnnullato", ""),
+            "CartaOriginaleAnnullato": t.attrib.get("CartaOriginaleAnnullato", ""),
+            "CausaleAnnullamento": t.attrib.get("CausaleAnnullamento", ""),
 
             "ImponibileIntrattenimenti": t.attrib.get("ImponibileIntrattenimenti", "0"),
 
@@ -460,6 +483,8 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
 
         ann = r.get("Annullamento", "N")
         ann_flag = is_ann(ann)
+        causale_ann = r.get("CausaleAnnullamento", "")
+        causale_ann_fmt = format_causale_annullamento(causale_ann)
 
         sort_date = de if de.isdigit() and len(de) == 8 else de
         sort_time = oe if oe.isdigit() else oe
@@ -514,6 +539,9 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
             r.get("RifAnn_OriginaleRiferimentoAnnullamento",""),
             r.get("RifAnn_CartaRiferimentoAnnullamento",""),
             r.get("RifAnn_CausaleRiferimentoAnnullamento",""),
+            r.get("OriginaleAnnullato",""),
+            r.get("CartaOriginaleAnnullato",""),
+            causale_ann_fmt,
         ])
 
         filter_blob = " ".join([
@@ -654,6 +682,9 @@ def build_log_html(rows_data: List[Dict[str, str]], file_title: str, cents_mode:
                   <li><b>Valuta</b>: {html.escape(r.get('Valuta',''))}</li>
                   <li><b>Imponibile intrattenimenti</b>: {html.escape(imp_fmt)}</li>
                   <li><b>Annullamento</b>: {html.escape(ann)}</li>
+                  {f"<li><b>Originale annullato</b>: {html.escape(r.get('OriginaleAnnullato',''))}</li>" if r.get('OriginaleAnnullato') else ""}
+                  {f"<li><b>Carta originale annullato</b>: {html.escape(r.get('CartaOriginaleAnnullato',''))}</li>" if r.get('CartaOriginaleAnnullato') else ""}
+                  {f"<li><b>Causale annullamento</b>: {html.escape(causale_ann_fmt)}</li>" if causale_ann_fmt else ""}
                 </ul>
 
                 <h4>Importi (standard)</h4>
