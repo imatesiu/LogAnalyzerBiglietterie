@@ -48,7 +48,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 import xml.etree.ElementTree as ET
 
 
-SCRIPT_VERSION = "2026-04-08.9"
+SCRIPT_VERSION = "2026-04-08.10"
 
 
 # -------------------------
@@ -715,9 +715,12 @@ def parse_rca_txt(path: str) -> List[Dict[str, Any]]:
             (row.get("DataInizioEvento") or "").strip(),
             (row.get("OraInizioEvento") or "").strip(),
         ), {})
+        rec_type = (row.get("TipoRecord") or "").strip()
+        rca_section = "Abbonamenti" if rec_type == "15" else "Titoli"
         for group in row.get("Gruppi", []):
             out.append({
                 "_file": os.path.basename(path),
+                "RcaSection": rca_section,
                 "CFOrganizzatore": (row.get("CFOrganizzatore") or "").strip(),
                 "CodiceLocale": (row.get("CodiceLocale") or "").strip(),
                 "DataEvento": (row.get("DataInizioEvento") or "").strip(),
@@ -780,6 +783,7 @@ def parse_rca_xml(path: str) -> List[Dict[str, Any]]:
                     tipo = (_find_text(tt, "TipoTitolo") or "").strip()
                     rec = {
                         "_file": os.path.basename(path),
+                        "RcaSection": "Titoli",
                         "CFOrganizzatore": cf_org,
                         "CodiceLocale": cod_loc,
                         "DataEvento": data_ev,
@@ -812,6 +816,50 @@ def parse_rca_xml(path: str) -> List[Dict[str, Any]]:
 
                         "TotaleTitoliBLTradiz": to_int(_find_text(tt, "TotaleTitoliBLTradiz"), 0),
                         "TotaleTitoliBLDigitali": to_int(_find_text(tt, "TotaleTitoliBLDigitali"), 0),
+                    }
+                    out.append(rec)
+
+            for ab in se.findall("./Abbonamenti"):
+                ordine = (_find_text(ab, "CodiceOrdinePosto") or "").strip()
+                capienza = to_int(_find_text(ab, "Capienza"), 0)
+
+                for tt in ab.findall("./TotaleTipoTitoloAbbonamento"):
+                    tipo = (_find_text(tt, "TipoTitoloAbbonamento") or "").strip()
+                    rec = {
+                        "_file": os.path.basename(path),
+                        "RcaSection": "Abbonamenti",
+                        "CFOrganizzatore": cf_org,
+                        "CodiceLocale": cod_loc,
+                        "DataEvento": data_ev,
+                        "OraEvento": ora_ev,
+                        "SistemaEmissione": sistema_em,
+                        "IncidenzaIntrattenimento": incidenza,
+                        "CodiceOrdine": ordine,
+                        "Capienza": capienza,
+                        "TipoTitolo": tipo,
+
+                        "TotaleTitoliLTA": to_int(_find_text(tt, "TotaleTitoliAbbLTA"), 0),
+
+                        "TotaleTitoliNoAccessoTradiz": to_int(_find_text(tt, "TotaleTitoliAbbNoAccessoTradiz"), 0),
+                        "TotaleTitoliNoAccessoDigitali": to_int(_find_text(tt, "TotaleTitoliAbbNoAccessoDigitali"), 0),
+
+                        "TotaleTitoliAutomatizzatiTradiz": to_int(_find_text(tt, "TotaleTitoliAbbAutomatizzatiTradiz"), 0),
+                        "TotaleTitoliAutomatizzatiDigitali": to_int(_find_text(tt, "TotaleTitoliAbbAutomatizzatiDigitali"), 0),
+
+                        "TotaleTitoliManualiTradiz": to_int(_find_text(tt, "TotaleTitoliAbbManualiTradiz"), 0),
+                        "TotaleTitoliManualiDigitali": to_int(_find_text(tt, "TotaleTitoliAbbManualiDigitali"), 0),
+
+                        "TotaleTitoliAnnullatiTradiz": to_int(_find_text(tt, "TotaleTitoliAbbAnnullatiTradiz"), 0),
+                        "TotaleTitoliAnnullatiDigitali": to_int(_find_text(tt, "TotaleTitoliAbbAnnullatiDigitali"), 0),
+
+                        "TotaleTitoliDaspatiTradiz": to_int(_find_text(tt, "TotaleTitoliAbbDaspatiTradiz"), 0),
+                        "TotaleTitoliDaspatiDigitali": to_int(_find_text(tt, "TotaleTitoliAbbDaspatiDigitali"), 0),
+
+                        "TotaleTitoliRubatiTradiz": to_int(_find_text(tt, "TotaleTitoliAbbRubatiTradiz"), 0),
+                        "TotaleTitoliRubatiDigitali": to_int(_find_text(tt, "TotaleTitoliAbbRubatiDigitali"), 0),
+
+                        "TotaleTitoliBLTradiz": to_int(_find_text(tt, "TotaleTitoliAbbBLTradiz"), 0),
+                        "TotaleTitoliBLDigitali": to_int(_find_text(tt, "TotaleTitoliAbbBLDigitali"), 0),
                     }
                     out.append(rec)
 
@@ -1093,7 +1141,7 @@ CHECK_DEFS: Dict[str, str] = {
     "LOG_duplicates": "LOG: verifica duplicati chiave titolo (emissioni)",
     "LOG_cancellations_ref": "LOG: annullamenti puntano a un titolo originale esistente",
     "LOG_vs_LTA": "LOG↔LTA: emissioni presenti in LTA; annullamenti verificati su LTA tramite campi *ANN* del titolo originale",
-    "LTA_vs_RCA": "LTA↔RCA: confronto totali per TipoTitolo (NoAccesso/Automatizzati/Manuali/Annullati/Daspati/Rubati/BL) Tradiz/Digitali",
+    "LTA_vs_RCA": "LTA↔RCA: confronto totali per TipoTitolo e sezione RCA (Titoli/Abbonamenti), con categorie NoAccesso/Automatizzati/Manuali/Annullati/Daspati/Rubati/BL Tradiz/Digitali",
     "RCA_internal": "RCA: TotaleTitoliLTA coerente con la somma delle categorie per TipoTitolo",
     "LOG_vs_RPM": "LOG↔RPM: coerenza aggregati titoli (accesso/annullati) per evento/ordine/tipo",
     "LTA_vs_RPM": "LTA↔RPM: coerenza quantità titoli (accesso/annullati)",
@@ -1441,8 +1489,8 @@ def run_checks(
     def _empty_rca_bucket() -> Dict[str, int]:
         return {f: 0 for f in rca_fields}
 
-    def _format_key_rca(key_rca: Tuple[str, str, str, str, str, str, str]) -> Dict[str, str]:
-        sistema, cf_org, cod_loc, data_ev, ora_ev, ordine, tipo = key_rca
+    def _format_key_rca(key_rca: Tuple[str, str, str, str, str, str, str, str]) -> Dict[str, str]:
+        sistema, cf_org, cod_loc, data_ev, ora_ev, ordine, tipo, section = key_rca
         return {
             "SistemaEmissione": sistema,
             "CFOrganizzatore": cf_org,
@@ -1451,6 +1499,7 @@ def run_checks(
             "OraEvento": ora_ev,
             "CodiceOrdine": ordine,
             "TipoTitolo": tipo,
+            "SezioneRCA": section,
             "Evento": f"{data_ev} {ora_ev} {cod_loc}".strip(),
         }
 
@@ -1512,8 +1561,8 @@ def run_checks(
         return summed
 
     # Aggregazione LTA
-    lta_rca: Dict[Tuple[str, str, str, str, str, str, str], Dict[str, int]] = defaultdict(_empty_rca_bucket)
-    lta_rows_by_key: Dict[Tuple[str, str, str, str, str, str, str], List[Dict[str, Any]]] = defaultdict(list)
+    lta_rca: Dict[Tuple[str, str, str, str, str, str, str, str], Dict[str, int]] = defaultdict(_empty_rca_bucket)
+    lta_rows_by_key: Dict[Tuple[str, str, str, str, str, str, str, str], List[Dict[str, Any]]] = defaultdict(list)
     unknown_lta_states: Counter = Counter()
 
     for r in lta_recs:
@@ -1526,6 +1575,7 @@ def run_checks(
             (r.get("OraEvento") or "").strip(),
             (r.get("CodiceOrdine") or "").strip(),
             (r.get("TipoTitolo") or "").strip(),
+            "Abbonamenti" if (r.get("Abbonamento") or "").strip().upper() == "S" else "Titoli",
         )
         b = lta_rca[key_rca]
         lta_rows_by_key[key_rca].append(r)
@@ -1578,9 +1628,9 @@ def run_checks(
         ))
 
     # Mappa RCA per chiave comparabile
-    rca_map: Dict[Tuple[str, str, str, str, str, str, str], Dict[str, Any]] = {}
-    rca_rows_by_key: Dict[Tuple[str, str, str, str, str, str, str], List[Dict[str, Any]]] = defaultdict(list)
-    rca_files_by_key: Dict[Tuple[str, str, str, str, str, str, str], List[str]] = defaultdict(list)
+    rca_map: Dict[Tuple[str, str, str, str, str, str, str, str], Dict[str, Any]] = {}
+    rca_rows_by_key: Dict[Tuple[str, str, str, str, str, str, str, str], List[Dict[str, Any]]] = defaultdict(list)
+    rca_files_by_key: Dict[Tuple[str, str, str, str, str, str, str, str], List[str]] = defaultdict(list)
     for rr in rca_recs:
         key_rca = (
             (rr.get("SistemaEmissione") or "").strip(),
@@ -1590,6 +1640,7 @@ def run_checks(
             (rr.get("OraEvento") or "").strip(),
             (rr.get("CodiceOrdine") or "").strip(),
             (rr.get("TipoTitolo") or "").strip(),
+            (rr.get("RcaSection") or "Titoli").strip(),
         )
         rca_rows_by_key[key_rca].append(rr)
         rca_files_by_key[key_rca].append(str(rr.get("_file") or ""))
