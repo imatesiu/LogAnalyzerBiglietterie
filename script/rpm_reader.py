@@ -186,15 +186,19 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
     sost = attrs.get("Sostituzione", "")
 
     tit = child(root, "Titolare")
-    org = child(root, "Organizzatore")
+    orgs = children(root, "Organizzatore")
+    primary_org = orgs[0] if orgs else None
 
     # Abbonamenti block (se presente)
     abbo_html = ""
     abbo_html_i = ""
-    #abbo = child(org, "Abbonamenti") if org is not None else None
-    abbos = children(org, "Abbonamenti") if org is not None else []
+    abbos = []
+    for org in orgs:
+        for abbo in children(org, "Abbonamenti"):
+            abbos.append((org, abbo))
     idx = 1
-    for abbo in abbos:
+    for org, abbo in abbos:
+        org_name = text_path(org, "Denominazione")
 
         if abbo is not None:
             em = child(abbo, "AbbonamentiEmessi")
@@ -233,6 +237,7 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
             <div class="pad">
               <h3>Abbonamento</h3>
               <ul>
+                <li><b>Organizzatore</b>: {html.escape(org_name)}</li>
                 <li><b>Codice Abbonamento</b>: {html.escape(text_path(abbo,'CodiceAbbonamento'))}</li>
                 <li><b>Validità</b>: {html.escape(fmt_date(text_path(abbo,'Validita')))}</li>
                 <li><b>Tipo Tassazione</b>: {html.escape(attr_path(abbo,'TipoTassazione','valore'))}</li>
@@ -247,21 +252,29 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
             """
             idx += 1
 
-    abbo_html = f"""
+    if abbos:
+        abbo_html = f"""
             <div class="card">
                  <h2>Abbonamenti ({len(abbos)})</h2>
               
               {abbo_html_i}
             </div>
             """
+    else:
+        abbo_html = ""
     # Eventi
-    events = children(org, "Evento") if org is not None else []
+    event_entries = []
+    for org in orgs:
+        for e in children(org, "Evento"):
+            event_entries.append((org, e))
 
     # Tabella eventi (ordinabile) + dettagli eventi (expand)
     tbody_rows = []
     ev_details = []
 
-    for idx, e in enumerate(events, start=1):
+    for idx, (org, e) in enumerate(event_entries, start=1):
+        org_name = text_path(org, "Denominazione")
+        org_cf = text_path(org, "CodiceFiscale")
         loc = child(e, "Locale")
         loc_name = text_path(loc, "Denominazione")
         loc_code = text_path(loc, "CodiceLocale")
@@ -312,33 +325,33 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
 
             for tn in children(od, "TitoliAnnullati"):
                 tot_qty_ann += int_or0(text_path(tn, "Quantita", "0"))
-                tot_corr_ann += int_or0(text_path(ta, "CorrispettivoLordo", "0"))
-                tot_prev_ann += int_or0(text_path(ta, "Prevendita", "0"))
+                tot_corr_ann += int_or0(text_path(tn, "CorrispettivoLordo", "0"))
+                tot_prev_ann += int_or0(text_path(tn, "Prevendita", "0"))
 
             #  BigliettiAbbonamento
             for ba in children(od, "BigliettiAbbonamento"):
                 tot_qty_biglabb += int_or0(text_path(ba, "Quantita", "0"))
-                tot_corr_biglabb += int_or0(text_path(ta, "CorrispettivoLordo", "0"))
-                tot_prev_biglabb += int_or0(text_path(ta, "Prevendita", "0"))
+                tot_corr_biglabb += int_or0(text_path(ba, "CorrispettivoLordo", "0"))
+                tot_prev_biglabb += int_or0(text_path(ba, "Prevendita", "0"))
 
 
             #  BigliettiAbbonamentoAnnullati
             for ba in children(od, "BigliettiAbbonamentoAnnullati"):
                 tot_qty_ann_biglabb += int_or0(text_path(ba, "Quantita", "0"))
-                tot_corr_ann_biglabb += int_or0(text_path(ta, "CorrispettivoLordo", "0"))
-                tot_prev_ann_biglabb += int_or0(text_path(ta, "Prevendita", "0"))
+                tot_corr_ann_biglabb += int_or0(text_path(ba, "CorrispettivoLordo", "0"))
+                tot_prev_ann_biglabb += int_or0(text_path(ba, "Prevendita", "0"))
 
             # (opzionale) AbbonamentiFissiAnnullati
             for af in children(od, "AbbonamentiFissiAnnullati"):
                 tot_qty_ann_abfissi += int_or0(text_path(af, "Quantita", "0"))
-                tot_corr_ann_abfissi += int_or0(text_path(ta, "CorrispettivoLordo", "0"))
-                tot_prev_ann_abfissi += int_or0(text_path(ta, "Prevendita", "0"))
+                tot_corr_ann_abfissi += int_or0(text_path(af, "CorrispettivoLordo", "0"))
+                tot_prev_ann_abfissi += int_or0(text_path(af, "Prevendita", "0"))
 
 
         # ---- TABELLINA EVENTI (con sorting)
         # filtro testuale (per ricerca)
         filter_blob = " ".join([
-            str(idx), date, time, loc_name, loc_code, title, tass,
+            str(idx), date, time, org_name, org_cf, loc_name, loc_code, title, tass,
             imp_intr, str(tot_qty_accesso), str(tot_qty_ann),
         ]).lower()
 
@@ -346,6 +359,7 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
         sort_idx = str(idx)
         sort_date = date if (date.isdigit() and len(date) == 8) else date
         sort_time = time if time.isdigit() else time
+        sort_org = org_name.lower()
         sort_qty = str(tot_qty_accesso)
         sort_ann = str(tot_qty_ann)
         sort_corr = str(tot_corr_accesso)
@@ -361,6 +375,7 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
             + td(html.escape(str(idx)), sort_idx)
             + td(html.escape(fmt_date(date)), sort_date)
             + td(html.escape(fmt_time(time)), sort_time)
+            + td(html.escape(org_name), sort_org)
             + td(html.escape(loc_name), loc_name.lower())
             + td(html.escape(title), title.lower())
             + td(html.escape(tass if tass else "n/d"), (tass or "").lower())
@@ -524,6 +539,7 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
               <span class="pill">Tassazione {html.escape(tass if tass else "n/d")}</span>
             </summary>
             <div class="pad">
+              <div><b>Organizzatore</b>: {html.escape(org_name)} ({html.escape(org_cf)})</div>
               <div><b>Titolo</b>: {html.escape(title)}</div>
               <div><b>Incidenza intrattenimento</b>: {html.escape(inc_show)}</div>
               <div><b>Imponibile intrattenimenti</b>: {html.escape(imp_show)}</div>
@@ -564,12 +580,20 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
       </div>
 
       <div class="card">
-        <h2>Organizzatore</h2>
+        <h2>Organizzatori ({len(orgs)})</h2>
+        {(
+            "<ul>" + "".join(
+                f"<li><b>{html.escape(text_path(org,'Denominazione'))}</b> - {html.escape(text_path(org,'CodiceFiscale'))} "
+                f"(tipo {html.escape(attr_path(org,'TipoOrganizzatore','valore') or 'n/d')})</li>"
+                for org in orgs
+            ) + "</ul>"
+        ) if len(orgs) != 1 else f"""
         <ul>
-          <li><b>Denominazione</b>: {html.escape(text_path(org,'Denominazione'))}</li>
-          <li><b>Codice Fiscale</b>: {html.escape(text_path(org,'CodiceFiscale'))}</li>
-          <li><b>Tipo organizzatore</b>: {html.escape(attr_path(org,'TipoOrganizzatore','valore'))}</li>
+          <li><b>Denominazione</b>: {html.escape(text_path(primary_org,'Denominazione'))}</li>
+          <li><b>Codice Fiscale</b>: {html.escape(text_path(primary_org,'CodiceFiscale'))}</li>
+          <li><b>Tipo organizzatore</b>: {html.escape(attr_path(primary_org,'TipoOrganizzatore','valore'))}</li>
         </ul>
+        """}
       </div>
     </div>
     """
@@ -577,8 +601,8 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
     # --- Eventi table (sortable) + filter
     events_table = f"""
     <div class="card" style="margin-top:12px;">
-      <h2>Eventi ({len(events)})</h2>
-      <input id="q" class="search" placeholder="Filtra per locale, titolo, data, tassazione..." />
+      <h2>Eventi ({len(event_entries)})</h2>
+      <input id="q" class="search" placeholder="Filtra per organizzatore, locale, titolo, data, tassazione..." />
       <div class="tablewrap">
         <table id="eventTable">
           <thead>
@@ -586,6 +610,7 @@ def build_html(root: ET.Element, file_title: str, cents_mode: bool = True) -> st
               {th("#","num")}
               {th("Data","date")}
               {th("Ora","time")}
+              {th("Organizzatore","text")}
               {th("Locale","text")}
               {th("Titolo","text")}
               {th("Tass.","text")}
@@ -775,4 +800,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
