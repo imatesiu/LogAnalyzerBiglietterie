@@ -48,7 +48,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 import xml.etree.ElementTree as ET
 
 
-SCRIPT_VERSION = "2026-04-08.11"
+SCRIPT_VERSION = "2026-04-08.13"
 
 
 # -------------------------
@@ -1223,7 +1223,7 @@ CHECK_DEFS: Dict[str, str] = {
     "LTA_vs_RCA": "LTA↔RCA: confronto totali per TipoTitolo e sezione RCA (Titoli/Abbonamenti), con categorie NoAccesso/Automatizzati/Manuali/Annullati/Daspati/Rubati/BL Tradiz/Digitali",
     "RCA_internal": "RCA: TotaleTitoliLTA coerente con la somma delle categorie per TipoTitolo",
     "LOG_vs_RPM": "LOG↔RPM: coerenza aggregati titoli (accesso/annullati) per evento/ordine/tipo",
-    "LTA_vs_RPM": "LTA↔RPM: coerenza quantità titoli (accesso/annullati), inclusi AbbonamentiFissi/BigliettiAbbonamento e i rispettivi annullati RPM",
+    "LTA_vs_RPM": "LTA↔RPM: coerenza quantità titoli (accesso/annullati), inclusi AbbonamentiFissi/BigliettiAbbonamento e annullati abbonamento RPM",
     "FIS_LOG_IVA_ISI": "Fiscale (LOG): ricostruzione IVA/ISI & ImponibileIntrattenimenti (calcolo-ISI) — solo TipoTassazione=I",
     "FIS_RPM_OMAGGI": "Fiscale (RPM): eccedenza omaggi (IVAEccedenteOmaggi) su prezzo massimo (corrispettivo, no prevendita)",
     "RPM_incidenza_spettacolo": "RPM: Incidenza Intrattenimento > 0 su evento con TipoTassazione='S' (spettacolo)",
@@ -1639,6 +1639,97 @@ def run_checks(
             summed[fld] = sum(int(rr.get(fld, 0) or 0) for rr in rows)
         return summed
 
+    rca_section_hint_by_event_abbo: Dict[Tuple[str, str, str, str, str, str], str] = {}
+    rca_section_hints_by_abbo: Dict[Tuple[str, str, str, str], set[str]] = defaultdict(set)
+
+    def _register_rca_section_hint(
+        cf_org: str,
+        cod_ordine: str,
+        tipo_titolo: str,
+        codice_abbonamento: str,
+        section: str,
+        data_evento: str = "",
+        ora_evento: str = "",
+    ) -> None:
+        cf_org = (cf_org or "").strip()
+        cod_ordine = (cod_ordine or "").strip()
+        tipo_titolo = (tipo_titolo or "").strip()
+        codice_abbonamento = (codice_abbonamento or "").strip()
+        section = (section or "").strip()
+        if not (cf_org and cod_ordine and tipo_titolo and codice_abbonamento and section):
+            return
+        rca_section_hints_by_abbo[(cf_org, cod_ordine, tipo_titolo, codice_abbonamento)].add(section)
+        data_evento = (data_evento or "").strip()
+        ora_evento = (ora_evento or "").strip()
+        if data_evento and ora_evento:
+            rca_section_hint_by_event_abbo[(cf_org, data_evento, ora_evento, cod_ordine, tipo_titolo, codice_abbonamento)] = section
+
+    def _section_from_rpm_kind(rr: Dict[str, Any]) -> Optional[str]:
+        kind = (rr.get("kind") or "").strip()
+        if kind in ("BigliettiAbbonamento", "BigliettiAbbonamentoAnnullati"):
+            return "Titoli"
+        if kind == "AbbonamentiFissi":
+            return "Abbonamenti"
+        if kind in ("AbbonamentiEmessi", "AbbonamentiAnnullati", "AbbonamentiIVAPreassolta", "AbbonamentiIVAPreassoltaAnnullati"):
+            turno = (rr.get("Turno") or "").strip().upper()
+            if turno == "L":
+                return "Titoli"
+            if turno == "F":
+                return "Abbonamenti"
+            return "Abbonamenti"
+        return None
+
+    for rr in rpm_recs:
+        section = _section_from_rpm_kind(rr)
+        if section is None:
+            continue
+        _register_rca_section_hint(
+            rr.get("Organizzatore_CF") or "",
+            rr.get("CodiceOrdine") or "",
+            rr.get("TipoTitolo") or "",
+            rr.get("CodiceAbbonamento") or "",
+            section,
+            rr.get("DataEvento") or "",
+            rr.get("OraEvento") or "",
+        )
+
+    for lr in log_recs:
+        kind = (lr.get("kind") or "").strip()
+        if kind == "BigliettoAbbonamento":
+            section = "Titoli"
+        elif kind == "Abbonamento":
+            section = "Abbonamenti"
+        else:
+            continue
+        _register_rca_section_hint(
+            lr.get("CFOrganizzatore") or "",
+            lr.get("CodiceOrdine") or "",
+            lr.get("TipoTitolo") or "",
+            lr.get("CodiceAbbonamento") or "",
+            section,
+            lr.get("DataEvento") or "",
+            lr.get("OraEvento") or "",
+        )
+
+    def _resolve_lta_rca_section(r: Dict[str, Any]) -> str:
+        if (r.get("Abbonamento") or "").strip().upper() != "S":
+            return "Titoli"
+        cf_org = (r.get("CFOrganizzatore") or "").strip()
+        data_ev = (r.get("DataEvento") or "").strip()
+        ora_ev = (r.get("OraEvento") or "").strip()
+        ordine = (r.get("CodiceOrdine") or "").strip()
+        tipo = (r.get("TipoTitolo") or "").strip()
+        codice_abbo = (r.get("CodiceAbbonamento") or "").strip()
+        if codice_abbo:
+            event_key = (cf_org, data_ev, ora_ev, ordine, tipo, codice_abbo)
+            section = rca_section_hint_by_event_abbo.get(event_key)
+            if section:
+                return section
+            generic_hints = rca_section_hints_by_abbo.get((cf_org, ordine, tipo, codice_abbo), set())
+            if len(generic_hints) == 1:
+                return next(iter(generic_hints))
+        return "Abbonamenti"
+
     # Aggregazione LTA
     lta_rca: Dict[Tuple[str, str, str, str, str, str, str, str], Dict[str, int]] = defaultdict(_empty_rca_bucket)
     lta_rows_by_key: Dict[Tuple[str, str, str, str, str, str, str, str], List[Dict[str, Any]]] = defaultdict(list)
@@ -1654,7 +1745,7 @@ def run_checks(
             (r.get("OraEvento") or "").strip(),
             (r.get("CodiceOrdine") or "").strip(),
             (r.get("TipoTitolo") or "").strip(),
-            "Abbonamenti" if (r.get("Abbonamento") or "").strip().upper() == "S" else "Titoli",
+            _resolve_lta_rca_section(r),
         )
         b = lta_rca[key_rca]
         lta_rows_by_key[key_rca].append(r)
@@ -1974,6 +2065,7 @@ def run_checks(
         ann = (r.get("Annullamento") or "").upper()
         is_abbo = (r.get("Abbonamento") or "").upper() == "S"
         codice_abbo = (r.get("CodiceAbbonamento") or "").strip()
+        lta_qty_accesso[key6] += 1
         if ann == "S":
             lta_qty_ann[key6] += 1
             if is_abbo and codice_abbo:
@@ -1983,8 +2075,6 @@ def run_checks(
                     key6[4],
                     key6[5],
                 )].append(key6)
-        else:
-            lta_qty_accesso[key6] += 1
 
     # Aggregazione RPM
     rpm_qty_accesso: Dict[Tuple[str, str, str, str, str, str], int] = Counter()
@@ -2101,6 +2191,7 @@ def run_checks(
         lta_ann_rows = [r for r in lta_rows if (r.get("Annullamento") or "").upper() == "S"]
         lta_non_ann_rows = [r for r in lta_rows if (r.get("Annullamento") or "").upper() != "S"]
         lta_abbo_rows = [r for r in lta_non_ann_rows if (r.get("Abbonamento") or "").upper() == "S"]
+        lta_abbo_all_rows = [r for r in lta_rows if (r.get("Abbonamento") or "").upper() == "S"]
         rpm_related_rows = rpm_related_by_key6.get(key6, [])
         rpm_abbo_rows = [rr for rr in rpm_related_rows if (rr.get("kind") or "") in ("BigliettiAbbonamento", "AbbonamentiFissi")]
         rpm_abbo_ann_rows = [rr for rr in rpm_related_rows if (rr.get("kind") or "") in ("BigliettiAbbonamentoAnnullati", "AbbonamentiAnnullati", "AbbonamentiIVAPreassoltaAnnullati")]
@@ -2112,58 +2203,64 @@ def run_checks(
         rpm_acc = rpm_qty_accesso.get(key6, None)
         rpm_an = rpm_qty_ann.get(key6, None)
         rpm_acc_base = int(rpm_acc or 0)
-        rpm_acc_total = rpm_acc_base + rpm_abbo_qty
-        rpm_access_like_present = (rpm_acc is not None) or (rpm_abbo_qty > 0)
+        rpm_acc_total = rpm_acc_base + rpm_abbo_qty + rpm_abbo_ann_qty
+        rpm_access_like_present = (rpm_acc is not None) or (rpm_abbo_qty > 0) or (rpm_abbo_ann_qty > 0)
         rpm_ann_base = int(rpm_an or 0)
         rpm_ann_total = rpm_ann_base + rpm_abbo_ann_qty
         rpm_ann_like_present = (rpm_an is not None) or (rpm_abbo_ann_qty > 0)
 
-        if rpm_abbo_qty > 0 and len(lta_abbo_rows) > 0:
+        if (rpm_abbo_qty + rpm_abbo_ann_qty) > 0 and len(lta_abbo_all_rows) > 0:
             delta_acc_tmp = lta_acc - rpm_acc_base
-            if delta_acc_tmp == len(lta_abbo_rows) == rpm_abbo_qty:
-                probable_note = "Possibile classificazione RPM su AbbonamentiFissi/BigliettiAbbonamento per i titoli LTA marcati Abbonamento='S'"
-            elif rpm_acc is None and lta_acc == len(lta_abbo_rows) == rpm_abbo_qty:
-                probable_note = "Tutti i titoli LTA di questa chiave risultano abbonamenti e in RPM compaiono solo come AbbonamentiFissi/BigliettiAbbonamento"
+            rpm_abbo_total = rpm_abbo_qty + rpm_abbo_ann_qty
+            if delta_acc_tmp == len(lta_abbo_all_rows) == rpm_abbo_total:
+                probable_note = "Possibile classificazione RPM su AbbonamentiFissi/BigliettiAbbonamento e relativi annullati per i titoli LTA marcati Abbonamento='S'"
+            elif rpm_acc is None and lta_acc == len(lta_abbo_all_rows) == rpm_abbo_total:
+                probable_note = "Tutti i titoli LTA di questa chiave risultano abbonamenti e in RPM compaiono solo come titoli di abbonamento (inclusi eventuali annullati)"
 
         if not rpm_access_like_present:
             issues.append(Issue(
                 severity="WARN",
                 check="LTA_vs_RPM",
-                message="RPM: chiave (evento/ordine/tipo) presente in LTA ma assente in RPM (TitoliAccesso/Abbonamenti)",
+                message="RPM: chiave (evento/ordine/tipo) presente in LTA ma assente in RPM (TitoliAccesso/Abbonamenti, inclusi annullati abbonamento)",
                 context={
                     **key_ctx,
                     "LTA_TitoliAccesso": lta_acc,
                     "LTA_files": lta_files,
-                    "LTA_titoli_candidati": _sample_lta_titles_for_gap(lta_non_ann_rows),
-                    "LTA_titoli_abbonamento_candidati": _sample_lta_titles_for_gap(lta_abbo_rows),
+                    "LTA_titoli_candidati": _sample_lta_titles_for_gap(lta_rows),
+                    "LTA_titoli_abbonamento_candidati": _sample_lta_titles_for_gap(lta_abbo_all_rows),
                     "RPM_TitoliAccesso": rpm_acc_base,
                     "RPM_entry_correlate": _sample_rpm_rows(rpm_related_rows),
                     "RPM_abbonamenti_correlati": _sample_rpm_rows(rpm_abbo_rows),
+                    "RPM_abbonamenti_annullati_correlati": _sample_rpm_rows(rpm_abbo_ann_rows),
                     "RPM_q_Abbonamenti": rpm_abbo_qty,
+                    "RPM_q_AbbonamentiAnnullati": rpm_abbo_ann_qty,
                     "Nota_probabile": probable_note,
                 },
             ))
         elif rpm_acc_total != lta_acc:
             delta_acc = lta_acc - rpm_acc_total
-            candidate_rows = lta_abbo_rows if delta_acc > 0 and len(lta_abbo_rows) == delta_acc else lta_non_ann_rows
+            candidate_rows = lta_abbo_all_rows if delta_acc > 0 and len(lta_abbo_all_rows) == delta_acc else lta_rows
             issues.append(Issue(
                 severity="WARN",
                 check="LTA_vs_RPM",
-                message="Differenza TitoliAccesso tra LTA e RPM per evento/ordine/tipo (inclusi AbbonamentiFissi/BigliettiAbbonamento)",
+                message="Differenza TitoliAccesso tra LTA e RPM per evento/ordine/tipo (inclusi titoli abbonamento e relativi annullati RPM)",
                 context={
                     **key_ctx,
                     "LTA": lta_acc,
                     "RPM_TitoliAccesso": rpm_acc_base,
                     "RPM_Abbonamenti": rpm_abbo_qty,
+                    "RPM_AbbonamentiAnnullati": rpm_abbo_ann_qty,
                     "RPM_TotaleConsiderato": rpm_acc_total,
                     "Delta_LTA_meno_RPM": delta_acc,
                     "LTA_files": lta_files,
                     "LTA_titoli_candidati": _sample_lta_titles_for_gap(candidate_rows),
-                    "LTA_titoli_chiave_esempio": _sample_lta_titles_for_gap(lta_non_ann_rows),
-                    "LTA_titoli_abbonamento_candidati": _sample_lta_titles_for_gap(lta_abbo_rows),
+                    "LTA_titoli_chiave_esempio": _sample_lta_titles_for_gap(lta_rows),
+                    "LTA_titoli_abbonamento_candidati": _sample_lta_titles_for_gap(lta_abbo_all_rows),
                     "RPM_entry_correlate": _sample_rpm_rows(rpm_related_rows),
                     "RPM_abbonamenti_correlati": _sample_rpm_rows(rpm_abbo_rows),
+                    "RPM_abbonamenti_annullati_correlati": _sample_rpm_rows(rpm_abbo_ann_rows),
                     "RPM_q_Abbonamenti": rpm_abbo_qty,
+                    "RPM_q_AbbonamentiAnnullati": rpm_abbo_ann_qty,
                     "Nota_probabile": probable_note,
                 },
             ))
