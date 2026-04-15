@@ -48,7 +48,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 import xml.etree.ElementTree as ET
 
 
-SCRIPT_VERSION = "2026-04-08.13"
+SCRIPT_VERSION = "2026-04-16.2"
 
 
 # -------------------------
@@ -2383,6 +2383,17 @@ def run_checks(
                 resolved_rates[code] = (best, isi_rate)
                 rate_notes[code] = f"Aliquota IVA variabile, scelta {best*100:.0f}% (mismatch {best_mis})"
 
+        # Per i codici non presenti nei LOG con TipoTassazione=I, usa comunque il default tabellare.
+        # Questo serve in particolare per eventi di solo Spettacolo (TipoTassazione=S, Incidenza=0),
+        # dove la verifica omaggi richiede l'IVA della quota spettacolo.
+        for code, info in aliquote.items():
+            if code in resolved_rates:
+                continue
+            cand = info.get("iva_candidates", [0.0]) or [0.0]
+            isi_rate = float(info.get("isi", 0.0))
+            resolved_rates[code] = (float(cand[0]), isi_rate)
+            rate_notes[code] = "Aliquota tabellare di default (nessun LOG TipoTassazione=I per il codice)"
+
         metrics["Aliquote_resolved_codes"] = len(resolved_rates)
 
         # Now check each LOG record
@@ -2620,15 +2631,15 @@ def run_checks(
         imponibile_intr_unit = unit_calc["imponibile_intr"]
         imponibile_sp_unit = unit_calc["imponibile_sp"]
 
-        # Regola soglia (IVA su eccedenza omaggi): applicare la soglia sulla singola parte Intrattenimento e sulla singola parte Spettacolo.
-        # Se la quota LORDO unitaria (per parte) è <= soglia, l'IVA su quella parte è 0.
+        # Regola soglia (IVA su eccedenza omaggi): applicare la soglia solo sulla quota Intrattenimento.
+        # La quota Spettacolo non viene azzerata dalla soglia.
         soglia_intr = quota_intr_unit <= soglia_omaggi_cents
-        soglia_sp = quota_sp_unit <= soglia_omaggi_cents
-        iva_unit_ecc = (0 if soglia_intr else int(iva_intr_unit)) + (0 if soglia_sp else int(iva_sp_unit))
+        soglia_sp = False
+        iva_unit_ecc = (0 if soglia_intr else int(iva_intr_unit)) + int(iva_sp_unit)
         expected_iva_ecc = ecc * iva_unit_ecc
 
-        # legacy flag (comodo per report sintetico): soglia applicata su almeno una delle due parti
-        soglia_flag = bool(soglia_intr or soglia_sp)
+        # legacy flag (comodo per report sintetico): soglia applicata sulla sola quota Intrattenimento
+        soglia_flag = bool(soglia_intr)
 
         if inferred:
             event_inferred[event_key] = True
@@ -2828,8 +2839,7 @@ def run_checks(
             imp_intr_unit = int(row.get("ImponibileIntr_unit") or 0)
             imp_sp_unit = int(row.get("ImponibileSp_unit") or 0)
             soglia_intr = bool(row.get("Soglia_applicata_intr"))
-            soglia_sp = bool(row.get("Soglia_applicata_sp"))
-            base_vat_unit = (0 if soglia_intr else imp_intr_unit) + (0 if soglia_sp else imp_sp_unit)
+            base_vat_unit = (0 if soglia_intr else imp_intr_unit) + imp_sp_unit
 
             ecc_by_event[ek]["EccedenzaTitoli"] += ecc
             if float(row.get("ISI_rate") or 0.0) > 0.0:
@@ -2994,10 +3004,9 @@ def run_checks(
             quota_intr_unit = int(unit_calc["quota_intr"])
             quota_sp_unit = int(unit_calc["quota_sp"])
             soglia_intr = quota_intr_unit <= soglia_omaggi_cents
-            soglia_sp = quota_sp_unit <= soglia_omaggi_cents
 
-            base_vat_unit = (0 if soglia_intr else int(unit_calc["imponibile_intr"])) + (0 if soglia_sp else int(unit_calc["imponibile_sp"]))
-            vat_unit = (0 if soglia_intr else int(unit_calc["iva_intr"])) + (0 if soglia_sp else int(unit_calc["iva_sp"]))
+            base_vat_unit = (0 if soglia_intr else int(unit_calc["imponibile_intr"])) + int(unit_calc["imponibile_sp"])
+            vat_unit = (0 if soglia_intr else int(unit_calc["iva_intr"])) + int(unit_calc["iva_sp"])
 
             ecc_by_event[ek]["EccedenzaTitoli"] += int(ecc)
             ecc_by_event[ek]["ImponibileImposta"] += int(ecc) * (int(unit_calc["imponibile_intr"]) if float(isi_rate) > 0.0 else 0)
@@ -3480,7 +3489,7 @@ def build_html_report(summary: Dict[str, Any], issues: List[Issue], metrics: Dic
           <div class="hint">
             Regola: eccedenza = omaggi_net - floor(capienza * {params.get('omaggi_pct_capienza',5)}%). 
             Prezzo max = CorrispettivoLordo più alto (esclude prevendita), o rateo abbonamento se maggiore.
-            Soglia lordo unitario applicata separatamente alle quote Intrattenimento e Spettacolo: {params.get('soglia_omaggi_eur',50.00):.2f} €.
+            Soglia lordo unitario applicata solo alla quota Intrattenimento: {params.get('soglia_omaggi_eur',50.00):.2f} €.
             Nota arrotondamenti: calcolo IVA/ISI per singolo titolo (round half-up) e poi moltiplica sull’eccedenza; un calcolo 'sul totale' può differire di 1 cent.
           </div>
           <div class="table-wrap">
@@ -3907,8 +3916,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         default=50.00,
         help=(
             "Soglia valore unitario LORDO (EUR) per IVAEccedenteOmaggi=0 (default 50.00). "
-            "Valutata separatamente sulla quota Intrattenimento lorda unitaria e sulla quota Spettacolo lorda unitaria "
-            "(prezzo * Incidenza%% e restante, escludendo la prevendita)."
+            "Valutata solo sulla quota Intrattenimento lorda unitaria "
+            "(prezzo * Incidenza%%, escludendo la prevendita)."
         ),
     )
     args = ap.parse_args(argv)
@@ -3922,6 +3931,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     if aliquote_path is None:
         if files["ALIQ"]:
             aliquote_path = files["ALIQ"][0]
+        else:
+            default_aliq = os.path.join(os.path.dirname(os.path.abspath(__file__)), "aliquote_tab1.csv")
+            if os.path.exists(default_aliq):
+                aliquote_path = default_aliq
     if aliquote_path is not None and os.path.exists(aliquote_path):
         aliquote = parse_aliquote_tab1_csv(aliquote_path)    # LOG: per ogni giorno (YYYY_MM_DD) prende il contatore più alto e unisce in memoria
     log_paths_found = list(files["LOG"])
